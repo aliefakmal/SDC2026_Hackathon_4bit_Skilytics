@@ -43,7 +43,10 @@ const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     return;
   }
   req.log.error({ err }, "Unhandled error");
-  res.status(500).json({ error: "server_error" });
+  res.status(500).json({
+    error: "server_error",
+    message: err instanceof Error ? err.message : String(err),
+  });
 };
 app.use(errorHandler);
 
