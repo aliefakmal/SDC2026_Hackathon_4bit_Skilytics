@@ -87,7 +87,7 @@ async function resolveModel(endpoint: string, configured: string, apiKey: string
   try {
     const res = await fetch(`https://api.runpod.ai/v2/${endpoint}/openai/v1/models`, {
       headers: { Authorization: `Bearer ${apiKey}` },
-      signal: AbortSignal.timeout(8_000),
+      signal: AbortSignal.timeout(2_500),
     });
     if (res.ok) {
       const j = (await res.json()) as { data?: { id: string }[] };
@@ -101,8 +101,9 @@ async function resolveModel(endpoint: string, configured: string, apiKey: string
     }
   } catch (err) {
     if (err instanceof Error && err.message.startsWith("Configured model ")) throw err;
-    // Endpoint cold; use the configured name for now.
+    // Endpoint cold or models endpoint timed out; use the configured name for now.
   }
+  servedModel.set(endpoint, configured);
   return configured;
 }
 

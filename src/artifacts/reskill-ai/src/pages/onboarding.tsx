@@ -308,6 +308,7 @@ function CvStep({ p, scope }: { p: Profile; scope: string }) {
   const { t, lang } = useT();
   const et = useErrText();
   const qc = useQueryClient();
+  const [, nav] = useLocation();
   const { go, upd } = useAdvance(p);
   const ref = useRef<HTMLInputElement>(null);
   const [consent, setConsent] = useState(false);
@@ -315,6 +316,12 @@ function CvStep({ p, scope }: { p: Profile; scope: string }) {
   const [drag, setDrag] = useState(false);
   const [since, setSince] = useState<number | null>(null);
   const lastFile = useRef<File | null>(null);
+  useEffect(() => {
+    // Ping AI endpoint in background to warm up when user reaches CV step
+    const base = import.meta.env.VITE_API_URL || "";
+    fetch(`${base}/api/ai/status`, { cache: "no-store" }).catch(() => {});
+  }, []);
+
   const up = useUploadCv({
     mutation: {
       onSuccess: async (np) => {
@@ -323,7 +330,7 @@ function CvStep({ p, scope }: { p: Profile; scope: string }) {
         qc.setQueryData(getGetProfileQueryKey(p.id), np);
         // a new extraction invalidates any earlier review draft and verification
         writeDraft(scope, p.id, { form: undefined });
-        try { await go("review", { verified: false }, undefined, true); } catch { /* step stays; user can continue */ }
+        nav("/onboarding/review");
       },
       onError: () => setSince(null),
     },

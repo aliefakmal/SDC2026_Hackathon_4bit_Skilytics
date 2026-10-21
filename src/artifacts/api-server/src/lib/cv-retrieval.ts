@@ -245,7 +245,11 @@ export async function extractCvMultimodalProfile(pages: CvDocumentPage[], lang: 
 
   const visionExtraction = validateExtraction(JSON.stringify(parsed.profile), cvText);
   let textExtraction: Awaited<ReturnType<typeof extractCvProfile>> | null = null;
-  if (Object.values(visionExtraction.fields).some((value) => !value)) {
+  const hasCoreFacts = Boolean(
+    visionExtraction.fields.name &&
+    (visionExtraction.fields.education || visionExtraction.fields.experience)
+  );
+  if (!hasCoreFacts) {
     try {
       textExtraction = await extractCvProfile(cvText, lang);
     } catch {
