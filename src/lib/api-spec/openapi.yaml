@@ -1,0 +1,1335 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Skilytics API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: profiles
+  - name: assessment
+  - name: catalog
+  - name: market
+  - name: ai
+  - name: cohort
+  - name: auth
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      responses:
+        "200":
+          description: Current user or null for guests
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/AuthUser"
+                  - type: "null"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "401":
+          description: Wrong email or password
+        "403":
+          description: Account belongs to another role
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      description: Registers an individual account and claims any guest work sent with X-Guest-Token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSession"
+        "409":
+          description: Email already registered
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      responses:
+        "204":
+          description: Logged out
+
+  /auth/demo-accounts:
+    get:
+      operationId: listDemoAccounts
+      tags: [auth]
+      responses:
+        "200":
+          description: Demo credentials shown on the login page
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DemoAccount"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [cohort]
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /profiles:
+    get:
+      operationId: listProfiles
+      tags: [profiles]
+      parameters:
+        - name: segment
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/Segment"
+        - name: organization
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Profiles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Profile"
+    post:
+      operationId: createProfile
+      tags: [profiles]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+
+  /profiles/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: getProfile
+      tags: [profiles]
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateProfile
+      tags: [profiles]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+    delete:
+      operationId: deleteProfile
+      tags: [profiles]
+      responses:
+        "204":
+          description: Deleted
+
+  /profiles/{id}/cv:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      operationId: uploadCv
+      tags: [profiles]
+      description: Upload a CV (PDF, DOCX, TXT, PNG, JPG/JPEG or WEBP as base64), up to 8 MB. Text documents are parsed locally. PDF pages with fewer than 40 extracted characters and standalone images are sent to the configured multimodal AI model for OCR (up to 10 image-only pages and 50 total PDF pages). If image-based structured profile extraction is incomplete, a targeted text-only RAG pass extracts the remaining facts from recognized CV text. The original file is processed in memory and is not stored; extracted CV text and evidence citations are saved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CvUpload"
+      responses:
+        "200":
+          description: Profile with extracted skills
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "400":
+          description: Unreadable file or no profile details could be verified from the CV
+
+  /riasec/questions:
+    get:
+      operationId: listRiasecQuestions
+      tags: [assessment]
+      responses:
+        "200":
+          description: Questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RiasecQuestion"
+
+  /profiles/{id}/riasec:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      operationId: submitRiasec
+      tags: [assessment]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RiasecSubmission"
+      responses:
+        "200":
+          description: Profile with RIASEC scores
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+
+  /profiles/{id}/matches:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: getProfileMatches
+      tags: [profiles]
+      responses:
+        "200":
+          description: Ranked role matches with skill gaps
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoleMatch"
+
+  /profiles/{id}/plan:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: getProfilePlan
+      tags: [profiles]
+      responses:
+        "200":
+          description: Latest plan or null
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Plan"
+                  - type: "null"
+    post:
+      operationId: createProfilePlan
+      tags: [profiles]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanInput"
+      responses:
+        "201":
+          description: Plan created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plan"
+
+  /profiles/{id}/insights:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: listProfileInsights
+      tags: [ai]
+      description: Latest cached insight per agent and language.
+      responses:
+        "200":
+          description: Cached agent insights
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentInsight"
+    post:
+      operationId: runProfileAgent
+      tags: [ai]
+      description: Runs one RAG agent on demand. Returns a cached result when inputs have not changed. Returns 503 if the AI engine is not connected.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentRunInput"
+      responses:
+        "200":
+          description: Insight
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentInsight"
+        "503":
+          description: AI engine not connected
+
+  /ai/status:
+    get:
+      operationId: getAiStatus
+      tags: [ai]
+      responses:
+        "200":
+          description: AI engine status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiStatus"
+
+  /roles:
+    get:
+      operationId: listRoles
+      tags: [catalog]
+      parameters:
+        - name: sector
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Role"
+
+  /roles/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: getRole
+      tags: [catalog]
+      responses:
+        "200":
+          description: Role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Role"
+
+  /courses:
+    get:
+      operationId: listCourses
+      tags: [catalog]
+      parameters:
+        - name: costType
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/CostType"
+        - name: hrdcOnly
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+
+  /sdg/targets:
+    get:
+      operationId: listSdgTargets
+      tags: [catalog]
+      responses:
+        "200":
+          description: SDG targets used for mapping
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SdgTarget"
+
+  /market/overview:
+    get:
+      operationId: getMarketOverview
+      tags: [market]
+      responses:
+        "200":
+          description: Overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarketOverview"
+
+  /market/sources:
+    get:
+      operationId: listMarketSources
+      tags: [market]
+      responses:
+        "200":
+          description: Data sources with freshness
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketSource"
+
+  /market/refresh:
+    post:
+      operationId: refreshMarketData
+      tags: [market]
+      description: Triggers ingestion of all market sources. No GPU used.
+      responses:
+        "200":
+          description: Updated sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MarketSource"
+
+  /market/ai-usage/roles:
+    get:
+      operationId: getAiUsageByRole
+      tags: [market]
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: geo
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [MYS, GLOBAL]
+      responses:
+        "200":
+          description: AI usage share by occupation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiUsageRoles"
+
+  /market/ai-usage/groups:
+    get:
+      operationId: getAiUsageByGroup
+      tags: [market]
+      responses:
+        "200":
+          description: AI usage share by occupation major group, Malaysia vs global
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiUsageGroups"
+
+  /market/exposure:
+    get:
+      operationId: getRoleExposure
+      tags: [market]
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Observed AI exposure by occupation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExposureItem"
+
+  /market/labour:
+    get:
+      operationId: getLabourTrend
+      tags: [market]
+      responses:
+        "200":
+          description: Malaysia monthly labour force series
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LabourPoint"
+
+  /predictions:
+    get:
+      operationId: listPredictions
+      tags: [ai]
+      responses:
+        "200":
+          description: Recent predictions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Prediction"
+    post:
+      operationId: createPrediction
+      tags: [ai]
+      description: On-demand future outlook from the Analyst agent, grounded on stored market data. Cached by question; 503 if AI engine not connected.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PredictionInput"
+      responses:
+        "201":
+          description: Prediction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Prediction"
+        "503":
+          description: AI engine not connected
+
+  /cohort/summary:
+    get:
+      operationId: getCohortSummary
+      tags: [cohort]
+      parameters:
+        - name: organization
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Aggregated cohort view for HR or career centres
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CohortSummary"
+
+  /cohort/organizations:
+    get:
+      operationId: listOrganizations
+      tags: [cohort]
+      responses:
+        "200":
+          description: Distinct organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OrganizationCount"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Segment:
+      type: string
+      enum: [worker, graduate, employer, career_centre]
+
+    CostType:
+      type: string
+      enum: [free, low_cost, paid]
+
+    HrdcStatus:
+      type: string
+      enum: [claimable_verified, check_with_employer, not_claimable]
+
+    SkillStatus:
+      type: string
+      enum: [evidenced, self_reported, inferred]
+
+    AgentName:
+      type: string
+      enum: [cv, holland, profiler, fitter, planner, sdg]
+
+    RiasecScores:
+      type: object
+      required: [R, I, A, S, E, C]
+      properties:
+        R: { type: number }
+        I: { type: number }
+        A: { type: number }
+        S: { type: number }
+        E: { type: number }
+        C: { type: number }
+
+    ProfileSkill:
+      type: object
+      required: [skillId, name, status]
+      properties:
+        skillId: { type: integer }
+        name: { type: string }
+        status:
+          $ref: "#/components/schemas/SkillStatus"
+        evidence: { type: ["string", "null"] }
+
+    InterestAnswer:
+      type: object
+      required: [questionId, value]
+      properties:
+        questionId: { type: integer, minimum: 1 }
+        value: { type: integer, minimum: 1, maximum: 5 }
+
+    CvEvidence:
+      type: object
+      required: [field, value, quote, source]
+      properties:
+        field: { type: string }
+        value: { type: string }
+        quote: { type: ["string", "null"] }
+        source: { type: string }
+
+    Profile:
+      type: object
+      required: [id, name, segment, weeklyHours, budgetMyr, skills, createdAt]
+      properties:
+        hrdcEligibilityStatus: { type: ["string", "null"], enum: [yes, no, unknown, null] }
+        education: { type: ["string", "null"] }
+        experience: { type: ["string", "null"] }
+        cvExtractionKey: { type: ["string", "null"] }
+        onboardingStep: { type: ["string", "null"] }
+        verified: { type: boolean }
+        cvEvidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/CvEvidence"
+        riasecAnswers:
+          type: array
+          items:
+            $ref: "#/components/schemas/InterestAnswer"
+        id: { type: integer }
+        name: { type: string }
+        segment:
+          $ref: "#/components/schemas/Segment"
+        currentRole: { type: ["string", "null"] }
+        organization: { type: ["string", "null"] }
+        goals: { type: ["string", "null"] }
+        weeklyHours: { type: integer }
+        budgetMyr: { type: number }
+        hrdcEligible: { type: boolean }
+        cvFileName: { type: ["string", "null"] }
+        cvUploadedAt: { type: ["string", "null"], format: date-time }
+        cvWordCount: { type: ["integer", "null"] }
+        isGuest: { type: boolean, description: "True while the profile is only tied to an anonymous browser token" }
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfileSkill"
+        riasecScores:
+          oneOf:
+            - $ref: "#/components/schemas/RiasecScores"
+            - type: "null"
+        riasecCode: { type: ["string", "null"] }
+        targetRoleId: { type: ["integer", "null"] }
+        createdAt: { type: string, format: date-time }
+
+    ProfileInput:
+      type: object
+      required: [name, segment, weeklyHours, budgetMyr]
+      properties:
+        name: { type: string, minLength: 1 }
+        segment:
+          $ref: "#/components/schemas/Segment"
+        currentRole: { type: string }
+        organization: { type: string }
+        goals: { type: string }
+        weeklyHours: { type: integer, minimum: 1, maximum: 60 }
+        budgetMyr: { type: number, minimum: 0 }
+        hrdcEligible: { type: boolean }
+
+    SkillConfirmation:
+      type: object
+      required: [skillId, status]
+      properties:
+        skillId: { type: integer }
+        status:
+          $ref: "#/components/schemas/SkillStatus"
+
+    ProfileUpdate:
+      type: object
+      properties:
+        hrdcEligibilityStatus: { type: string, enum: [yes, no, unknown] }
+        education: { type: string, maxLength: 6000 }
+        experience: { type: string, maxLength: 6000 }
+        onboardingStep: { type: string, enum: [status, cv, review, holland, results, save, complete] }
+        verified: { type: boolean }
+        riasecAnswers:
+          type: array
+          maxItems: 30
+          items:
+            $ref: "#/components/schemas/InterestAnswer"
+        name: { type: string, minLength: 1 }
+        segment:
+          $ref: "#/components/schemas/Segment"
+        currentRole: { type: string }
+        organization: { type: string }
+        goals: { type: string }
+        weeklyHours: { type: integer, minimum: 1, maximum: 60 }
+        budgetMyr: { type: number, minimum: 0 }
+        hrdcEligible: { type: boolean }
+        targetRoleId: { type: ["integer", "null"] }
+        addSkills:
+          type: array
+          items:
+            $ref: "#/components/schemas/SkillConfirmation"
+        removeSkillIds:
+          type: array
+          items: { type: integer }
+
+    CvUpload:
+      type: object
+      required: [fileName, contentBase64, consent]
+      properties:
+        consent: { type: boolean }
+        lang:
+          $ref: "#/components/schemas/Lang"
+        fileName: { type: string }
+        contentBase64: { type: string }
+
+    RiasecQuestion:
+      type: object
+      required: [id, text, textMs, textZh, type]
+      properties:
+        id: { type: integer }
+        text: { type: string }
+        textMs: { type: string }
+        textZh: { type: string }
+        type: { type: string, enum: [R, I, A, S, E, C] }
+
+    RiasecAnswer:
+      type: object
+      required: [questionId, value]
+      properties:
+        questionId: { type: integer }
+        value: { type: integer, minimum: 1, maximum: 5 }
+
+    RiasecSubmission:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiasecAnswer"
+
+    Skill:
+      type: object
+      required: [id, name, category]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        category: { type: string }
+
+    RoleSkill:
+      type: object
+      required: [skillId, name, category, importance]
+      properties:
+        skillId: { type: integer }
+        name: { type: string }
+        category: { type: string }
+        importance: { type: integer, description: "1 (nice to have) to 3 (core)" }
+
+    Role:
+      type: object
+      required: [id, socCode, title, titleMs, titleZh, sector, riasecCode, skills, myColCritical]
+      properties:
+        sourceUrl: { type: ["string", "null"] }
+        sourceVersion: { type: ["string", "null"] }
+        officialTitle: { type: ["string", "null"] }
+        sourceFetchedAt: { type: ["string", "null"] }
+        myColStatus: { type: string, enum: [unverified] }
+        id: { type: integer }
+        socCode: { type: string }
+        title: { type: string }
+        titleMs: { type: string }
+        titleZh: { type: string }
+        sector: { type: string }
+        riasecCode: { type: string }
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleSkill"
+        aiExposure: { type: ["number", "null"], description: "Observed AI exposure 0-1" }
+        aiUsagePctMy: { type: ["number", "null"] }
+        aiUsagePctGlobal: { type: ["number", "null"] }
+        myColCritical: { type: boolean }
+        description: { type: ["string", "null"] }
+
+    MatchBreakdown:
+      type: object
+      required: [skills, transferable, interest, preferences, feasibility]
+      properties:
+        skills: { type: number }
+        transferable: { type: number }
+        interest: { type: number }
+        preferences: { type: number }
+        feasibility: { type: number }
+
+    RoleMatch:
+      type: object
+      required: [role, score, breakdown, matchedSkills, gapSkills, marketDemand]
+      properties:
+        role:
+          $ref: "#/components/schemas/Role"
+        score: { type: number }
+        breakdown:
+          $ref: "#/components/schemas/MatchBreakdown"
+        matchedSkills:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleSkill"
+        gapSkills:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleSkill"
+        marketDemand: { type: ["number", "null"], description: "Unavailable until a verified Malaysian demand series is configured; AI exposure is not demand." }
+
+    Course:
+      type: object
+      required: [id, title, provider, url, costMyr, costType, hrdcStatus, durationHours, level, language, skills, lastVerified]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        provider: { type: string }
+        url: { type: string }
+        costMyr: { type: number }
+        costType:
+          $ref: "#/components/schemas/CostType"
+        hrdcStatus:
+          $ref: "#/components/schemas/HrdcStatus"
+        durationHours: { type: number }
+        level: { type: string }
+        language: { type: string }
+        certificate: { type: boolean }
+        skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Skill"
+        lastVerified: { type: string, format: date }
+
+    SdgTarget:
+      type: object
+      required: [code, title, description]
+      properties:
+        code: { type: string }
+        title: { type: string }
+        description: { type: string }
+
+    PlanItem:
+      type: object
+      required: [courseId, title, provider, url, startWeek, durationWeeks, costMyr, hrdcStatus, skills, sdgTargets]
+      properties:
+        courseId: { type: integer }
+        title: { type: string }
+        provider: { type: string }
+        url: { type: string }
+        startWeek: { type: integer }
+        durationWeeks: { type: integer }
+        costMyr: { type: number }
+        hrdcStatus:
+          $ref: "#/components/schemas/HrdcStatus"
+        skills:
+          type: array
+          items: { type: string }
+        sdgTargets:
+          type: array
+          items:
+            $ref: "#/components/schemas/SdgTarget"
+
+    Plan:
+      type: object
+      required: [id, profileId, roleId, roleTitle, totalWeeks, totalCostMyr, uncoveredSkills, items, createdAt]
+      properties:
+        verificationStatus: { type: string, enum: [unverified] }
+        id: { type: integer }
+        profileId: { type: integer }
+        roleId: { type: integer }
+        roleTitle: { type: string }
+        totalWeeks: { type: ["integer", "null"] }
+        totalCostMyr: { type: ["number", "null"] }
+        uncoveredSkills:
+          type: array
+          items: { type: string }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanItem"
+        createdAt: { type: string, format: date-time }
+
+    PlanInput:
+      type: object
+      required: [roleId]
+      properties:
+        roleId: { type: integer }
+
+    SourceRef:
+      type: object
+      required: [label]
+      properties:
+        label: { type: string }
+        url: { type: ["string", "null"] }
+        dataDate: { type: ["string", "null"] }
+
+    AgentInsight:
+      type: object
+      required: [id, agent, lang, content, sources, model, cached, createdAt]
+      properties:
+        id: { type: integer }
+        agent:
+          $ref: "#/components/schemas/AgentName"
+        lang:
+          $ref: "#/components/schemas/Lang"
+        content: { type: string }
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/SourceRef"
+        model: { type: string }
+        cached: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    AgentRunInput:
+      type: object
+      required: [agent]
+      properties:
+        agent:
+          $ref: "#/components/schemas/AgentName"
+        roleId: { type: integer }
+        refresh: { type: boolean }
+        lang:
+          $ref: "#/components/schemas/Lang"
+
+    AiStatus:
+      type: object
+      required: [connected, provider, mainModel, lightModel, mainConfigured, lightConfigured, mainStatus, mainDetail, mainError, lightStatus, lightDetail, lightError]
+      properties:
+        connected: { type: boolean }
+        provider: { type: string }
+        mainModel: { type: ["string", "null"] }
+        lightModel: { type: ["string", "null"] }
+        mainConfigured: { type: boolean }
+        lightConfigured: { type: boolean }
+        mainStatus: { type: string, enum: [ok, error, not_configured] }
+        mainDetail: { type: ["string", "null"] }
+        mainError: { type: ["string", "null"] }
+        lightStatus: { type: string, enum: [ok, error, not_configured] }
+        lightDetail: { type: ["string", "null"] }
+        lightError: { type: ["string", "null"] }
+        message: { type: ["string", "null"] }
+
+    MarketSource:
+      type: object
+      required: [id, name, kind, url, description, refreshCadence, status, recordCount, consumers]
+      properties:
+        version: { type: ["string", "null"] }
+        stale: { type: boolean }
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [dataset, catalogue, ai_endpoint] }
+        url: { type: string }
+        description: { type: string }
+        refreshCadence: { type: string }
+        status: { type: string, enum: [ok, error, pending, not_configured] }
+        consumers:
+          type: array
+          items: { type: string }
+          description: Agent or feature keys that use this source
+        detail: { type: ["string", "null"], description: "Extra status detail, e.g. worker counts for AI endpoints" }
+        lastFetchedAt: { type: ["string", "null"], format: date-time }
+        dataDate: { type: ["string", "null"] }
+        recordCount: { type: integer }
+        error: { type: ["string", "null"] }
+
+    MarketOverview:
+      type: object
+      required: [sourcesOk, sourcesTotal]
+      properties:
+        unemploymentRate: { type: ["number", "null"] }
+        unemploymentDate: { type: ["string", "null"] }
+        participationRate: { type: ["number", "null"] }
+        aiUsagePeriod: { type: ["string", "null"] }
+        malaysiaUsageIndex: { type: ["number", "null"], description: "AI usage per working-age capita relative to world (1.0 = proportional)" }
+        topAiRoleMy: { type: ["string", "null"] }
+        topExposedRole: { type: ["string", "null"] }
+        sourcesOk: { type: integer }
+        sourcesTotal: { type: integer }
+        lastRefresh: { type: ["string", "null"], format: date-time }
+
+    AiUsageRole:
+      type: object
+      required: [socCode, title, majorGroup, usagePct]
+      properties:
+        socCode: { type: string }
+        title: { type: string }
+        majorGroup: { type: string }
+        usagePct: { type: number }
+        usagePctGlobal: { type: ["number", "null"] }
+        exposure: { type: ["number", "null"] }
+
+    AiUsageRoles:
+      type: object
+      required: [geo, items]
+      properties:
+        geo: { type: string }
+        period: { type: ["string", "null"] }
+        fetchedAt: { type: ["string", "null"], format: date-time }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiUsageRole"
+
+    AiUsageGroup:
+      type: object
+      required: [majorGroup, usagePctMy, usagePctGlobal]
+      properties:
+        majorGroup: { type: string }
+        usagePctMy: { type: ["number", "null"] }
+        usagePctGlobal: { type: ["number", "null"] }
+
+    AiUsageGroups:
+      type: object
+      required: [items]
+      properties:
+        period: { type: ["string", "null"] }
+        fetchedAt: { type: ["string", "null"], format: date-time }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiUsageGroup"
+
+    ExposureItem:
+      type: object
+      required: [socCode, title, exposure]
+      properties:
+        socCode: { type: string }
+        title: { type: string }
+        exposure: { type: number }
+
+    LabourPoint:
+      type: object
+      required: [date]
+      properties:
+        date: { type: string }
+        unemploymentRate: { type: ["number", "null"] }
+        participationRate: { type: ["number", "null"] }
+        employedThousands: { type: ["number", "null"] }
+        unemployedThousands: { type: ["number", "null"] }
+
+    Prediction:
+      type: object
+      required: [id, question, horizonYears, lang, content, sources, model, cached, createdAt]
+      properties:
+        id: { type: integer }
+        lang:
+          $ref: "#/components/schemas/Lang"
+        roleId: { type: ["integer", "null"] }
+        roleTitle: { type: ["string", "null"] }
+        question: { type: string }
+        horizonYears: { type: integer }
+        content: { type: string }
+        sources:
+          type: array
+          items:
+            $ref: "#/components/schemas/SourceRef"
+        model: { type: string }
+        cached: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    PredictionInput:
+      type: object
+      required: [question, horizonYears]
+      properties:
+        roleId: { type: integer }
+        question: { type: string, minLength: 3 }
+        horizonYears: { type: integer, minimum: 1, maximum: 10 }
+        lang:
+          $ref: "#/components/schemas/Lang"
+
+    CountItem:
+      type: object
+      required: [label, count]
+      properties:
+        label: { type: string }
+        count: { type: integer }
+
+    CohortMember:
+      type: object
+      required: [id, name, segment]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        segment:
+          $ref: "#/components/schemas/Segment"
+        currentRole: { type: ["string", "null"] }
+        riasecCode: { type: ["string", "null"] }
+        topMatchTitle: { type: ["string", "null"] }
+        topMatchScore: { type: ["number", "null"] }
+        currentRoleExposure: { type: ["number", "null"] }
+        hasPlan: { type: boolean }
+        skillCount: { type: integer }
+        hrdcEligible: { type: boolean }
+
+    CohortSummary:
+      type: object
+      required: [profileCount, segmentCounts, topGaps, riasecDistribution, roleFitDistribution, gapCourses, members]
+      properties:
+        organization: { type: ["string", "null"] }
+        profileCount: { type: integer }
+        avgExposure: { type: ["number", "null"] }
+        planCoverage: { type: number }
+        segmentCounts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountItem"
+        topGaps:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountItem"
+        riasecDistribution:
+          type: array
+          items:
+            $ref: "#/components/schemas/CountItem"
+        roleFitDistribution:
+          type: array
+          description: Count of members by their top-matching role
+          items:
+            $ref: "#/components/schemas/CountItem"
+        gapCourses:
+          type: array
+          description: Courses in the catalogue that cover the most common gaps
+          items:
+            $ref: "#/components/schemas/GapCourses"
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/CohortMember"
+
+    OrganizationCount:
+      type: object
+      required: [organization, count]
+      properties:
+        organization: { type: string }
+        count: { type: integer }
+
+    ActivityItem:
+      type: object
+      required: [kind, label, createdAt]
+      properties:
+        kind: { type: string }
+        label: { type: string }
+        profileId: { type: ["integer", "null"] }
+        createdAt: { type: string, format: date-time }
+
+    DashboardSummary:
+      type: object
+      required: [profileCount, planCount, predictionCount, insightCount, roleCount, courseCount, recentActivity]
+      properties:
+        profileCount: { type: integer }
+        planCount: { type: integer }
+        predictionCount: { type: integer }
+        insightCount: { type: integer }
+        roleCount: { type: integer }
+        courseCount: { type: integer }
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+
+    Lang:
+      type: string
+      enum: [en, ms, zh]
+
+    UserRole:
+      type: string
+      enum: [individual, hr, tvet]
+
+    AuthUser:
+      type: object
+      required: [id, email, name, role]
+      properties:
+        id: { type: integer }
+        email: { type: string }
+        name: { type: string }
+        role:
+          $ref: "#/components/schemas/UserRole"
+        organization: { type: ["string", "null"] }
+
+    AuthSession:
+      type: object
+      required: [token, user, claimedProfiles]
+      properties:
+        token: { type: string }
+        user:
+          $ref: "#/components/schemas/AuthUser"
+        claimedProfiles: { type: integer }
+
+    LoginInput:
+      type: object
+      required: [email, password, role]
+      properties:
+        email: { type: string, minLength: 3 }
+        password: { type: string, minLength: 1 }
+        role:
+          $ref: "#/components/schemas/UserRole"
+
+    RegisterInput:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string, minLength: 1 }
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+
+    DemoAccount:
+      type: object
+      required: [role, email, password, organization]
+      properties:
+        role:
+          $ref: "#/components/schemas/UserRole"
+        email: { type: string }
+        password: { type: string }
+        organization: { type: string }
+
+    CourseBrief:
+      type: object
+      required: [id, title, provider, url, costMyr, costType, hrdcStatus, durationHours]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        provider: { type: string }
+        url: { type: string }
+        costMyr: { type: number }
+        costType:
+          $ref: "#/components/schemas/CostType"
+        hrdcStatus:
+          $ref: "#/components/schemas/HrdcStatus"
+        durationHours: { type: number }
+
+    GapCourses:
+      type: object
+      required: [skill, count, courses]
+      properties:
+        skill: { type: string }
+        count: { type: integer }
+        courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/CourseBrief"
