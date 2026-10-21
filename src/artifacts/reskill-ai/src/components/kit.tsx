@@ -92,13 +92,26 @@ export function Empty({ title, children, icon, action }: { title: string; childr
   );
 }
 
-export function ErrorBox({ error, retry, message }: { error?: unknown; retry?: () => void; message?: string }) {
+export function ErrorBox({
+  error,
+  retry,
+  message,
+  action,
+}: {
+  error?: unknown;
+  retry?: () => void;
+  message?: string;
+  action?: ReactNode;
+}) {
   const { t } = useT();
   const et = useErrText();
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm sm:flex-row sm:items-center sm:justify-between" role="alert">
       <div className="flex items-start gap-2 text-destructive"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><span>{message ?? et(error)}</span></div>
-      {retry && <Button variant="outline" className="min-h-11 shrink-0" onClick={retry} data-testid="button-retry"><RotateCw className="mr-1.5 h-4 w-4" />{t("common.retry")}</Button>}
+      <div className="flex flex-wrap items-center gap-2 shrink-0">
+        {retry && <Button variant="outline" className="min-h-11 shrink-0" onClick={retry} data-testid="button-retry"><RotateCw className="mr-1.5 h-4 w-4" />{t("common.retry")}</Button>}
+        {action}
+      </div>
     </div>
   );
 }

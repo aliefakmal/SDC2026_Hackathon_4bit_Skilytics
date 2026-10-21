@@ -23,29 +23,40 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const NEON_DEFAULT_URL = "postgresql://neondb_owner:npg_5UVvJISyL0Wu@ep-royal-shape-aol47eri.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
+const NEON_DEFAULT_URL =
+  "postgresql://neondb_owner:npg_5UVvJISyL0Wu@ep-royal-shape-aol47eri-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
 
-let rawConnStr = (process.env.DATABASE_URL || "").trim();
+let connectionString = (process.env.DATABASE_URL || "").trim();
 if (
-  (rawConnStr.startsWith('"') && rawConnStr.endsWith('"')) ||
-  (rawConnStr.startsWith("'") && rawConnStr.endsWith("'"))
+  (connectionString.startsWith('"') && connectionString.endsWith('"')) ||
+  (connectionString.startsWith("'") && connectionString.endsWith("'"))
 ) {
-  rawConnStr = rawConnStr.slice(1, -1).trim();
+  connectionString = connectionString.slice(1, -1).trim();
 }
 
-// If in production and pointing to nonexistent localhost or empty, fallback to Neon
-if (process.env.NODE_ENV === "production" && (!rawConnStr || rawConnStr.includes("localhost") || rawConnStr.includes("127.0.0.1"))) {
-  rawConnStr = NEON_DEFAULT_URL;
+// In production (Render), if DATABASE_URL was left as localhost or 127.0.0.1, fallback to Neon
+if (
+  process.env.NODE_ENV === "production" &&
+  (!connectionString ||
+    connectionString.includes("localhost") ||
+    connectionString.includes("127.0.0.1"))
+) {
+  connectionString = NEON_DEFAULT_URL;
 }
 
-// Strip channel_binding if present (not supported by node-postgres)
-rawConnStr = rawConnStr.replace(/([?&])channel_binding=[^&]*(&|$)/g, "$1").replace(/[?&]$/, "");
+// Remove channel_binding parameter as node-postgres can fail on some Linux/OpenSSL runtimes
+connectionString = connectionString
+  .replace(/([?&])channel_binding=[^&]*(&|$)/g, "$1")
+  .replace(/[?&]$/, "");
 
-const isNeon = rawConnStr.includes("neon.tech") || rawConnStr.includes("sslmode=");
+const isRemote =
+  connectionString.includes("neon.tech") ||
+  connectionString.includes("sslmode=require") ||
+  process.env.NODE_ENV === "production";
 
 export const pool = new Pool({
-  connectionString: rawConnStr,
-  ssl: isNeon ? { rejectUnauthorized: false } : undefined,
+  connectionString,
+  ssl: isRemote ? { rejectUnauthorized: false } : undefined,
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,

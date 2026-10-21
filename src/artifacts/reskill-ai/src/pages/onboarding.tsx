@@ -3,7 +3,7 @@ import { Link, Redirect, useLocation, useParams, useSearch } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, FileUp, GraduationCap, HardHat, HelpCircle, Loader2, Quote, RotateCw, Sparkles, X,
+  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, FileUp, GraduationCap, HardHat, HelpCircle, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
 } from "lucide-react";
 import {
   useCreateProfile, useGetProfile, useListRiasecQuestions, useRunProfileAgent, useSubmitRiasec, useUpdateProfile, useUploadCv,
@@ -85,23 +85,29 @@ export default function Onboarding() {
   }
   if (q.isLoading) return <Frame><Rows n={4} h="h-16" /></Frame>;
   if (q.isError || !p) {
+    const handleStartOver = () => {
+      setObProfile(scope, null);
+      setPid(null);
+      nav("/onboarding/status");
+    };
     return (
       <Frame>
         <div className="space-y-4">
-          <ErrorBox message={t("ob.loadErr")} retry={() => q.refetch()} />
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              className="min-h-11 text-xs"
-              onClick={() => {
-                setObProfile(scope, null);
-                setPid(null);
-                nav("/onboarding/status");
-              }}
-            >
-              {t("ob.startOver")}
-            </Button>
-          </div>
+          <ErrorBox
+            message={t("ob.loadErr")}
+            retry={() => q.refetch()}
+            action={
+              <Button
+                variant="secondary"
+                className="min-h-11 shrink-0"
+                onClick={handleStartOver}
+                data-testid="button-start-over"
+              >
+                <PlusCircle className="mr-1.5 h-4 w-4" />
+                {t("ob.startOver")}
+              </Button>
+            }
+          />
         </div>
       </Frame>
     );
