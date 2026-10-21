@@ -23,12 +23,19 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-let rawConnStr = process.env.DATABASE_URL.trim();
+const NEON_DEFAULT_URL = "postgresql://neondb_owner:npg_5UVvJISyL0Wu@ep-royal-shape-aol47eri.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
+
+let rawConnStr = (process.env.DATABASE_URL || "").trim();
 if (
   (rawConnStr.startsWith('"') && rawConnStr.endsWith('"')) ||
   (rawConnStr.startsWith("'") && rawConnStr.endsWith("'"))
 ) {
   rawConnStr = rawConnStr.slice(1, -1).trim();
+}
+
+// If in production and pointing to nonexistent localhost or empty, fallback to Neon
+if (process.env.NODE_ENV === "production" && (!rawConnStr || rawConnStr.includes("localhost") || rawConnStr.includes("127.0.0.1"))) {
+  rawConnStr = NEON_DEFAULT_URL;
 }
 
 // Strip channel_binding if present (not supported by node-postgres)

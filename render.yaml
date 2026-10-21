@@ -14,11 +14,11 @@ services:
       - key: PORT
         value: 10000
       - key: DATABASE_URL
-        sync: false
+        value: postgresql://neondb_owner:npg_5UVvJISyL0Wu@ep-royal-shape-aol47eri.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
       - key: DATABASE_URL_UNPOOLED
-        sync: false
+        value: postgresql://neondb_owner:npg_5UVvJISyL0Wu@ep-royal-shape-aol47eri.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
       - key: SESSION_SECRET
-        sync: false
+        generateValue: true
       - key: RUNPOD_API_KEY
         sync: false
       - key: RUNPOD_LLM_ENDPOINT_ID
