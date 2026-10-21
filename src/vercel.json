@@ -3,7 +3,12 @@
   "services": {
     "api-server": {
       "root": "artifacts/api-server",
-      "framework": "express"
+      "framework": "express",
+      "functions": {
+        "**": {
+          "maxDuration": 60
+        }
+      }
     },
     "mockup-sandbox": {
       "root": "artifacts/mockup-sandbox",

@@ -1,6 +1,7 @@
 import mammoth from "mammoth";
-import { definePDFJSModule, extractText, getDocumentProxy, renderPageAsImage } from "unpdf";
+import { definePDFJSModule, extractImages, extractText, getDocumentProxy, renderPageAsImage } from "unpdf";
 import type { SkillRow, StoredProfileSkill } from "@workspace/db";
+import zlib from "node:zlib";
 
 export class CvError extends Error {}
 
@@ -15,8 +16,69 @@ const MIN_SCANNED_PAGE_RENDER_DIMENSION = 64;
 let pdfJsModuleReady: Promise<void> | undefined;
 
 async function ensurePdfJsModule(): Promise<void> {
-  pdfJsModuleReady ??= definePDFJSModule(() => import("pdfjs-dist/legacy/build/pdf.mjs"));
+  if (!pdfJsModuleReady) {
+    pdfJsModuleReady = (async () => {
+      try {
+        await definePDFJSModule(() => import("pdfjs-dist/legacy/build/pdf.mjs"));
+      } catch {}
+    })();
+  }
   await pdfJsModuleReady;
+}
+
+const CRC32_TABLE = new Uint32Array(256);
+for (let i = 0; i < 256; i++) {
+  let c = i;
+  for (let k = 0; k < 8; k++) {
+    c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  }
+  CRC32_TABLE[i] = c;
+}
+
+function crc32(buf: Uint8Array | Uint8ClampedArray): number {
+  let crc = -1;
+  for (let i = 0; i < buf.length; i++) {
+    crc = (crc >>> 8) ^ CRC32_TABLE[(crc ^ buf[i]) & 0xff];
+  }
+  return (crc ^ -1) >>> 0;
+}
+
+function encodeRawImageToPng(width: number, height: number, channels: number, data: Uint8Array | Uint8ClampedArray): Buffer {
+  const stride = width * channels;
+  const filtered = Buffer.alloc(height * (stride + 1));
+  for (let y = 0; y < height; y++) {
+    filtered[y * (stride + 1)] = 0;
+    const srcStart = y * stride;
+    filtered.set(data.subarray(srcStart, srcStart + stride), y * (stride + 1) + 1);
+  }
+  const compressed = zlib.deflateSync(filtered);
+
+  function makeChunk(type: string, chunkData: Buffer): Buffer {
+    const chunk = Buffer.alloc(12 + chunkData.length);
+    chunk.writeUInt32BE(chunkData.length, 0);
+    chunk.write(type, 4, 4, "ascii");
+    chunkData.copy(chunk, 8);
+    const crc = crc32(chunk.subarray(4, 8 + chunkData.length));
+    chunk.writeUInt32BE(crc, 8 + chunkData.length);
+    return chunk;
+  }
+
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8;
+  ihdr[9] = channels === 4 ? 6 : channels === 3 ? 2 : 0;
+  ihdr[10] = 0;
+  ihdr[11] = 0;
+  ihdr[12] = 0;
+
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  return Buffer.concat([
+    signature,
+    makeChunk("IHDR", ihdr),
+    makeChunk("IDAT", compressed),
+    makeChunk("IEND", Buffer.alloc(0)),
+  ]);
 }
 
 export type CvImageInput = {
@@ -123,23 +185,40 @@ export async function extractCvDocument(
 
       if (scannedPages.length > MAX_SCANNED_PAGES) throw new CvError("cv_too_many_pages");
 
-      const canvasImport = () => import("@napi-rs/canvas");
       const rendered: Array<{ pageNumber: number; image: CvImageInput }> = [];
       for (const { pageNumber } of scannedPages) {
         const page = await pdf.getPage(pageNumber);
         const viewport = page.getViewport({ scale: 1 });
         const scale = safeScannedPageScale(viewport.width, viewport.height);
-        const png = Buffer.from(await renderPageAsImage(pdf, pageNumber, { canvasImport, scale }));
-        const { createCanvas, loadImage } = await canvasImport();
-        const source = await loadImage(png);
-        const canvas = createCanvas(source.width, source.height);
-        const context = canvas.getContext("2d");
-        context.drawImage(source, 0, 0);
-        const jpeg = canvas.toBuffer("image/jpeg", 86);
-        rendered.push({
-          pageNumber,
-          image: { mediaType: "image/jpeg" as const, base64: jpeg.toString("base64") },
-        });
+        let imageInput: CvImageInput | undefined;
+        try {
+          const canvasImport = () => import("@napi-rs/canvas");
+          const png = Buffer.from(await renderPageAsImage(pdf, pageNumber, { canvasImport, scale }));
+          const { createCanvas, loadImage } = await canvasImport();
+          const source = await loadImage(png);
+          const canvas = createCanvas(source.width, source.height);
+          const context = canvas.getContext("2d");
+          context.drawImage(source, 0, 0);
+          const jpeg = canvas.toBuffer("image/jpeg", 86);
+          imageInput = {
+            mediaType: "image/jpeg" as const,
+            base64: jpeg.toString("base64"),
+          };
+        } catch (renderErr) {
+          if (renderErr instanceof CvError) throw renderErr;
+          // Fallback: extract embedded image directly without native canvas dependency
+          const extracted = await extractImages(pdf, pageNumber);
+          if (extracted.length > 0) {
+            const best = extracted.sort((a, b) => (b.width * b.height) - (a.width * a.height))[0];
+            const pngBuf = encodeRawImageToPng(best.width, best.height, best.channels, best.data);
+            imageInput = {
+              mediaType: "image/png" as const,
+              base64: pngBuf.toString("base64"),
+            };
+          }
+        }
+        if (!imageInput) throw new CvError("cv_unreadable");
+        rendered.push({ pageNumber, image: imageInput });
       }
       const renderedByPage = new Map(rendered.map((page) => [page.pageNumber, page.image]));
       const pages = pageTexts.map((text, index) => ({

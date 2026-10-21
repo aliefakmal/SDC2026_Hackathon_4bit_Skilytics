@@ -164,8 +164,9 @@ router.post("/profiles/:id/cv", async (req, res) => {
       res.status(400).json({ error: err.message });
       return;
     }
-    req.log.warn({ profileId: id }, "CV parse failed");
-    res.status(400).json({ error: "cv_unreadable" });
+    const detail = err instanceof Error ? err.message : String(err);
+    req.log.warn({ profileId: id, detail }, "CV parse failed");
+    res.status(400).json({ error: "cv_unreadable", detail });
     return;
   }
   const documentProcessingMs = Math.round(performance.now() - documentProcessingStartedAt);
