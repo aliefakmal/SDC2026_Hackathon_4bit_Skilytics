@@ -89,7 +89,7 @@ router.patch("/profiles/:id", async (req, res) => {
   const p = await requireProfile(id, req, res);
   if (!p) return;
   const step = body.onboardingStep;
-  if (body.verified && (!(body.name ?? p.name).trim() || !(body.goals ?? p.goals)?.trim())) {
+  if (body.verified && !(body.name ?? p.name).trim()) {
     res.status(400).json({ error: "invalid_input" }); return;
   }
   if ((body.verified || ["holland", "results", "save", "complete"].includes(step ?? "")) && !p.cvExtractionKey) {
