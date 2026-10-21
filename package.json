@@ -1,0 +1,14 @@
+{
+  "name": "skilytics-root",
+  "private": true,
+  "scripts": {
+    "build": "pnpm --dir src run build",
+    "dev": "pnpm --dir src run dev",
+    "dev:api": "pnpm --dir src run dev:api",
+    "db:push": "pnpm --dir src run db:push"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.3",
+    "@neon/env": "^1.6.4"
+  }
+}

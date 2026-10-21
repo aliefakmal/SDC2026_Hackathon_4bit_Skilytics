@@ -1,10 +1,16 @@
 import { createRoot } from "react-dom/client";
-import { setAuthTokenGetter, setExtraHeadersGetter } from "@workspace/api-client-react";
+import { setAuthTokenGetter, setExtraHeadersGetter, setBaseUrl } from "@workspace/api-client-react";
 
 import App from "./App";
 import { ErrorBoundary } from "@/components/error-boundary";
 
 import "./index.css";
+
+const rawApiUrl = import.meta.env.VITE_API_URL;
+if (rawApiUrl) {
+  const cleanApiUrl = rawApiUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
+  setBaseUrl(cleanApiUrl);
+}
 
 const GUEST_KEY = "skilytics.guest";
 function guestToken(): string {
