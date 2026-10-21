@@ -50,9 +50,11 @@ const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     return;
   }
   req.log.error({ err }, "Unhandled error");
+  const cause = (err as any)?.cause?.message || (err as any)?.cause || (err as any)?.detail || (err as any)?.code;
   res.status(500).json({
     error: "server_error",
     message: err instanceof Error ? err.message : String(err),
+    cause: cause ? (typeof cause === "object" ? JSON.stringify(cause) : String(cause)) : undefined,
   });
 };
 app.use(errorHandler);

@@ -84,7 +84,28 @@ export default function Onboarding() {
     return <Frame step="status" maxIdx={0}><StatusStep scope={scope} onCreated={(id) => { setPid(id); nav("/onboarding/cv"); }} /></Frame>;
   }
   if (q.isLoading) return <Frame><Rows n={4} h="h-16" /></Frame>;
-  if (q.isError || !p) return <Frame><ErrorBox message={t("ob.loadErr")} retry={() => q.refetch()} /></Frame>;
+  if (q.isError || !p) {
+    return (
+      <Frame>
+        <div className="space-y-4">
+          <ErrorBox message={t("ob.loadErr")} retry={() => q.refetch()} />
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              className="min-h-11 text-xs"
+              onClick={() => {
+                setObProfile(scope, null);
+                setPid(null);
+                nav("/onboarding/status");
+              }}
+            >
+              {t("ob.startOver")}
+            </Button>
+          </div>
+        </div>
+      </Frame>
+    );
+  }
 
   const allowed = serverStep(p);
   const step = requested ?? allowed;
