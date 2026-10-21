@@ -163,7 +163,7 @@ export function Sources() {
   const qc = useQueryClient();
   const { toast } = useToast();
   const src = useListMarketSources({ query: { queryKey: getListMarketSourcesQueryKey() } });
-  const ai = useGetAiStatus({ query: { queryKey: getGetAiStatusQueryKey() } });
+  const ai = useGetAiStatus({ query: { queryKey: getGetAiStatusQueryKey(), staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false } });
   const [since, setSince] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
   useEffect(() => { if (!since) return; const i = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(i); }, [since]);

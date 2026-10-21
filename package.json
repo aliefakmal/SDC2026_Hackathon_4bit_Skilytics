@@ -5,7 +5,10 @@
     "build": "pnpm --dir src run build",
     "dev": "pnpm --dir src run dev",
     "dev:api": "pnpm --dir src run dev:api",
-    "db:push": "pnpm --dir src run db:push"
+    "db:push": "pnpm --dir src run db:push",
+    "build:render": "npx -y pnpm --dir src install && npx -y pnpm --dir src run typecheck:libs && npx -y pnpm --dir src --filter @workspace/api-server run build",
+    "start:render": "node src/artifacts/api-server/dist/index.mjs",
+    "start": "node src/artifacts/api-server/dist/index.mjs"
   },
   "dependencies": {
     "@neon/config": "^1.9.3",

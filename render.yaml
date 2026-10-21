@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: skilytics-api
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm run build:render
+    startCommand: npm run start:render
+    healthCheckPath: /api/healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: RUNPOD_API_KEY
+        sync: false
+      - key: RUNPOD_LLM_ENDPOINT_ID
+        sync: false
+      - key: RUNPOD_LIGHT_ENDPOINT_ID
+        sync: false
+      - key: RUNPOD_LLM_MODEL
+        value: qwen/qwen3.5-27b
+      - key: RUNPOD_LIGHT_MODEL
+        value: qwen/qwen3.5-9b

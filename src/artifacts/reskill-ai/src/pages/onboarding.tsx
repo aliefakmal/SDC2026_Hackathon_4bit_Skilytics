@@ -246,8 +246,7 @@ function StatusStep({ scope, profile, onCreated }: { scope: string; profile?: Pr
       // Hours/budget are placeholders the review step requires the user to set explicitly.
       const np = await create.mutateAsync({ data: { name: t("ob.draftName"), segment: seg, weeklyHours: 1, budgetMyr: 0 } });
       setObProfile(scope, np.id);
-      const np2 = await upd.mutateAsync({ id: np.id, data: { onboardingStep: "cv" } });
-      qc.setQueryData(getGetProfileQueryKey(np.id), np2);
+      qc.setQueryData(getGetProfileQueryKey(np.id), np);
       qc.invalidateQueries({ queryKey: ["/api/profiles"] });
       onCreated(np.id);
     } catch { /* surfaced below */ }

@@ -10,6 +10,7 @@ const rawApiUrl = import.meta.env.VITE_API_URL;
 if (rawApiUrl) {
   const cleanApiUrl = rawApiUrl.replace(/\/api\/?$/, "").replace(/\/+$/, "");
   setBaseUrl(cleanApiUrl);
+  console.info(`[Skilytics] API target connected to: ${cleanApiUrl}`);
 }
 
 const GUEST_KEY = "skilytics.guest";

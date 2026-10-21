@@ -10,8 +10,17 @@ import { hashInput, predictionPrompt, SOURCE_AEI, SOURCE_DOSM, type Lang } from 
 
 const router: IRouter = Router();
 
+let cachedStatus: { data: Awaited<ReturnType<typeof aiStatus>>; expiresAt: number } | null = null;
+
 router.get("/ai/status", async (_req, res) => {
-  res.json(await aiStatus());
+  const now = Date.now();
+  if (cachedStatus && now < cachedStatus.expiresAt) {
+    res.json(cachedStatus.data);
+    return;
+  }
+  const data = await aiStatus();
+  cachedStatus = { data, expiresAt: now + 5 * 60 * 1000 };
+  res.json(data);
 });
 
 function predictionToApi(r: typeof predictionsTable.$inferSelect, cached: boolean) {

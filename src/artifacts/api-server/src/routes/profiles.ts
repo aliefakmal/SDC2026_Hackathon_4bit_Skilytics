@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { performance } from "node:perf_hooks";
 import { db, profilesTable, plansTable, insightsTable, rolesTable, type StoredProfileSkill } from "@workspace/db";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import {
   ListProfilesQueryParams,
   CreateProfileBody,
@@ -61,6 +61,7 @@ router.post("/profiles", async (req, res) => {
       weeklyHours: body.weeklyHours,
       budgetMyr: body.budgetMyr,
       hrdcEligible: body.hrdcEligible ?? false,
+      onboardingStep: "cv",
     })
     .returning();
   res.status(201).json(profileToApi(row, await loadSkills()));
