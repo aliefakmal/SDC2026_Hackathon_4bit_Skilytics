@@ -34,12 +34,17 @@ if (
   connectionString = connectionString.slice(1, -1).trim();
 }
 
-// In production (Render), if DATABASE_URL was left as localhost or 127.0.0.1, fallback to Neon
+// In Render / cloud environment, or when localhost is specified in cloud, fallback to Neon
+const isCloudRuntime = Boolean(
+  process.env.RENDER ||
+    process.env.NODE_ENV === "production" ||
+    process.env.PORT === "10000" ||
+    connectionString.includes("localhost:5432/skilytics")
+);
+
 if (
-  process.env.NODE_ENV === "production" &&
-  (!connectionString ||
-    connectionString.includes("localhost") ||
-    connectionString.includes("127.0.0.1"))
+  isCloudRuntime &&
+  (connectionString.includes("localhost") || connectionString.includes("127.0.0.1"))
 ) {
   connectionString = NEON_DEFAULT_URL;
 }
@@ -53,6 +58,8 @@ const isRemote =
   connectionString.includes("neon.tech") ||
   connectionString.includes("sslmode=require") ||
   process.env.NODE_ENV === "production";
+
+export const activeConnectionString = connectionString;
 
 export const pool = new Pool({
   connectionString,
