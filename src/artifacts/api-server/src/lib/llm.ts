@@ -43,9 +43,9 @@ function cfg() {
   }
 
   const geminiKey = process.env["GEMINI_API_KEY"]?.trim();
-  let geminiModel = process.env["GEMINI_MODEL"]?.trim() || "gemini-3.8-flash";
+  let geminiModel = process.env["GEMINI_MODEL"]?.trim() || "gemini-2.5-flash";
   if (geminiModel === "gemini-2.0-flash") {
-    geminiModel = "gemini-3.8-flash";
+    geminiModel = "gemini-2.5-flash";
   }
 
   const groqKey = process.env["GROQ_API_KEY"]?.trim();
@@ -398,58 +398,75 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
       }
     }
     const isJsonTask = system.includes("JSON") || system.includes("json");
-    const maxRetries = 2;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(c.geminiModel)}:generateContent?key=${encodeURIComponent(c.geminiKey)}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            system_instruction: {
-              parts: [{ text: system }],
-            },
-            contents: [{ parts }],
-            generationConfig: {
-              temperature: images ? 0.1 : 0.2,
-              maxOutputTokens: 8192,
-              ...(isJsonTask ? { responseMimeType: "application/json" } : {}),
-            },
-          }),
-          signal: AbortSignal.timeout(60_000),
-        });
-        if ((res.status === 429 || res.status === 500 || res.status === 503) && attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
+    const candidateModels = Array.from(new Set([c.geminiModel, "gemini-2.5-flash", "gemini-flash-latest", "gemini-3.8-flash"]));
+    let lastError: Error | null = null;
+    let successfulModel = c.geminiModel;
+    let content = "";
+
+    for (const model of candidateModels) {
+      successfulModel = model;
+      let res: Response | null = null;
+      for (let attempt = 0; attempt <= 1; attempt++) {
+        try {
+          res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(c.geminiKey)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_instruction: {
+                parts: [{ text: system }],
+              },
+              contents: [{ parts }],
+              generationConfig: {
+                temperature: images ? 0.1 : 0.2,
+                maxOutputTokens: 2048,
+                ...(isJsonTask ? { responseMimeType: "application/json" } : {}),
+              },
+            }),
+            signal: AbortSignal.timeout(images ? 45_000 : 25_000),
+          });
+          if (res.status === 429 && attempt < 1) {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            continue;
+          }
+          break;
+        } catch (err) {
+          if (attempt < 1) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            continue;
+          }
+          lastError = err instanceof Error ? err : new Error(String(err));
+        }
+      }
+
+      if (!res) continue;
+
+      if (!res.ok) {
+        const errTxt = await res.text().catch(() => "");
+        if (res.status === 503 || res.status === 404) {
+          lastError = new Error(`Model ${model} returned HTTP ${res.status}: ${errTxt}`);
           continue;
         }
+        throw new Error(`Google Gemini (${model}) request failed with HTTP ${res.status}: ${errTxt}`);
+      }
+
+      const json = (await res.json()) as {
+        candidates?: { finishReason?: string; content?: { parts?: { text?: string }[] } }[];
+      };
+      const partsArray = json.candidates?.[0]?.content?.parts ?? [];
+      content = partsArray.map((p) => p.text || "").join("").trim();
+      if (content) {
+        lastError = null;
         break;
-      } catch (err) {
-        if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) {
-          throw new AiTimeoutError("Google Gemini request timed out.");
-        }
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-          continue;
-        }
-        throw err;
       }
     }
-    if (!res!.ok) {
-      const errTxt = await res!.text().catch(() => "");
-      throw new Error(`Google Gemini request failed with HTTP ${res!.status}: ${errTxt}`);
-    }
-    const json = (await res!.json()) as {
-      candidates?: { finishReason?: string; content?: { parts?: { text?: string }[] } }[];
-    };
-    const partsArray = json.candidates?.[0]?.content?.parts ?? [];
-    const content = partsArray.map((p) => p.text || "").join("").trim();
+
     if (!content) {
-      const reason = json.candidates?.[0]?.finishReason || "unknown";
-      throw new Error(`Google Gemini returned an empty response (finishReason: ${reason}).`);
+      throw lastError || new Error("Google Gemini returned an empty response.");
     }
     const endpointRequestMs = Math.round(performance.now() - requestStartedAt);
     return {
       content,
-      model: c.geminiModel,
+      model: successfulModel,
       timing: {
         endpointTier: tier,
         modelResolutionMs: 1,
