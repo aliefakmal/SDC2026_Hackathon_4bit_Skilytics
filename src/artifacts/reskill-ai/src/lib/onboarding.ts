@@ -1,5 +1,5 @@
 // Resumable onboarding state. Never stores the CV file or its base64 content.
-export const OB_STEPS = ["status", "cv", "review", "holland", "results", "save"] as const;
+export const OB_STEPS = ["status", "cv", "review", "goals", "holland", "results", "save"] as const;
 export type ObStep = (typeof OB_STEPS)[number];
 
 const PREFIX = "skilytics.onboarding.";

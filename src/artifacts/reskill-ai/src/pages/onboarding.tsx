@@ -123,6 +123,7 @@ export default function Onboarding() {
       {step === "status" && <StatusStep scope={scope} profile={p} onCreated={() => nav("/onboarding/cv")} />}
       {step === "cv" && <CvStep p={p} scope={scope} />}
       {step === "review" && <ReviewStep p={p} scope={scope} />}
+      {step === "goals" && <GoalsStep p={p} scope={scope} />}
       {step === "holland" && <HollandStep p={p} scope={scope} />}
       {step === "results" && <ResultsStep p={p} />}
       {step === "save" && <SaveStep p={p} scope={scope} />}
@@ -387,13 +388,17 @@ function CvStep({ p, scope }: { p: Profile; scope: string }) {
 }
 
 /* ---------- 3. review ---------- */
-const CV_FIELDS = [["name", "ob.review.name"], ["currentRole", "ob.review.role"], ["organization", "ob.review.org"], ["education", "ob.review.edu"], ["experience", "ob.review.exp"]] as const;
-type CvKey = (typeof CV_FIELDS)[number][0];
-type TextKey = CvKey | "goals";
-const OPTIONAL_WITH_NONE = ["currentRole", "organization", "education", "experience"] as const;
-type NoneKey = (typeof OPTIONAL_WITH_NONE)[number];
+const REVIEW_FIELDS = [
+  ["name", "ob.review.name"],
+  ["currentRole", "ob.review.role"],
+  ["organization", "ob.review.org"],
+  ["education", "ob.review.edu"],
+  ["experience", "ob.review.exp"],
+] as const;
+type ReviewFieldKey = (typeof REVIEW_FIELDS)[number][0];
+const OPTIONAL_WITH_NONE: ReviewFieldKey[] = ["currentRole", "organization", "education", "experience"];
 type Hrdc = "" | "yes" | "no" | "unknown";
-type ReviewForm = Record<TextKey, string> & { hours: string; budget: string; hrdc: Hrdc } & Record<`none_${NoneKey}`, string>;
+type ReviewForm = Record<ReviewFieldKey, string> & Record<`none_${ReviewFieldKey}`, string>;
 const norm = (v: string | null | undefined) => (v ?? "").toLowerCase().replace(/\s+/g, " ").trim();
 type EvState = "supported" | "corrected" | "none";
 /** Evidence counts only if the CV actually quoted it AND the current form value still matches. */
@@ -403,15 +408,20 @@ function evState(ev: CvEvidence[], field: string, current: string): EvState {
   return real.some((e) => norm(e.value) === norm(current) && norm(current) !== "") ? "supported" : "corrected";
 }
 
-function initForm(p: Profile, scope: string): ReviewForm {
+function initReviewForm(p: Profile, scope: string): ReviewForm {
   const d = (readDraft(scope, p.id).form ?? {}) as Partial<ReviewForm>;
   const prev = !!p.verified;
   const base: ReviewForm = {
-    name: DRAFT_NAMES.has(p.name) ? "" : p.name, currentRole: p.currentRole ?? "", organization: p.organization ?? "",
-    education: p.education ?? "", experience: p.experience ?? "", goals: p.goals ?? "",
-    hours: prev ? String(p.weeklyHours) : "", budget: prev ? String(p.budgetMyr) : "", hrdc: prev ? (p.hrdcEligibilityStatus ?? (p.hrdcEligible ? "yes" : "no")) : "",
-    none_currentRole: prev && !p.currentRole ? "1" : "", none_organization: prev && !p.organization ? "1" : "",
-    none_education: prev && !p.education ? "1" : "", none_experience: prev && !p.experience ? "1" : "",
+    name: DRAFT_NAMES.has(p.name) ? "" : p.name,
+    currentRole: p.currentRole ?? "",
+    organization: p.organization ?? "",
+    education: p.education ?? "",
+    experience: p.experience ?? "",
+    none_name: "",
+    none_currentRole: prev && !p.currentRole ? "1" : "",
+    none_organization: prev && !p.organization ? "1" : "",
+    none_education: prev && !p.education ? "1" : "",
+    none_experience: prev && !p.experience ? "1" : "",
   };
   return { ...base, ...d };
 }
@@ -422,57 +432,146 @@ function ReviewStep({ p, scope }: { p: Profile; scope: string }) {
   const qc = useQueryClient();
   const { go, upd } = useAdvance(p);
   const skillUpd = useUpdateProfile({ mutation: { onSuccess: (np) => qc.setQueryData(getGetProfileQueryKey(p.id), np) } });
-  const [stage, setStage] = useState<"cv" | "preferences">("cv");
-  const [form, setForm] = useState<ReviewForm>(() => initForm(p, scope));
-  useEffect(() => { writeDraft(scope, p.id, { form: form as unknown as Record<string, string> }); }, [form, scope, p.id]);
+  const [form, setForm] = useState<ReviewForm>(() => initReviewForm(p, scope));
+  useEffect(() => {
+    const existing = readDraft(scope, p.id).form ?? {};
+    writeDraft(scope, p.id, { form: { ...existing, ...form } });
+  }, [form, scope, p.id]);
   const set = (k: keyof ReviewForm, v: string) => setForm((f) => ({ ...f, [k]: v }));
   const ev = p.cvEvidence ?? [];
-  const [touchedCv, setTouchedCv] = useState(false);
-  const [touchedPrefs, setTouchedPrefs] = useState(false);
+  const [touched, setTouched] = useState(false);
 
-  // CV validation
-  const cvErrs: Partial<Record<string, string>> = {};
-  if (!form.name.trim()) cvErrs.name = t("ob.review.required");
-  OPTIONAL_WITH_NONE.forEach((k) => { if (!form[k].trim() && !form[`none_${k}`]) cvErrs[k] = t("ob.review.pickOne"); });
-  const cvOk = Object.keys(cvErrs).length === 0;
+  const errs: Partial<Record<string, string>> = {};
+  if (!form.name.trim()) errs.name = t("ob.review.nameReq");
+  OPTIONAL_WITH_NONE.forEach((k) => { if (!form[k].trim() && !form[`none_${k}`]) errs[k] = t("ob.review.pickOne"); });
+  const ok = Object.keys(errs).length === 0;
 
-  // Preferences validation (goals is optional!)
+  const submit = () => {
+    setTouched(true);
+    if (!ok || !p.cvExtractionKey) return;
+    const val = (k: ReviewFieldKey) => (form[`none_${k}`] ? "" : form[k].trim());
+    go("goals", {
+      name: form.name.trim(),
+      currentRole: val("currentRole"),
+      organization: val("organization"),
+      education: val("education"),
+      experience: val("experience"),
+      verified: true,
+    }).catch(() => undefined);
+  };
+  const E = ({ k }: { k: string }) => (touched && errs[k] ? <p className="text-xs text-destructive" data-testid={`error-review-${k}`}>{errs[k]}</p> : null);
+
+  return (
+    <>
+      <StepHead title={t("ob.review.title")} sub={t("ob.review.sub")} />
+      <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
+        <div className="space-y-5">
+          {REVIEW_FIELDS.map(([k, label]) => {
+            const long = k === "experience" || k === "education";
+            const none = !!form[`none_${k}`];
+            const st = evState(ev, k, none ? "" : form[k]);
+            return (
+              <div key={k} className="space-y-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label htmlFor={`f-${k}`}>{t(label)}{k === "name" && <span className="text-destructive"> *</span>}</Label>
+                  {st && <EvChip s={st} filled={!none && !!form[k].trim()} />}
+                </div>
+                {long ? <Textarea id={`f-${k}`} rows={3} value={none ? "" : form[k]} disabled={none} onChange={(e) => set(k, e.target.value)} data-testid={`input-review-${k}`} />
+                  : <Input id={`f-${k}`} value={none ? "" : form[k]} disabled={none} onChange={(e) => set(k, e.target.value)} className="min-h-11" data-testid={`input-review-${k}`} />}
+                {OPTIONAL_WITH_NONE.includes(k) && (
+                  <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                    <Checkbox checked={none} onCheckedChange={(v) => set(`none_${k}`, v === true ? "1" : "")} data-testid={`checkbox-none-${k}`} />
+                    {t(k === "experience" ? "ob.review.noExp" : "ob.review.noInfo")}
+                  </label>
+                )}
+                <E k={k} />
+              </div>
+            );
+          })}
+          <p className="text-[11px] text-muted-foreground">{t("ob.review.draft")}</p>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-accent">{t("ob.review.evidence")}</h2>
+            {!ev.length ? <p className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">{t("ob.review.noEvidence")}</p>
+              : <EvidenceList ev={ev} current={(f) => (REVIEW_FIELDS.some(([k]) => k === f) ? (form[`none_${f as ReviewFieldKey}`] ? "" : form[f as ReviewFieldKey]) : null)} />}
+          </div>
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-accent">{t("ob.review.skills", { n: p.skills.length })}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">{t("ob.review.skillsSub")}</p>
+            {!p.skills.length ? <p className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">{t("ob.review.skillsEmpty")}</p> : (
+              <ul className="mt-2 divide-y divide-border rounded-xl border border-border">
+                {p.skills.map((s) => (
+                  <li key={s.skillId} className="flex items-center justify-between gap-2 px-3 py-1.5" data-testid={`row-ob-skill-${s.skillId}`}>
+                    <span className="flex min-w-0 flex-wrap items-center gap-2 text-sm"><span className="truncate font-medium">{s.name}</span><StatusTag s={s.status} /></span>
+                    <span className="flex shrink-0">
+                      {s.status === "inferred" && <Button variant="ghost" className="min-h-11 px-2 text-xs" disabled={skillUpd.isPending} onClick={() => skillUpd.mutate({ id: p.id, data: { addSkills: [{ skillId: s.skillId, status: "self_reported" }] } })} data-testid={`button-ob-confirm-skill-${s.skillId}`}><Check className="mr-1 h-4 w-4" />{t("skills.confirm")}</Button>}
+                      <Button variant="ghost" className="min-h-11 min-w-11 px-0" disabled={skillUpd.isPending} onClick={() => skillUpd.mutate({ id: p.id, data: { removeSkillIds: [s.skillId] } })} aria-label={t("skills.remove", { name: s.name })} data-testid={`button-ob-remove-skill-${s.skillId}`}><X className="h-4 w-4" /></Button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {skillUpd.error && <div className="mt-2"><ErrorBox message={et(skillUpd.error)} /></div>}
+          </div>
+        </div>
+      </div>
+      {!p.cvExtractionKey && <div className="mt-4"><ErrorBox message={t("ob.cv.required")} /></div>}
+      {touched && !ok && <div className="mt-4"><ErrorBox message={t("ob.review.fixErrors")} /></div>}
+      {upd.error && <div className="mt-4"><ErrorBox message={et(upd.error)} /></div>}
+      <NavBar back="cv">
+        <Button className="min-h-11" disabled={upd.isPending || !p.cvExtractionKey} onClick={submit} data-testid="button-review-confirm">
+          {upd.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-1.5 h-4 w-4" />}{t("ob.review.confirm")}
+        </Button>
+      </NavBar>
+    </>
+  );
+}
+
+/* ---------- 4. goals ---------- */
+type GoalsForm = {
+  goals: string;
+  hours: string;
+  budget: string;
+  hrdc: Hrdc;
+};
+
+function initGoalsForm(p: Profile, scope: string): GoalsForm {
+  const d = (readDraft(scope, p.id).form ?? {}) as Partial<GoalsForm>;
+  const prev = idx(p.onboardingStep) >= idx("goals");
+  const base: GoalsForm = {
+    goals: p.goals ?? "",
+    hours: prev && p.weeklyHours ? String(p.weeklyHours) : (p.weeklyHours && p.weeklyHours > 1 ? String(p.weeklyHours) : "10"),
+    budget: prev && p.budgetMyr != null ? String(p.budgetMyr) : "0",
+    hrdc: prev ? (p.hrdcEligibilityStatus ?? (p.hrdcEligible ? "yes" : (p.hrdcEligible === false ? "no" : ""))) : "",
+  };
+  return { ...base, ...d };
+}
+
+function GoalsStep({ p, scope }: { p: Profile; scope: string }) {
+  const { t } = useT();
+  const et = useErrText();
+  const { go, upd } = useAdvance(p);
+  const [form, setForm] = useState<GoalsForm>(() => initGoalsForm(p, scope));
+  useEffect(() => {
+    const existing = readDraft(scope, p.id).form ?? {};
+    writeDraft(scope, p.id, { form: { ...existing, ...form } });
+  }, [form, scope, p.id]);
+  const set = (k: keyof GoalsForm, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const [touched, setTouched] = useState(false);
+
   const hoursN = Number(form.hours);
   const budgetN = Number(form.budget);
-  const prefErrs: Partial<Record<string, string>> = {};
-  if (form.hours.trim() === "" || !Number.isInteger(hoursN) || hoursN < 1 || hoursN > 60) prefErrs.hours = t("ob.review.hoursErr");
-  if (form.budget.trim() === "" || !Number.isFinite(budgetN) || budgetN < 0) prefErrs.budget = t("ob.review.budgetErr");
-  if (!form.hrdc) prefErrs.hrdc = t("ob.review.required");
-  const prefOk = Object.keys(prefErrs).length === 0;
+  const errs: Partial<Record<string, string>> = {};
+  if (form.hours.trim() === "" || !Number.isInteger(hoursN) || hoursN < 1 || hoursN > 60) errs.hours = t("ob.review.hoursErr");
+  if (form.budget.trim() === "" || !Number.isFinite(budgetN) || budgetN < 0) errs.budget = t("ob.review.budgetErr");
+  if (!form.hrdc) errs.hrdc = t("ob.review.required");
+  const ok = Object.keys(errs).length === 0;
 
-  const submitCv = async () => {
-    setTouchedCv(true);
-    if (!cvOk || !p.cvExtractionKey) return;
-    const val = (k: NoneKey) => (form[`none_${k}`] ? "" : form[k].trim());
-    try {
-      const np = await upd.mutateAsync({
-        id: p.id,
-        data: {
-          name: form.name.trim(),
-          currentRole: val("currentRole"),
-          organization: val("organization"),
-          education: val("education"),
-          experience: val("experience"),
-          verified: true,
-        },
-      });
-      qc.setQueryData(getGetProfileQueryKey(p.id), np);
-      qc.invalidateQueries({ queryKey: ["/api/profiles"] });
-      setStage("preferences");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {
-      // upd.error surfaced in UI
-    }
-  };
-
-  const submitPrefs = () => {
-    setTouchedPrefs(true);
-    if (!prefOk) return;
+  const submit = () => {
+    setTouched(true);
+    if (!ok) return;
     go("holland", {
       goals: form.goals.trim(),
       weeklyHours: hoursN,
@@ -481,148 +580,67 @@ function ReviewStep({ p, scope }: { p: Profile; scope: string }) {
       hrdcEligibilityStatus: form.hrdc as "yes" | "no" | "unknown",
     }).catch(() => undefined);
   };
+  const E = ({ k }: { k: string }) => (touched && errs[k] ? <p className="text-xs text-destructive" data-testid={`error-goals-${k}`}>{errs[k]}</p> : null);
 
-  if (stage === "cv") {
-    const ECv = ({ k }: { k: string }) => (touchedCv && cvErrs[k] ? <p className="text-xs text-destructive" data-testid={`error-review-${k}`}>{cvErrs[k]}</p> : null);
-    return (
-      <>
-        <StepHead title={t("ob.review.title")} sub={t("ob.review.sub")} />
-        <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
-          <div className="space-y-5">
-            {CV_FIELDS.map(([k, label]) => {
-              const long = k === "experience" || k === "education";
-              const isOptional = (OPTIONAL_WITH_NONE as readonly string[]).includes(k);
-              const none = isOptional && !!form[`none_${k as NoneKey}`];
-              const st = evState(ev, k, none ? "" : form[k]);
-              return (
-                <div key={k} className="space-y-1.5">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <Label htmlFor={`f-${k}`}>{t(label)}{k === "name" && <span className="text-destructive"> *</span>}</Label>
-                    {st && <EvChip s={st} filled={!none && !!form[k].trim()} />}
-                  </div>
-                  {long ? <Textarea id={`f-${k}`} rows={3} value={none ? "" : form[k]} disabled={none} onChange={(e) => set(k, e.target.value)} data-testid={`input-review-${k}`} />
-                    : <Input id={`f-${k}`} value={none ? "" : form[k]} disabled={none} onChange={(e) => set(k, e.target.value)} className="min-h-11" data-testid={`input-review-${k}`} />}
-                  {isOptional && (
-                    <label className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-                      <Checkbox checked={none} onCheckedChange={(v) => set(`none_${k as NoneKey}`, v === true ? "1" : "")} data-testid={`checkbox-none-${k}`} />
-                      {t(k === "experience" ? "ob.review.noExp" : "ob.review.noInfo")}
-                    </label>
-                  )}
-                  <ECv k={k} />
-                </div>
-              );
-            })}
-            <p className="text-[11px] text-muted-foreground">{t("ob.review.draft")}</p>
-          </div>
-
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-accent">{t("ob.review.evidence")}</h2>
-              {!ev.length ? <p className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">{t("ob.review.noEvidence")}</p>
-                : <EvidenceList ev={ev} current={(f) => {
-                    const isOptional = (OPTIONAL_WITH_NONE as readonly string[]).includes(f);
-                    if (isOptional && form[`none_${f as NoneKey}`]) return "";
-                    return (form as Record<string, string>)[f] ?? null;
-                  }} />}
-            </div>
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-accent">{t("ob.review.skills", { n: p.skills.length })}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">{t("ob.review.skillsSub")}</p>
-              {!p.skills.length ? <p className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">{t("ob.review.skillsEmpty")}</p> : (
-                <ul className="mt-2 divide-y divide-border rounded-xl border border-border">
-                  {p.skills.map((s) => (
-                    <li key={s.skillId} className="flex items-center justify-between gap-2 px-3 py-1.5" data-testid={`row-ob-skill-${s.skillId}`}>
-                      <span className="flex min-w-0 flex-wrap items-center gap-2 text-sm"><span className="truncate font-medium">{s.name}</span><StatusTag s={s.status} /></span>
-                      <span className="flex shrink-0">
-                        {s.status === "inferred" && <Button variant="ghost" className="min-h-11 px-2 text-xs" disabled={skillUpd.isPending} onClick={() => skillUpd.mutate({ id: p.id, data: { addSkills: [{ skillId: s.skillId, status: "self_reported" }] } })} data-testid={`button-ob-confirm-skill-${s.skillId}`}><Check className="mr-1 h-4 w-4" />{t("skills.confirm")}</Button>}
-                        <Button variant="ghost" className="min-h-11 min-w-11 px-0" disabled={skillUpd.isPending} onClick={() => skillUpd.mutate({ id: p.id, data: { removeSkillIds: [s.skillId] } })} aria-label={t("skills.remove", { name: s.name })} data-testid={`button-ob-remove-skill-${s.skillId}`}><X className="h-4 w-4" /></Button>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {skillUpd.error && <div className="mt-2"><ErrorBox message={et(skillUpd.error)} /></div>}
-            </div>
-          </div>
-        </div>
-        {!p.cvExtractionKey && <div className="mt-4"><ErrorBox message={t("ob.cv.required")} /></div>}
-        {touchedCv && !cvOk && <div className="mt-4"><ErrorBox message={t("ob.review.fixErrors")} /></div>}
-        {upd.error && <div className="mt-4"><ErrorBox message={et(upd.error)} /></div>}
-        <NavBar back="cv">
-          <Button className="min-h-11" disabled={upd.isPending || !p.cvExtractionKey} onClick={submitCv} data-testid="button-review-confirm">
-            {upd.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {t("ob.review.confirmNext")}
-            <ArrowRight className="ml-1.5 h-4 w-4" />
-          </Button>
-        </NavBar>
-      </>
-    );
-  }
-
-  const EPref = ({ k }: { k: string }) => (touchedPrefs && prefErrs[k] ? <p className="text-xs text-destructive" data-testid={`error-review-${k}`}>{prefErrs[k]}</p> : null);
   return (
     <>
-      <StepHead title={t("ob.prefs.title")} sub={t("ob.prefs.sub")} />
+      <StepHead title={t("ob.goals.title")} sub={t("ob.goals.sub")} />
       <div className="max-w-2xl space-y-6">
         <div className="space-y-1.5">
-          <Label htmlFor="f-goals" className="text-base font-semibold">{t("ob.review.goals")}</Label>
+          <Label htmlFor="f-goals">{t("ob.goals.label")}</Label>
           <Textarea
             id="f-goals"
-            rows={4}
+            rows={3}
             value={form.goals}
             onChange={(e) => set("goals", e.target.value)}
-            placeholder={t("ob.prefs.goalsHint")}
-            data-testid="input-review-goals"
+            placeholder={t("ob.goals.hint")}
+            data-testid="input-goals"
           />
         </div>
 
-        <fieldset className="rounded-2xl border border-border p-5">
+        <fieldset className="rounded-2xl border border-border p-4 sm:p-5">
           <legend className="px-1 text-sm font-bold">{t("ob.review.prefs")}</legend>
           <p className="mb-4 text-xs text-muted-foreground">{t("ob.review.prefsSub")}</p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="f-hours">{t("ob.review.hours")} <span className="text-destructive">*</span></Label>
-              <Input id="f-hours" type="number" inputMode="numeric" min={1} max={60} value={form.hours} onChange={(e) => set("hours", e.target.value)} className="min-h-11" data-testid="input-review-hours" />
-              <EPref k="hours" />
+              <Input id="f-hours" type="number" inputMode="numeric" min={1} max={60} value={form.hours} onChange={(e) => set("hours", e.target.value)} className="min-h-11" data-testid="input-goals-hours" />
+              <E k="hours" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="f-budget">{t("ob.review.budget")} <span className="text-destructive">*</span></Label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">RM</span>
-                <Input id="f-budget" type="number" inputMode="decimal" min={0} value={form.budget} onChange={(e) => set("budget", e.target.value)} className="min-h-11 pl-11" data-testid="input-review-budget" />
-              </div>
-              <EPref k="budget" />
+              <div className="relative"><span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">RM</span>
+                <Input id="f-budget" type="number" inputMode="decimal" min={0} value={form.budget} onChange={(e) => set("budget", e.target.value)} className="min-h-11 pl-11" data-testid="input-goals-budget" /></div>
+              <E k="budget" />
             </div>
           </div>
-          <div className="mt-4 space-y-1.5">
+          <div className="mt-5 space-y-1.5">
             <div className="text-sm font-medium">{t("ob.review.hrdc")} <span className="text-destructive">*</span></div>
             <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label={t("ob.review.hrdc")}>
               {(["yes", "no", "unknown"] as const).map((v) => (
                 <button key={v} type="button" role="radio" aria-checked={form.hrdc === v} onClick={() => set("hrdc", v)} data-testid={`button-hrdc-${v}`}
-                  className={cn("min-h-11 rounded-lg border px-2 text-sm font-medium transition-colors", form.hrdc === v ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-primary")}>
+                  className={cn("min-h-11 rounded-lg border px-2 text-sm font-medium", form.hrdc === v ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-primary")}>
                   {t(v === "yes" ? "ob.review.hrdcYes" : v === "no" ? "ob.review.hrdcNo" : "ob.review.hrdcUnknown")}
                 </button>
               ))}
             </div>
             {form.hrdc === "unknown" && <p className="mt-2 rounded-lg bg-[hsl(var(--gold-soft))]/60 p-2 text-xs" data-testid="text-hrdc-unknown">{t("ob.review.hrdcUnknownNote")}</p>}
-            <EPref k="hrdc" />
+            <E k="hrdc" />
           </div>
         </fieldset>
         <p className="text-[11px] text-muted-foreground">{t("ob.review.draft")}</p>
       </div>
 
-      {touchedPrefs && !prefOk && <div className="mt-4"><ErrorBox message={t("ob.review.fixErrors")} /></div>}
+      {touched && !ok && <div className="mt-4"><ErrorBox message={t("ob.review.fixErrors")} /></div>}
       {upd.error && <div className="mt-4"><ErrorBox message={et(upd.error)} /></div>}
-      <div className="mt-8 flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-        <Button variant="ghost" className="min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary" onClick={() => { setStage("cv"); window.scrollTo({ top: 0, behavior: "smooth" }); }} data-testid="button-prefs-back">
-          <ArrowLeft className="h-4 w-4" />{t("ob.prefs.back")}
-        </Button>
-        <Button className="min-h-11" disabled={upd.isPending} onClick={submitPrefs} data-testid="button-prefs-continue">
+
+      <NavBar back="review">
+        <Button className="min-h-11" disabled={upd.isPending} onClick={submit} data-testid="button-goals-confirm">
           {upd.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          {t("ob.prefs.continue")}
+          {t("ob.goals.confirm")}
           <ArrowRight className="ml-1.5 h-4 w-4" />
         </Button>
-      </div>
+      </NavBar>
     </>
   );
 }
@@ -636,7 +654,7 @@ function EvChip({ s, filled }: { s: EvState; filled: boolean }) {
 
 function EvidenceList({ ev, current }: { ev: CvEvidence[]; current?: (field: string) => string | null }) {
   const { t } = useT();
-  const label = (f: string) => { const x = CV_FIELDS.find(([k]) => k === f); return x ? t(x[1]) : f; };
+  const label = (f: string) => { const x = REVIEW_FIELDS.find(([k]) => k === f); return x ? t(x[1]) : f; };
   return (
     <ul className="mt-3 space-y-2">
       {ev.map((e, i) => {
@@ -659,7 +677,7 @@ function EvidenceList({ ev, current }: { ev: CvEvidence[]; current?: (field: str
   );
 }
 
-/* ---------- 4. holland ---------- */
+/* ---------- 5. holland ---------- */
 function HollandStep({ p, scope }: { p: Profile; scope: string }) {
   const { t, lang } = useT();
   const et = useErrText();
@@ -722,7 +740,7 @@ function HollandStep({ p, scope }: { p: Profile; scope: string }) {
         </>
       )}
       {sub.error && <div className="mt-4"><ErrorBox message={et(sub.error)} retry={submit} /></div>}
-      <NavBar back="review">
+      <NavBar back="goals">
         {done < total && <span className="self-center text-xs text-muted-foreground">{t("ob.holland.all", { n: total })}</span>}
         <Button className="min-h-11" disabled={!total || done < total || sub.isPending} onClick={submit} data-testid="button-holland-submit">
           {sub.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t("ob.holland.submit")}<ArrowRight className="ml-1.5 h-4 w-4" />

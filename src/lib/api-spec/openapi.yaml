@@ -769,7 +769,7 @@ components:
         hrdcEligibilityStatus: { type: string, enum: [yes, no, unknown] }
         education: { type: string, maxLength: 6000 }
         experience: { type: string, maxLength: 6000 }
-        onboardingStep: { type: string, enum: [status, cv, review, holland, results, save, complete] }
+        onboardingStep: { type: string, enum: [status, cv, review, goals, holland, results, save, complete] }
         verified: { type: boolean }
         riasecAnswers:
           type: array

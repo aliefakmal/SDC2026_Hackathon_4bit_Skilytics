@@ -186,6 +186,7 @@ export const ProfileUpdateOnboardingStep = {
   status: 'status',
   cv: 'cv',
   review: 'review',
+  goals: 'goals',
   holland: 'holland',
   results: 'results',
   save: 'save',

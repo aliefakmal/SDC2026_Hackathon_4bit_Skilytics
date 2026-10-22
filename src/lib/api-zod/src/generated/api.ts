@@ -321,7 +321,7 @@ export const UpdateProfileBody = zod.object({
   "hrdcEligibilityStatus": zod.enum(['yes', 'no', 'unknown']).optional(),
   "education": zod.string().max(updateProfileBodyEducationMax).optional(),
   "experience": zod.string().max(updateProfileBodyExperienceMax).optional(),
-  "onboardingStep": zod.enum(['status', 'cv', 'review', 'holland', 'results', 'save', 'complete']).optional(),
+  "onboardingStep": zod.enum(['status', 'cv', 'review', 'goals', 'holland', 'results', 'save', 'complete']).optional(),
   "verified": zod.boolean().optional(),
   "riasecAnswers": zod.array(zod.object({
   "questionId": zod.number().int().min(1),

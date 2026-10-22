@@ -92,7 +92,7 @@ router.patch("/profiles/:id", async (req, res) => {
   if (body.verified && !(body.name ?? p.name).trim()) {
     res.status(400).json({ error: "invalid_input" }); return;
   }
-  if ((body.verified || ["holland", "results", "save", "complete"].includes(step ?? "")) && !p.cvExtractionKey) {
+  if ((body.verified || ["goals", "holland", "results", "save", "complete"].includes(step ?? "")) && !p.cvExtractionKey) {
     res.status(400).json({ error: "cv_required" }); return;
   }
   if (["results", "save", "complete"].includes(step ?? "") && (!p.verified || !p.riasecScores)) {
