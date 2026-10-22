@@ -320,11 +320,12 @@ function mockGenerateChat(system: string, user: string, images?: ChatImage[]): s
     ]);
     const currentRole = findPattern([
       /(?:Current role|Position|Title|Jawatan):\s*([^\n\r]+)/i,
-      /\b((?:Senior\s+)?(?:Data\s+Analyst|Software\s+Engineer|Operations\s+Intern|Project\s+Manager|Machine\s+Operator|Executive|Consultant))\b/i,
+      /\b((?:Senior\s+|Junior\s+|Lead\s+)?(?:Data\s+Analyst|Software\s+Engineer|Business\s+Operation\s+Intern|Operations\s+Intern|Project\s+Manager|Machine\s+Operator|Executive|Consultant|Intern(?:ship)?|Officer|Coordinator|Technician))\b/i,
+      /\b(Bachelor(?:\s+of|\s+in)\s+[^\n\r,]+|Diploma(?:\s+in)?\s+[^\n\r,]+|Degree(?:\s+in)?\s+[^\n\r,]+)\b/i,
     ]);
     const organization = findPattern([
-      /(?:Organization|Company|Organisasi|Majikan):\s*([^\n\r]+)/i,
-      /\b(SINE\s+DORBY|Sample\s+Research\s+Lab|Tech\s+Solutions|Petronas|Intel)\b/i,
+      /(?:Organization|Company|Organisasi|Majikan|Institution|Institusi):\s*([^\n\r]+)/i,
+      /\b(SINE\s+DORBY|Sample\s+Research\s+Lab|Tech\s+Solutions|Petronas|Intel|Universiti\s+Teknologi\s+Malaysia|Universiti\s+[^\n\r,]+)\b/i,
     ]);
     const education = findPattern([
       /(?:Education|Pendidikan):\s*([^\n\r]+)/i,

@@ -97,6 +97,7 @@ export function isCvImageFile(fileName: string): boolean {
 
 function decodeBase64(contentBase64: string): Buffer {
   const cleaned = contentBase64.replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
+  if (contentBase64.trim() && !/^[A-Za-z0-9+/=]+$/.test(cleaned)) throw new CvError("cv_corrupt");
   const padLength = (4 - (cleaned.length % 4)) % 4;
   const padded = cleaned + "=".repeat(padLength);
   const buf = Buffer.from(padded, "base64");

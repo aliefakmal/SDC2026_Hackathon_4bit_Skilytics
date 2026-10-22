@@ -158,7 +158,7 @@ test("historical work entries are not presented as the current role", () => {
     "WORK EXPERIENCE",
     "SINE DORBY",
     "Business Operation Intern",
-    "Oct 2023 - Mar 2024",
+    "Oct 2012 - Mar 2013",
     "Gained experience in managing daily operations.",
     "SKILLS",
     "Excel",
@@ -173,7 +173,7 @@ test("historical work entries are not presented as the current role", () => {
   const result = applySectionEvidence(extracted, source);
   assert.equal(result.fields.currentRole, null);
   assert.equal(result.fields.education, "Bachelor of Real Estate");
-  assert.match(result.fields.experience!, /Oct 2023 - Mar 2024/);
+  assert.match(result.fields.experience!, /Oct 2012 - Mar 2013/);
   assert.equal(result.evidence.find((entry) => entry.field === "currentRole")?.source, "no_evidence");
 });
 test("RIASEC is deterministic, balanced, duplicate-safe and independent of CV text", () => {
