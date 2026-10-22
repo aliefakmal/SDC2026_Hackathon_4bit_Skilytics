@@ -23,7 +23,14 @@ export const SKILL_REFERENCES = [
   ["Time Management", "Managing one's own time and the time of others."],
 ].map(([name, text]) => ({ name, text, source: "O*NET Content Model — Skills", url: "https://www.onetonline.org/skills/", version: "content-model-reference-2026-10" }));
 
-const valueSchema = z.object({ value: z.string().max(6000), quote: z.string().max(6000) }).nullable();
+const valueSchema = z.union([
+  z.object({
+    value: z.string().max(6000),
+    quote: z.string().max(6000).nullish(),
+  }).transform((v) => ({ value: v.value, quote: v.quote ?? v.value })),
+  z.string().max(6000).transform((s) => ({ value: s, quote: s })),
+  z.null(),
+]);
 const extractionSchema = z.object({
   name: valueSchema, currentRole: valueSchema, organization: valueSchema,
   education: valueSchema, experience: valueSchema,
@@ -42,6 +49,28 @@ const multimodalOutputSchema = z.object({
   })).max(10),
   profile: extractionSchema,
 });
+
+function preprocessMultimodal(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object") return raw;
+  const obj = raw as Record<string, any>;
+  const rawPages = obj.imagePages || obj.image_pages || obj.pages || [];
+  const profile = obj.profile || obj;
+  return {
+    imagePages: Array.isArray(rawPages)
+      ? rawPages.map((p, idx) => ({
+          pageNumber: p?.pageNumber ?? p?.page_number ?? p?.page ?? (idx + 1),
+          text: typeof p === "string" ? p : (p?.text || p?.content || ""),
+        }))
+      : [],
+    profile: {
+      name: profile?.name ?? null,
+      currentRole: profile?.currentRole ?? profile?.current_role ?? null,
+      organization: profile?.organization ?? profile?.company ?? null,
+      education: profile?.education ?? null,
+      experience: profile?.experience ?? null,
+    },
+  };
+}
 
 function parseJsonOutput(raw: string): unknown {
   const cleaned = raw.trim();
@@ -226,7 +255,8 @@ export async function extractCvMultimodalProfile(pages: CvDocumentPage[], lang: 
 
   let parsed: z.infer<typeof multimodalOutputSchema>;
   try {
-    parsed = multimodalOutputSchema.parse(parseJsonOutput(out.content));
+    const rawParsed = parseJsonOutput(out.content);
+    parsed = multimodalOutputSchema.parse(preprocessMultimodal(rawParsed));
   } catch {
     throw new CvAiOutputError("invalid_structured_output");
   }
@@ -234,12 +264,17 @@ export async function extractCvMultimodalProfile(pages: CvDocumentPage[], lang: 
   const expectedPages = new Set(imagePages.map((page) => page.pageNumber));
   const recognizedByPage = new Map<number, string>();
   for (const page of parsed.imagePages) {
-    if (!expectedPages.has(page.pageNumber) || recognizedByPage.has(page.pageNumber)) {
-      throw new CvAiOutputError("invalid_structured_output");
+    if (expectedPages.has(page.pageNumber) && !recognizedByPage.has(page.pageNumber)) {
+      recognizedByPage.set(page.pageNumber, page.text);
     }
-    recognizedByPage.set(page.pageNumber, page.text);
   }
-  if (recognizedByPage.size !== expectedPages.size) throw new CvAiOutputError("invalid_structured_output");
+  for (const pageNum of expectedPages) {
+    if (!recognizedByPage.has(pageNum)) {
+      const fallbackText = parsed.imagePages[0]?.text || "";
+      if (fallbackText) recognizedByPage.set(pageNum, fallbackText);
+    }
+  }
+  if (recognizedByPage.size === 0) throw new CvAiOutputError("invalid_structured_output");
 
   const cvText = normalizeCvText(pages
     .slice()
