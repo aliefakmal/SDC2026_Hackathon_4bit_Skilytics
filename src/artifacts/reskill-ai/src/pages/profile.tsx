@@ -741,7 +741,7 @@ function PlanView({ pl, onRebuild, rebuilding }: { pl: Plan; onRebuild: () => vo
                     <span className="tnum font-semibold text-foreground">{it.costMyr === 0 ? t("cost.free") : f.myr(it.costMyr)}</span>
                     {it.costMyr > 0 && <CostBadge type={it.costMyr <= 200 ? "low_cost" : "paid"} />}
                   </div>
-                  {it.sdgTargets.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{it.sdgTargets.map((s) => <SdgBadge key={s.code} code={s.code} title={`${s.code} ${s.title}`} />)}</div>}
+                  {it.sdgTargets.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{it.sdgTargets.filter((s, i, all) => all.findIndex((x) => x.code.split(".")[0] === s.code.split(".")[0]) === i).map((s, i) => <SdgBadge key={s.code} code={s.code} title={`${s.code} ${s.title}`} primary={i === 0} />)}</div>}
                 </div>
                 <div className="min-w-0">
                   {it.startWeek !== null && it.durationWeeks !== null ? <div className="relative h-9 rounded-lg bg-muted/70">

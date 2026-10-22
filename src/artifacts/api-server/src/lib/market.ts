@@ -74,11 +74,20 @@ export const SOURCES: SourceDef[] = [
     consumers: ["pathway", "agent_planner", "agent_sdg", "cohort"],
   },
   {
+    id: "gemini",
+    name: "Google Gemini API",
+    kind: "ai_endpoint",
+    url: "https://ai.google.dev/gemini-api/docs/models",
+    description: "Active API for all seven agents during testing; model metadata checks do not generate text.",
+    refreshCadence: "on_refresh",
+    consumers: ["agent_cv", "agent_holland", "agent_profiler", "agent_fitter", "agent_planner", "agent_sdg", "predictions"],
+  },
+  {
     id: "runpod_main",
     name: "RunPod main model endpoint",
     kind: "ai_endpoint",
     url: "https://www.runpod.io/console/serverless",
-    description: "Serverless vLLM endpoint for the larger model. Health checks do not generate text but can wake a worker.",
+    description: "Disabled Qwen serverless placeholder for future hybrid routing; no generation or worker wake during testing.",
     refreshCadence: "on_refresh",
     consumers: ["agent_profiler", "agent_fitter", "agent_planner", "predictions"],
   },
@@ -87,7 +96,7 @@ export const SOURCES: SourceDef[] = [
     name: "RunPod light model endpoint",
     kind: "ai_endpoint",
     url: "https://www.runpod.io/console/serverless",
-    description: "Serverless vLLM endpoint for the smaller model. Falls back to the main endpoint if not configured.",
+    description: "Disabled lighter Qwen serverless placeholder for future hybrid routing; no generation or worker wake during testing.",
     refreshCadence: "on_refresh",
     consumers: ["agent_cv", "agent_holland", "agent_sdg"],
   },
@@ -276,6 +285,11 @@ async function checkEndpoint(tier: "main" | "light"): Promise<void> {
   await setSource(`runpod_${tier}`, { status: h.status, lastFetchedAt: new Date(), detail: h.detail, error: h.error, recordCount: 0 });
 }
 
+async function checkGemini(): Promise<void> {
+  const h = await endpointHealth("main", "gemini");
+  await setSource("gemini", { status: h.status, lastFetchedAt: new Date(), detail: h.detail, error: h.error, recordCount: 0 });
+}
+
 let running: Promise<void> | null = null;
 
 export function refreshAll(force = false): Promise<void> {
@@ -286,6 +300,7 @@ export function refreshAll(force = false): Promise<void> {
     ["aei_exposure", ingestExposure],
     ["aei_usage", () => ingestUsage(force)],
     ["course_catalogue", checkCourseLinks],
+    ["gemini", checkGemini],
     ["runpod_main", () => checkEndpoint("main")],
     ["runpod_light", () => checkEndpoint("light")],
   ];

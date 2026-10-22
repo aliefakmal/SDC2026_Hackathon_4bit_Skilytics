@@ -7,7 +7,7 @@ import { useT, type DictKey } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { AiRoutingPanel } from "@/components/ai-routing-panel";
 
-export type DocType = "external" | "static" | "derived" | "demo" | "user";
+export type DocType = "external" | "static" | "derived" | "service" | "demo" | "user";
 
 /** A fact row. `k` = translated prose, `ref` = verbatim reference identifier (URL, file, field, title), `url` = link. */
 type Row = { label: DictKey; k?: DictKey[]; ref?: string; url?: string };
@@ -69,9 +69,10 @@ const DOCS: Doc[] = [
     { label: "docs.f.limits", k: ["docs.fcc.limits"] },
     { label: "docs.f.license", k: ["docs.fcc.license"], url: "https://github.com/freeCodeCamp/freeCodeCamp/blob/main/LICENSE.md" },
   ] },
-  { id: "runpod", types: ["external", "user"], name: "sources.aiTitle", sourceIds: ["runpod_main", "runpod_light"], ai: true, rows: [
+  { id: "runpod", types: ["service", "user"], name: "sources.aiTitle", sourceIds: ["gemini", "runpod_main", "runpod_light"], ai: true, rows: [
     { label: "docs.f.publisher", ref: "Google Gemini API + RunPod Serverless (vLLM, OpenAI-compatible)" },
-    { label: "docs.f.dataset", url: "https://docs.runpod.io/serverless/vllm/openai-compatibility" },
+    { label: "docs.f.api", url: "https://ai.google.dev/gemini-api/docs/models" },
+    { label: "docs.f.api", url: "https://docs.runpod.io/serverless/vllm/openai-compatibility" },
     { label: "docs.f.method", k: ["docs.ai.checks", "docs.ai.cold", "docs.ai.configured"] },
     { label: "docs.f.limits", k: ["docs.ai.ids", "docs.ai.retrieval"] },
     { label: "docs.f.privacy", k: ["docs.ai.privacy"] },
@@ -101,18 +102,19 @@ const DOCS: Doc[] = [
   ] },
 ];
 
-const TYPES: DocType[] = ["external", "static", "derived", "demo", "user"];
+const TYPES: DocType[] = ["external", "static", "derived", "service", "demo", "user"];
 const CATEGORIES = [
   { key: "market", ids: ["dosm", "aei_usage", "aei_exposure"] },
   { key: "career", ids: ["onet", "riasec", "match"] },
   { key: "learning", ids: ["courses", "freecodecamp", "sdg"] },
-  { key: "infrastructure", ids: ["runpod"] },
+  { key: "aiService", ids: ["runpod"] },
   { key: "privacy", ids: ["demo"] },
 ] as const;
 const TYPE_TONE: Record<DocType, string> = {
   external: "bg-[hsl(var(--maroon-soft))] text-primary",
   static: "bg-muted text-foreground",
   derived: "bg-[hsl(var(--gold-soft))] text-foreground",
+  service: "bg-sky-50 text-sky-900 dark:bg-sky-950 dark:text-sky-200",
   demo: "border border-dashed border-border text-muted-foreground",
   user: "bg-card border border-border text-foreground",
 };
@@ -219,13 +221,13 @@ export function SourceDocumentation({ sources, ai }: { sources: MarketSource[]; 
   const { t } = useT();
   return (
     <Panel className="mt-6" title={t("docs.title")} meta={t("docs.sub")}>
-      <dl className="mb-4 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-5" data-testid="docs-types">
+      <dl className="mb-4 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-3" data-testid="docs-types">
         {TYPES.map((ty) => <div key={ty} className="space-y-1"><dt><TypeTag type={ty} /></dt><dd className="text-muted-foreground">{t(`docs.typeDesc.${ty}` as DictKey)}</dd></div>)}
       </dl>
       <div className="space-y-6">{CATEGORIES.map((category) => (
         <section key={category.key} aria-labelledby={`sources-category-${category.key}`}>
           <h3 id={`sources-category-${category.key}`} className="mb-2 text-sm font-semibold text-primary">{t(`docs.category.${category.key}` as DictKey)}</h3>
-          {category.key === "infrastructure" && <AiRoutingPanel />}
+          {category.key === "aiService" && <AiRoutingPanel />}
           <div className="space-y-2">{category.ids.map((id) => {
             const d = DOCS.find((entry) => entry.id === id)!;
             return <DocItem key={d.id} d={d} live={sources} ai={ai} />;
