@@ -97,7 +97,7 @@ export const en = {
   "err.email_taken": "That email is already registered.", "err.forbidden": "You do not have access to this.",
   "err.guest_token_required": "Guest session missing. Reload the page.", "err.invalid_credentials": "Email or password is incorrect.",
   "err.login_required": "Please log in first.", "err.plan_required": "Build a pathway first.",
-  "err.profile_not_found": "Profile not found.", "err.riasec_incomplete": "Answer more questions first.",
+  "err.profile_not_found": "Profile not found.", "err.riasec_incomplete": "Answer all 30 interest questions first.",
   "err.riasec_required": "Complete the RIASEC test first.", "err.role_not_found": "Role not found.",
   "err.wrong_role": "This account belongs to a different portal.", "err.ai_timeout": "The AI took too long to respond.",
   "guest.body": "Your work is saved on this device only. Sign up to keep it.",

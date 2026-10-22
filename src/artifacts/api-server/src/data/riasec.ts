@@ -1,37 +1,39 @@
-// Self-authored RIASEC interest screener (5 items per type, 1-5 Likert).
-// This is a screening tool inspired by Holland's theory, not the O*NET
-// Interest Profiler, and is not a validated psychometric instrument.
+// O*NET Mini Interest Profiler, Appendix A: https://www.onetcenter.org/dl_files/Mini-IP.pdf
+// Source: U.S. Department of Labor/Employment and Training Administration.
+// Used under the O*NET Tools Developer License: https://www.onetcenter.org/license_tools.html
+// Malay and Mandarin translations are by Skilytics and are not independently validated.
+// IDs 101-130 distinguish these items from the former self-authored 1-30 questionnaire.
+// USDOL/ETA has not approved, endorsed, or tested these modifications.
 export type RiasecType = "R" | "I" | "A" | "S" | "E" | "C";
-
 export const RIASEC_QUESTIONS: { id: number; type: RiasecType; text: string; textMs: string; textZh: string }[] = [
-  { id: 1, type: "R", text: "Repair or assemble machines and equipment", textMs: "Membaiki atau memasang mesin dan peralatan", textZh: "维修或组装机器和设备" },
-  { id: 2, type: "I", text: "Analyse data to find out why something happened", textMs: "Menganalisis data untuk mengetahui punca sesuatu berlaku", textZh: "分析数据，找出事情发生的原因" },
-  { id: 3, type: "A", text: "Design posters, videos or visual content", textMs: "Mereka poster, video atau kandungan visual", textZh: "设计海报、视频或视觉内容" },
-  { id: 4, type: "S", text: "Teach or coach someone to learn a new skill", textMs: "Mengajar atau membimbing seseorang mempelajari kemahiran baharu", textZh: "教导或指导他人学习新技能" },
-  { id: 5, type: "E", text: "Convince people to buy a product or support an idea", textMs: "Meyakinkan orang untuk membeli produk atau menyokong idea", textZh: "说服别人购买产品或支持某个想法" },
-  { id: 6, type: "C", text: "Keep records, files and spreadsheets organised and accurate", textMs: "Memastikan rekod, fail dan hamparan sentiasa tersusun dan tepat", textZh: "让记录、文件和电子表格保持整齐准确" },
-  { id: 7, type: "R", text: "Work outdoors or on a site with tools", textMs: "Bekerja di luar atau di tapak menggunakan alatan", textZh: "在户外或工地使用工具工作" },
-  { id: 8, type: "I", text: "Solve complex puzzles or technical problems", textMs: "Menyelesaikan teka-teki atau masalah teknikal yang kompleks", textZh: "解决复杂的谜题或技术问题" },
-  { id: 9, type: "A", text: "Write stories, articles or scripts", textMs: "Menulis cerita, artikel atau skrip", textZh: "撰写故事、文章或剧本" },
-  { id: 10, type: "S", text: "Help people who are facing personal difficulties", textMs: "Membantu orang yang menghadapi kesulitan peribadi", textZh: "帮助正面临个人困难的人" },
-  { id: 11, type: "E", text: "Lead a team to hit a target", textMs: "Memimpin pasukan untuk mencapai sasaran", textZh: "带领团队达成目标" },
-  { id: 12, type: "C", text: "Follow clear procedures and checklists", textMs: "Mengikut prosedur dan senarai semak yang jelas", textZh: "按照清晰的流程和检查清单做事" },
-  { id: 13, type: "R", text: "Install wiring, solar panels or electrical systems", textMs: "Memasang pendawaian, panel solar atau sistem elektrik", textZh: "安装电线、太阳能板或电气系统" },
-  { id: 14, type: "I", text: "Read research and test new ideas", textMs: "Membaca kajian dan menguji idea baharu", textZh: "阅读研究资料并测试新想法" },
-  { id: 15, type: "A", text: "Come up with original concepts for a brand or product", textMs: "Menghasilkan konsep asli untuk jenama atau produk", textZh: "为品牌或产品构思原创概念" },
-  { id: 16, type: "S", text: "Care for patients, children or the elderly", textMs: "Menjaga pesakit, kanak-kanak atau warga emas", textZh: "照顾病人、儿童或长者" },
-  { id: 17, type: "E", text: "Start and run my own business", textMs: "Memulakan dan mengendalikan perniagaan sendiri", textZh: "创办并经营自己的生意" },
-  { id: 18, type: "C", text: "Check documents and numbers for errors", textMs: "Menyemak dokumen dan angka untuk mencari kesilapan", textZh: "检查文件和数字中的错误" },
-  { id: 19, type: "R", text: "Operate machinery or a production line", textMs: "Mengendalikan jentera atau barisan pengeluaran", textZh: "操作机械或生产线" },
-  { id: 20, type: "I", text: "Write code or build a model to predict outcomes", textMs: "Menulis kod atau membina model untuk meramal hasil", textZh: "编写代码或建立模型来预测结果" },
-  { id: 21, type: "A", text: "Perform, present or express ideas creatively", textMs: "Membuat persembahan atau meluahkan idea secara kreatif", textZh: "表演、演讲或以创意方式表达想法" },
-  { id: 22, type: "S", text: "Work in a team where people support each other", textMs: "Bekerja dalam pasukan yang saling menyokong", textZh: "在互相支持的团队中工作" },
-  { id: 23, type: "E", text: "Negotiate deals or contracts", textMs: "Merunding urus niaga atau kontrak", textZh: "洽谈交易或合同" },
-  { id: 24, type: "C", text: "Manage inventory, invoices or schedules", textMs: "Menguruskan inventori, invois atau jadual", textZh: "管理库存、发票或日程" },
-  { id: 25, type: "R", text: "Build or fix things with my hands", textMs: "Membina atau membaiki sesuatu dengan tangan sendiri", textZh: "亲手制作或修理东西" },
-  { id: 26, type: "I", text: "Investigate how systems or the natural world work", textMs: "Menyiasat cara sistem atau alam semula jadi berfungsi", textZh: "探究系统或自然界如何运作" },
-  { id: 27, type: "A", text: "Design user interfaces or experiences", textMs: "Mereka antara muka atau pengalaman pengguna", textZh: "设计用户界面或用户体验" },
-  { id: 28, type: "S", text: "Resolve conflicts and listen to others' concerns", textMs: "Menyelesaikan konflik dan mendengar masalah orang lain", textZh: "化解冲突并倾听他人的顾虑" },
-  { id: 29, type: "E", text: "Pitch ideas to managers or clients", textMs: "Membentangkan idea kepada pengurus atau pelanggan", textZh: "向经理或客户提出想法" },
-  { id: 30, type: "C", text: "Ensure work complies with rules and standards", textMs: "Memastikan kerja mematuhi peraturan dan piawaian", textZh: "确保工作符合规章和标准" },
+  { id: 101, type: "R", text: "Build kitchen cabinets", textMs: "Membina kabinet dapur", textZh: "制作厨房橱柜" },
+  { id: 102, type: "I", text: "Develop a new medicine", textMs: "Membangunkan ubat baharu", textZh: "研发新药" },
+  { id: 103, type: "A", text: "Write books or plays", textMs: "Menulis buku atau skrip teater", textZh: "写书或剧本" },
+  { id: 104, type: "S", text: "Help people with personal or emotional problems", textMs: "Membantu orang yang menghadapi masalah peribadi atau emosi", textZh: "帮助有个人或情绪困扰的人" },
+  { id: 105, type: "E", text: "Manage a department within a large company", textMs: "Mengurus jabatan dalam syarikat besar", textZh: "管理大公司中的一个部门" },
+  { id: 106, type: "C", text: "Install software across computers on a large network", textMs: "Memasang perisian pada komputer dalam rangkaian besar", textZh: "为大型网络中的计算机安装软件" },
+  { id: 107, type: "R", text: "Repair household appliances", textMs: "Membaiki peralatan rumah", textZh: "维修家用电器" },
+  { id: 108, type: "I", text: "Study ways to reduce water pollution", textMs: "Mengkaji cara mengurangkan pencemaran air", textZh: "研究减少水污染的方法" },
+  { id: 109, type: "A", text: "Compose or arrange music", textMs: "Menggubah atau menyusun muzik", textZh: "作曲或编曲" },
+  { id: 110, type: "S", text: "Give career guidance to people", textMs: "Memberi bimbingan kerjaya kepada orang ramai", textZh: "为他人提供职业指导" },
+  { id: 111, type: "E", text: "Start your own business", textMs: "Memulakan perniagaan sendiri", textZh: "创办自己的企业" },
+  { id: 112, type: "C", text: "Operate a calculator", textMs: "Menggunakan kalkulator", textZh: "使用计算器" },
+  { id: 113, type: "R", text: "Assemble electronic parts", textMs: "Memasang komponen elektronik", textZh: "组装电子零件" },
+  { id: 114, type: "I", text: "Conduct chemical experiments", textMs: "Menjalankan eksperimen kimia", textZh: "进行化学实验" },
+  { id: 115, type: "A", text: "Create special effects for movies", textMs: "Menghasilkan kesan khas untuk filem", textZh: "为电影制作特效" },
+  { id: 116, type: "S", text: "Perform rehabilitation therapy", textMs: "Menjalankan terapi pemulihan", textZh: "进行康复治疗" },
+  { id: 117, type: "E", text: "Negotiate business contracts", textMs: "Merunding kontrak perniagaan", textZh: "谈判商业合同" },
+  { id: 118, type: "C", text: "Keep shipping and receiving records", textMs: "Menyimpan rekod penghantaran dan penerimaan barang", textZh: "保存发货和收货记录" },
+  { id: 119, type: "R", text: "Drive a truck to deliver packages to offices and homes", textMs: "Memandu trak untuk menghantar bungkusan ke pejabat dan rumah", textZh: "驾驶卡车向办公室和住家递送包裹" },
+  { id: 120, type: "I", text: "Examine blood samples using a microscope", textMs: "Memeriksa sampel darah menggunakan mikroskop", textZh: "用显微镜检查血液样本" },
+  { id: 121, type: "A", text: "Paint sets for plays", textMs: "Melukis set pentas untuk pementasan teater", textZh: "为舞台剧绘制布景" },
+  { id: 122, type: "S", text: "Do volunteer work at a non-profit organization", textMs: "Menjadi sukarelawan di pertubuhan bukan untung", textZh: "在非营利组织做志愿工作" },
+  { id: 123, type: "E", text: "Market a new line of clothing", textMs: "Memasarkan rangkaian pakaian baharu", textZh: "推广新的服装系列" },
+  { id: 124, type: "C", text: "Inventory supplies using a hand-held computer", textMs: "Merekod inventori bekalan menggunakan komputer genggam", textZh: "使用手持电脑清点物资" },
+  { id: 125, type: "R", text: "Test the quality of parts before shipment", textMs: "Menguji kualiti komponen sebelum penghantaran", textZh: "在发货前检测零件质量" },
+  { id: 126, type: "I", text: "Develop a way to better predict the weather", textMs: "Membangunkan cara untuk meramal cuaca dengan lebih tepat", textZh: "开发更准确的天气预测方法" },
+  { id: 127, type: "A", text: "Write scripts for movies or television shows", textMs: "Menulis skrip untuk filem atau rancangan televisyen", textZh: "为电影或电视节目编写剧本" },
+  { id: 128, type: "S", text: "Teach a high-school class", textMs: "Mengajar kelas sekolah menengah", textZh: "教授高中课程" },
+  { id: 129, type: "E", text: "Sell merchandise at a department store", textMs: "Menjual barangan di gedung serbaneka", textZh: "在百货商店销售商品" },
+  { id: 130, type: "C", text: "Stamp, sort, and distribute mail for an organization", textMs: "Mengecap, mengisih dan mengedarkan surat untuk sesebuah organisasi", textZh: "为机构盖章、分类和分发邮件" },
 ];

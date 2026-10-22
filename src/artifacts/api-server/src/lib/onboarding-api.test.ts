@@ -64,6 +64,7 @@ test("both individual paths validate prerequisites, preserve state and reject cr
     assert.equal(verified.status, 200); assert.equal(verified.body.hrdcEligibilityStatus, "unknown");
     assert.equal(verified.body.hrdcEligible, false);
     assert.equal((await request(`/profiles/${id}/riasec`, "POST", { answers: [...answers, answers[0]] })).status, 400);
+    assert.equal((await request(`/profiles/${id}/riasec`, "POST", { answers: answers.slice(0, 29) })).body.error, "riasec_incomplete");
     const scored = await request(`/profiles/${id}/riasec`, "POST", { answers });
     assert.equal(scored.body.riasecCode, "SRI"); assert.equal(scored.body.riasecScores.S, 5);
     assert.deepEqual((await request(`/profiles/${id}`)).body.riasecAnswers, answers);

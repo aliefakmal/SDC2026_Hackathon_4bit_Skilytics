@@ -177,6 +177,9 @@ test("historical work entries are not presented as the current role", () => {
   assert.equal(result.evidence.find((entry) => entry.field === "currentRole")?.source, "no_evidence");
 });
 test("RIASEC is deterministic, balanced, duplicate-safe and independent of CV text", () => {
+  assert.equal(RIASEC_QUESTIONS.length, 30);
+  assert.deepEqual(["R", "I", "A", "S", "E", "C"].map((type) => RIASEC_QUESTIONS.filter((q) => q.type === type).length), [5, 5, 5, 5, 5, 5]);
+  assert.ok(RIASEC_QUESTIONS.every((q) => q.text && q.textMs && q.textZh));
   const answers = RIASEC_QUESTIONS.map((q) => ({ questionId: q.id, value: q.type === "S" ? 5 : 3 }));
   const out = scoreRiasec(answers);
   assert.equal(out.code, "SRI"); assert.equal(out.scores.S, 5);
@@ -184,6 +187,7 @@ test("RIASEC is deterministic, balanced, duplicate-safe and independent of CV te
   assert.throws(() => scoreRiasec([...answers, answers[0]]), /invalid_input/);
   assert.throws(() => scoreRiasec(answers.map((a) => ({ ...a, questionId: 999 }))), /invalid_input/);
   assert.throws(() => scoreRiasec(answers.slice(0, 17)), /riasec_incomplete/);
+  assert.throws(() => scoreRiasec(answers.slice(0, 29)), /riasec_incomplete/);
   assert.throws(() => scoreRiasec(answers.map((a) => ({ ...a, value: 6 }))), /invalid_input/);
 });
 test("official CSV preserves quoted commas, newlines and escaped quotations", () => {

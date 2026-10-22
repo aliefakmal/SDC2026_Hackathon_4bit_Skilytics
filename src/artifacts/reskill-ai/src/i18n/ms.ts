@@ -99,7 +99,7 @@ export const ms: Record<DictKey, string> = {
   "err.email_taken": "E-mel itu sudah didaftarkan.", "err.forbidden": "Anda tiada akses untuk ini.",
   "err.guest_token_required": "Sesi tetamu hilang. Muat semula halaman.", "err.invalid_credentials": "E-mel atau kata laluan salah.",
   "err.login_required": "Sila log masuk dahulu.", "err.plan_required": "Bina laluan dahulu.",
-  "err.profile_not_found": "Profil tidak dijumpai.", "err.riasec_incomplete": "Jawab lebih banyak soalan dahulu.",
+  "err.profile_not_found": "Profil tidak dijumpai.", "err.riasec_incomplete": "Jawab kesemua 30 soalan minat dahulu.",
   "err.riasec_required": "Lengkapkan ujian RIASEC dahulu.", "err.role_not_found": "Peranan tidak dijumpai.",
   "err.wrong_role": "Akaun ini milik portal lain.", "err.ai_timeout": "AI mengambil masa terlalu lama.",
   "guest.body": "Kerja anda disimpan pada peranti ini sahaja. Daftar untuk menyimpannya.",

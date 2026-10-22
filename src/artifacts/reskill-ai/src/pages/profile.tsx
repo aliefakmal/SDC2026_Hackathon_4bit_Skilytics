@@ -430,7 +430,7 @@ function RiasecPanel({ p }: { p: Profile }) {
     },
   });
   const total = qs.data?.length ?? 0;
-  const done = Object.keys(ans).length;
+  const done = (qs.data ?? []).filter((q) => ans[q.id] >= 1 && ans[q.id] <= 5).length;
   const scores = p.riasecScores;
   if (scores && !retake) {
     const max = Math.max(1, ...RIASEC_KEYS.map((k) => scores[k]));
@@ -470,9 +470,9 @@ function RiasecPanel({ p }: { p: Profile }) {
             ))}
           </ol>
           <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
-            {done < 18 && <span className="text-xs text-muted-foreground">{t("riasec.min", { n: 18 - done })}</span>}
+            {done < total && <span className="text-xs text-muted-foreground">{t("ob.holland.all", { n: total })}</span>}
             {retake && <Button variant="ghost" className="min-h-11" onClick={() => setRetake(false)}>{t("common.cancel")}</Button>}
-            <Button className="min-h-11" disabled={done < 18 || sub.isPending} data-testid="button-submit-riasec"
+            <Button className="min-h-11" disabled={!total || done < total || sub.isPending} data-testid="button-submit-riasec"
               onClick={() => sub.mutate({ id: p.id, data: { answers: Object.entries(ans).map(([k, v]) => ({ questionId: Number(k), value: v })) } })}>
               {sub.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t("riasec.submit", { n: done, total })}
             </Button>

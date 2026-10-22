@@ -1241,6 +1241,7 @@ function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; 
   });
   const saveRef = useRef(upd.mutate);
   saveRef.current = upd.mutate;
+  const questionIds = new Set((qs.data ?? []).map((q) => q.id));
   const timer = useRef<number | undefined>(undefined);
   const first = useRef(true);
   useEffect(() => {
@@ -1248,10 +1249,10 @@ function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; 
     if (first.current) { first.current = false; return; }
     window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => {
-      saveRef.current({ id: p.id, data: { riasecAnswers: Object.entries(ans).map(([k, v]) => ({ questionId: Number(k), value: v })) } });
+      saveRef.current({ id: p.id, data: { riasecAnswers: Object.entries(ans).filter(([k]) => questionIds.has(Number(k))).map(([k, v]) => ({ questionId: Number(k), value: v })) } });
     }, 1200);
     return () => window.clearTimeout(timer.current);
-  }, [ans, scope, p.id]);
+  }, [ans, scope, p.id, qs.data]);
   const sub = useSubmitRiasec({
     mutation: {
       onSuccess: async (np) => {
@@ -1263,12 +1264,15 @@ function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; 
     },
   });
   const total = qs.data?.length ?? 0;
-  const done = (qs.data ?? []).filter((x) => ans[x.id]).length;
+  const done = (qs.data ?? []).filter((x) => ans[x.id] >= 1 && ans[x.id] <= 5).length;
   const valid = new Set((qs.data ?? []).map((x) => x.id));
   const submit = () => sub.mutate({ id: p.id, data: { answers: Object.entries(ans).filter(([k]) => valid.has(Number(k))).map(([k, v]) => ({ questionId: Number(k), value: v })) } });
   return (
     <>
       <StepHead title={t("ob.holland.title")} sub={t("ob.holland.sub")} />
+      <p className="mb-3 text-xs text-muted-foreground">
+        {t("ob.holland.source")} <a className="underline" href="https://www.onetcenter.org/license_tools.html" target="_blank" rel="noopener noreferrer">O*NET® Interest Profiler / Developer License</a>
+      </p>
       {qs.isLoading ? <Rows n={6} /> : qs.isError ? <ErrorBox error={qs.error} retry={() => qs.refetch()} /> : !total ? <ErrorBox message={t("riasec.none")} /> : (
         <>
           <div className="sticky top-0 z-10 -mx-2 mb-3 rounded-xl bg-card/95 px-2 py-2 backdrop-blur">

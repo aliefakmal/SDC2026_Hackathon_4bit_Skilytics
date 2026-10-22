@@ -99,7 +99,7 @@ export const zh: Record<DictKey, string> = {
   "err.email_taken": "该邮箱已注册。", "err.forbidden": "你无权访问此内容。",
   "err.guest_token_required": "访客会话丢失，请刷新页面。", "err.invalid_credentials": "邮箱或密码不正确。",
   "err.login_required": "请先登录。", "err.plan_required": "请先生成路径。",
-  "err.profile_not_found": "未找到资料。", "err.riasec_incomplete": "请先回答更多问题。",
+  "err.profile_not_found": "未找到资料。", "err.riasec_incomplete": "请先回答全部 30 道兴趣题。",
   "err.riasec_required": "请先完成 RIASEC 测试。", "err.role_not_found": "未找到职位。",
   "err.wrong_role": "此账户属于其他门户。", "err.ai_timeout": "AI 响应超时。",
   "guest.body": "你的内容仅保存在此设备上。注册即可保留。",
