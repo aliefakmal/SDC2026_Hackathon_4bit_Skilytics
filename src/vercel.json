@@ -31,8 +31,13 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
+      "destination": "https://sdc2026-hackathon-4bit-skilytics.onrender.com/api/$1"
+    },
+    {
+      "source": "/((?!api/|assets/|.*\\.[a-zA-Z0-9]+$).*)",
       "destination": {
-        "service": "api-server"
+        "service": "reskill-ai",
+        "path": "/index.html"
       }
     },
     {

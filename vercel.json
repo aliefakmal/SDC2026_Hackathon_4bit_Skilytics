@@ -7,7 +7,7 @@
       "destination": "https://sdc2026-hackathon-4bit-skilytics.onrender.com/api/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/|assets/|.*\\.[a-zA-Z0-9]+$).*)",
       "destination": "/index.html"
     }
   ]
