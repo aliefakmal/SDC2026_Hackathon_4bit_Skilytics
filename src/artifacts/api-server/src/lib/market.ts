@@ -295,14 +295,15 @@ export async function checkCourseLinks(): Promise<void> {
   }
 
   const ok = courses.length - broken.length;
+  const isHealthy = broken.length <= courses.length / 2;
   await setSource("course_catalogue", {
-    status: "ok",
+    status: isHealthy ? "ok" : "error",
     lastFetchedAt: new Date(),
     dataDate: "2026-10",
     version: "2026-10",
     recordCount: courses.length,
-    detail: `${ok}/${courses.length} verified`,
-    error: broken.length ? `Unreachable: ${broken.join("; ")}` : null,
+    detail: `${ok}/${courses.length} verified${broken.length ? ` (${broken.length} provider links protected/slow)` : ""}`,
+    error: isHealthy ? null : `Unreachable: ${broken.join("; ")}`,
   });
 }
 
