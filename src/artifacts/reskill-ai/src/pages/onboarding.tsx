@@ -479,6 +479,10 @@ function CvStep({
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const handleAtsConfirm = () => {
+    if (!consent) {
+      promptConsent();
+      return;
+    }
     setShowAtsNotice(false);
     if (pendingFile) {
       const f = pendingFile;
@@ -674,10 +678,6 @@ function CvStep({
         type="button"
         disabled={up.isPending}
         onClick={() => {
-          if (!consent) {
-            promptConsent();
-            return;
-          }
           setPendingFile(null);
           setShowAtsNotice(true);
         }}
@@ -689,10 +689,6 @@ function CvStep({
           setDrag(false);
           const f = e.dataTransfer.files[0];
           if (!f) return;
-          if (!consent) {
-            promptConsent();
-            return;
-          }
           setPendingFile(f);
           setShowAtsNotice(true);
         }}
@@ -730,6 +726,41 @@ function CvStep({
               <span>{t("ob.cv.atsTip3")}</span>
             </div>
           </div>
+
+          <label className={cn(
+            "my-1 flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 text-xs leading-relaxed transition-all",
+            highlightConsent
+              ? "border-primary bg-[hsl(var(--maroon-soft))] ring-2 ring-primary"
+              : "border-border/80 bg-background hover:border-primary/50"
+          )}>
+            <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
+              <Checkbox
+                checked={consent}
+                onCheckedChange={(v) => {
+                  setConsent(v === true);
+                  if (v === true) {
+                    setHighlightConsent(false);
+                    setLocal(null);
+                  }
+                }}
+                className={cn(
+                  "h-4 w-4 rounded-md transition-all",
+                  highlightConsent && "border-primary ring-2 ring-primary ring-offset-1"
+                )}
+                data-testid="checkbox-ats-consent"
+              />
+            </div>
+            <div className="min-w-0">
+              <span className={cn(highlightConsent ? "font-semibold text-primary" : "text-foreground")}>
+                {t("ob.cv.consent")}
+              </span>
+              {highlightConsent && (
+                <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-primary">
+                  {t("ob.cv.consentNeeded")}
+                </p>
+              )}
+            </div>
+          </label>
 
           <DialogFooter className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button

@@ -233,6 +233,10 @@ function CvPanel({ p }: { p: Profile }) {
   };
 
   const handleAtsConfirm = () => {
+    if (!consent) {
+      toast({ title: t("ob.cv.consentNeeded"), variant: "destructive" });
+      return;
+    }
     setShowAtsNotice(false);
     if (pendingFile) {
       const f = pendingFile;
@@ -254,10 +258,6 @@ function CvPanel({ p }: { p: Profile }) {
         <Checkbox checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5" data-testid="checkbox-cv-consent" /><span>{t("ob.cv.consent")}</span>
       </label>
       <button type="button" onClick={() => {
-        if (!consent) {
-          toast({ title: t("ob.cv.consentNeeded"), variant: "destructive" });
-          return;
-        }
         setPendingFile(null);
         setShowAtsNotice(true);
       }} disabled={up.isPending} data-testid="button-upload-cv"
@@ -266,10 +266,6 @@ function CvPanel({ p }: { p: Profile }) {
           setDrag(false);
           const f = e.dataTransfer.files[0];
           if (!f) return;
-          if (!consent) {
-            toast({ title: t("ob.cv.consentNeeded"), variant: "destructive" });
-            return;
-          }
           setPendingFile(f);
           setShowAtsNotice(true);
         }}
@@ -307,6 +303,11 @@ function CvPanel({ p }: { p: Profile }) {
               <span>{t("ob.cv.atsTip3")}</span>
             </div>
           </div>
+
+          <label className="my-1 flex cursor-pointer items-start gap-2.5 rounded-xl border border-border/80 bg-background p-3 text-xs leading-relaxed transition-all hover:border-primary/50">
+            <Checkbox checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5" data-testid="checkbox-ats-profile-consent" />
+            <span>{t("ob.cv.consent")}</span>
+          </label>
 
           <DialogFooter className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
