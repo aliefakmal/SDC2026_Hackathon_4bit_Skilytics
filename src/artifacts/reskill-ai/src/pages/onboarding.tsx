@@ -1314,7 +1314,8 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
   // The server caches by inputs, so pressing again after a refresh reuses the cached reply.
   const [fresh, setFresh] = useState<{ key: string; ins: AgentInsight } | null>(null);
   const [since, setSince] = useState<number | null>(null);
-  const scoreKey = scores ? `${code}:${RIASEC.map((k) => scores[k].toFixed(2)).join(",")}` : "";
+  const [selectedLetter, setSelectedLetter] = useState(0);
+  const scoreKey = scores ? `${code}:${RIASEC.map((k) => scores[k].toFixed(2)).join(",")}:${p.cvExtractionKey ?? ""}` : "";
   const run = useRunProfileAgent({
     mutation: {
       onSuccess: (r) => { setSince(null); setFresh({ key: scoreKey, ins: r }); },
@@ -1323,14 +1324,15 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
   });
   const insight = fresh && fresh.key === scoreKey && fresh.ins.lang === lang ? fresh.ins : null;
   const explain = () => { setSince(Date.now()); run.mutate({ id: p.id, data: { agent: "holland", lang } }); };
-  const verified = p.verified ? (p.cvEvidence ?? []).filter((e) => e.source !== "no_evidence" && !!e.quote) : [];
+  const selectedType = code[selectedLetter] ?? code[0];
   return (
     <>
       <div className="mb-6 flex flex-wrap items-end gap-4">
-        <div className="tnum flex gap-1" aria-hidden>
+        <div className="tnum flex gap-1" role="group" aria-label={t("ob.results.exploreCode")}>
           {code.split("").slice(0, 3).map((c, i) => (
-            <motion.span key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.12 }}
-              className={cn("flex h-16 w-14 items-center justify-center rounded-2xl text-3xl font-extrabold", i === 0 ? "bg-primary text-primary-foreground" : "bg-[hsl(var(--gold-soft))] text-primary")}>{c}</motion.span>
+            <motion.button type="button" key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.12 }}
+              onClick={() => setSelectedLetter(i)} aria-pressed={selectedLetter === i} aria-label={`${c}: ${tk("riasec", c)}`}
+              className={cn("flex h-16 w-14 items-center justify-center rounded-2xl text-3xl font-extrabold transition-transform hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary", selectedLetter === i ? "bg-primary text-primary-foreground" : "bg-[hsl(var(--gold-soft))] text-primary")}>{c}</motion.button>
           ))}
         </div>
         <div className="min-w-0">
@@ -1338,6 +1340,11 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
           <p className="mt-1 text-sm text-muted-foreground">{t("ob.results.sub")}</p>
         </div>
       </div>
+      {selectedType && selectedType !== "-" && <div className="mb-6 rounded-2xl border border-primary/25 bg-card p-4" data-testid="holland-letter-detail">
+        <p className="text-xs font-semibold uppercase tracking-wide text-accent">{t("ob.results.exploreCode")}</p>
+        <p className="mt-1 font-bold">{selectedType} · {tk("riasec", selectedType)}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t(`ob.results.type.${selectedType}` as Parameters<typeof t>[0])}</p>
+      </div>}
       <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
         <div>
           <h2 className="text-sm font-bold uppercase tracking-wider text-accent">{t("ob.results.scores")}</h2>
@@ -1352,15 +1359,13 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
             </div>
           ) : <p className="mt-3 text-sm text-muted-foreground">-</p>}
           <p className="mt-3 text-[11px] text-muted-foreground">{t("riasec.disclaimer")}</p>
-          <h2 className="mt-6 text-sm font-bold uppercase tracking-wider text-accent">{t("ob.results.verified")}</h2>
-          {!verified.length ? <p className="mt-3 text-sm text-muted-foreground">{t("ob.results.none")}</p> : <EvidenceList ev={verified} current={(f) => (f in p ? String((p as unknown as Record<string, unknown>)[f] ?? "") : null)} />}
         </div>
         <div className="rounded-2xl border border-accent/40 bg-[hsl(var(--gold-soft))]/40 p-4 md:p-5">
           <h2 className="flex items-center gap-2 font-bold"><Sparkles className="h-4 w-4 text-accent" />{t("ob.results.explainTitle")}</h2>
           <p className="mt-1 text-xs text-muted-foreground">{t("ob.results.explainNote")}</p>
           <div className="mt-4">
             {insight ? (
-              <div data-testid="text-holland-insight">
+              <div data-testid="text-holland-insight" aria-live="polite" className="rounded-xl border border-accent/30 bg-card p-4">
                 <div className="mb-2 flex flex-wrap gap-1.5 text-[11px]">
                   <span className="rounded-full border border-border bg-card px-2 py-0.5" data-testid="text-insight-lang">{t("ob.results.lang", { lang: LANG_NAME[insight.lang as Lang] ?? insight.lang })}</span>
                   {insight.cached && <span className="rounded-full bg-card px-2 py-0.5 font-semibold">{t("common.cached")}</span>}

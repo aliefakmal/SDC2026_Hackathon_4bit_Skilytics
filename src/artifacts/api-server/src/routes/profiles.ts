@@ -449,10 +449,9 @@ router.post("/profiles/:id/insights", async (req, res) => {
       return;
     }
     ctx["riasec"] = { skor: p.riasecScores, kod: p.riasecCode };
-    ctx["jawapanSebenar"] = p.riasecAnswers;
-    ctx["profilDisahkan"] = p.verified;
-    ctx["buktiCv"] = p.cvEvidence;
-    ctx["padananTeratas"] = top;
+    delete ctx.profil;
+    delete ctx.kemahiran;
+    ctx["buktiCv"] = (p.cvEvidence ?? []).filter((e) => e.quote && e.source !== "no_evidence").slice(0, 3);
   }
   if (agent === "profiler" || agent === "fitter") {
     ctx["riasec"] = p.riasecScores ? { skor: p.riasecScores, kod: p.riasecCode } : null;
@@ -469,7 +468,7 @@ router.post("/profiles/:id/insights", async (req, res) => {
   }
   if (targetRole) ctx["peranSasaran"] = targetRole.title;
 
-  const inputHash = hashInput(agent, lang, ctx, agentRoutes().find((route) => route.agent === agent));
+  const inputHash = hashInput(agent, lang, ctx, agent === "holland" ? "eli5-v1" : null, agentRoutes().find((route) => route.agent === agent));
   if (!body.refresh) {
     const [cached] = await db
       .select()
