@@ -44,7 +44,7 @@ function cfg() {
 
   const geminiKey = process.env["GEMINI_API_KEY"]?.trim();
   let geminiModel = process.env["GEMINI_MODEL"]?.trim() || "gemini-2.5-flash";
-  if (geminiModel === "gemini-2.0-flash" || geminiModel === "gemini-3.8-flash") {
+  if (geminiModel === "gemini-2.0-flash" || geminiModel === "gemini-3.8-flash" || geminiModel === "gemini-flash-latest") {
     geminiModel = "gemini-2.5-flash";
   }
 
@@ -385,23 +385,25 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
   if (c.provider === "gemini") {
     if (!c.geminiKey) throw new AiNotConnectedError("Google Gemini API key not configured. Set GEMINI_API_KEY.");
     const requestStartedAt = performance.now();
-    let res: Response;
-    const parts: any[] = [{ text: user }];
+    const parts: any[] = [];
     if (images?.length) {
       for (const img of images) {
         parts.push({
-          inline_data: {
-            mime_type: img.mediaType,
+          inlineData: {
+            mimeType: img.mediaType,
             data: img.base64,
           },
         });
       }
     }
+    parts.push({ text: user });
+
     const isJsonTask = system.includes("JSON") || system.includes("json");
-    const candidateModels = Array.from(new Set([c.geminiModel, "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-flash-latest"]));
+    const candidateModels = Array.from(new Set([c.geminiModel, "gemini-2.5-flash", "gemini-2.5-flash-lite"]));
     let lastError: Error | null = null;
     let successfulModel = c.geminiModel;
     let content = "";
+    const modelErrors: string[] = [];
 
     for (const model of candidateModels) {
       successfulModel = model;
@@ -422,7 +424,7 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
                 ...(isJsonTask ? { responseMimeType: "application/json" } : {}),
               },
             }),
-            signal: AbortSignal.timeout(images ? 35_000 : 25_000),
+            signal: AbortSignal.timeout(images ? 25_000 : 20_000),
           });
           if (res.status === 429 && attempt < 1) {
             await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -434,7 +436,9 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
             await new Promise((resolve) => setTimeout(resolve, 1000));
             continue;
           }
-          lastError = err instanceof Error ? err : new Error(String(err));
+          const detail = err instanceof Error ? err.message : String(err);
+          modelErrors.push(`${model} (Timeout/Error): ${detail}`);
+          lastError = err instanceof Error ? err : new Error(detail);
         }
       }
 
@@ -442,8 +446,9 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
 
       if (!res.ok) {
         const errTxt = await res.text().catch(() => "");
+        modelErrors.push(`${model} (HTTP ${res.status}): ${errTxt}`);
         if (res.status === 429 || res.status === 503 || res.status === 404 || res.status === 500) {
-          lastError = new Error(`Model ${model} returned HTTP ${res.status}: ${errTxt}`);
+          lastError = new Error(`Gemini candidates failed: ${modelErrors.join(" | ")}`);
           continue;
         }
         throw new Error(`Google Gemini (${model}) request failed with HTTP ${res.status}: ${errTxt}`);
