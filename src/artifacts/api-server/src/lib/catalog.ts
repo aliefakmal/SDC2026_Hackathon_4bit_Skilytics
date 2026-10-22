@@ -79,9 +79,7 @@ export async function loadRoles(): Promise<RoleView[]> {
 }
 
 export async function loadCourses(): Promise<CourseView[]> {
-  // No provider feed currently verifies price, duration, claimability or availability.
-  // Retain seed rows for backwards-compatible saved/demo plans, never publish them as facts.
-  return [];
+  return loadDemoCourses();
 }
 
 export async function loadDemoCourses(): Promise<CourseView[]> {

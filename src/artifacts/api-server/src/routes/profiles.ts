@@ -443,11 +443,12 @@ router.post("/profiles/:id/insights", async (req, res) => {
     res.json(insightToApi(row));
   } catch (err) {
     if (err instanceof AiNotConnectedError) {
-      res.status(503).json({ error: "ai_not_connected" });
+      res.status(503).json({ error: "ai_not_connected", detail: err.message });
       return;
     }
-    req.log.error({ err, agent }, "Agent run failed");
-    res.status(502).json({ error: err instanceof AiTimeoutError ? "ai_timeout" : "ai_failed" });
+    const detail = err instanceof Error ? err.message : String(err);
+    req.log.error({ err, agent, detail }, "Agent run failed");
+    res.status(502).json({ error: err instanceof AiTimeoutError ? "ai_timeout" : "ai_failed", detail });
   }
 });
 

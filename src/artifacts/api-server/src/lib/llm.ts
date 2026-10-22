@@ -398,38 +398,54 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
       }
     }
     const isJsonTask = system.includes("JSON") || system.includes("json");
-    try {
-      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(c.geminiModel)}:generateContent?key=${encodeURIComponent(c.geminiKey)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: system }],
-          },
-          contents: [{ parts }],
-          generationConfig: {
-            temperature: images ? 0.1 : 0.2,
-            maxOutputTokens: 8192,
-            ...(isJsonTask ? { responseMimeType: "application/json" } : {}),
-          },
-        }),
-        signal: AbortSignal.timeout(60_000),
-      });
-    } catch (err) {
-      if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) {
-        throw new AiTimeoutError("Google Gemini request timed out.");
+    const maxRetries = 2;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(c.geminiModel)}:generateContent?key=${encodeURIComponent(c.geminiKey)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            system_instruction: {
+              parts: [{ text: system }],
+            },
+            contents: [{ parts }],
+            generationConfig: {
+              temperature: images ? 0.1 : 0.2,
+              maxOutputTokens: 8192,
+              ...(isJsonTask ? { responseMimeType: "application/json" } : {}),
+            },
+          }),
+          signal: AbortSignal.timeout(60_000),
+        });
+        if ((res.status === 429 || res.status === 500 || res.status === 503) && attempt < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, 2000 * (attempt + 1)));
+          continue;
+        }
+        break;
+      } catch (err) {
+        if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) {
+          throw new AiTimeoutError("Google Gemini request timed out.");
+        }
+        if (attempt < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          continue;
+        }
+        throw err;
       }
-      throw err;
     }
-    if (!res.ok) {
-      const errTxt = await res.text().catch(() => "");
-      throw new Error(`Google Gemini request failed with HTTP ${res.status}: ${errTxt}`);
+    if (!res!.ok) {
+      const errTxt = await res!.text().catch(() => "");
+      throw new Error(`Google Gemini request failed with HTTP ${res!.status}: ${errTxt}`);
     }
-    const json = (await res.json()) as {
-      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    const json = (await res!.json()) as {
+      candidates?: { finishReason?: string; content?: { parts?: { text?: string }[] } }[];
     };
-    const content = (json.candidates?.[0]?.content?.parts?.[0]?.text ?? "").trim();
-    if (!content) throw new Error("Google Gemini returned an empty response.");
+    const partsArray = json.candidates?.[0]?.content?.parts ?? [];
+    const content = partsArray.map((p) => p.text || "").join("").trim();
+    if (!content) {
+      const reason = json.candidates?.[0]?.finishReason || "unknown";
+      throw new Error(`Google Gemini returned an empty response (finishReason: ${reason}).`);
+    }
     const endpointRequestMs = Math.round(performance.now() - requestStartedAt);
     return {
       content,

@@ -131,11 +131,12 @@ router.post("/predictions", async (req, res) => {
     res.status(201).json(predictionToApi(row, false));
   } catch (err) {
     if (err instanceof AiNotConnectedError) {
-      res.status(503).json({ error: "ai_not_connected" });
+      res.status(503).json({ error: "ai_not_connected", detail: err.message });
       return;
     }
-    req.log.error({ err }, "Prediction failed");
-    res.status(502).json({ error: err instanceof AiTimeoutError ? "ai_timeout" : "ai_failed" });
+    const detail = err instanceof Error ? err.message : String(err);
+    req.log.error({ err, detail }, "Prediction failed");
+    res.status(502).json({ error: err instanceof AiTimeoutError ? "ai_timeout" : "ai_failed", detail });
   }
 });
 
