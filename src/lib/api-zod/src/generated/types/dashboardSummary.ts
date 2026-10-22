@@ -12,7 +12,5 @@ export interface DashboardSummary {
   planCount: number;
   predictionCount: number;
   insightCount: number;
-  roleCount: number;
-  courseCount: number;
   recentActivity: ActivityItem[];
 }

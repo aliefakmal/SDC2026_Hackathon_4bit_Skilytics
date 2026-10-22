@@ -1243,14 +1243,12 @@ components:
 
     DashboardSummary:
       type: object
-      required: [profileCount, planCount, predictionCount, insightCount, roleCount, courseCount, recentActivity]
+      required: [profileCount, planCount, predictionCount, insightCount, recentActivity]
       properties:
         profileCount: { type: integer }
         planCount: { type: integer }
         predictionCount: { type: integer }
         insightCount: { type: integer }
-        roleCount: { type: integer }
-        courseCount: { type: integer }
         recentActivity:
           type: array
           items:

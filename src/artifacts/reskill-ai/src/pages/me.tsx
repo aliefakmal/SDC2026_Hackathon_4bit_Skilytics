@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Bot, ClipboardList, FileText, Loader2, Plus, Send, Sparkles, UserRound } from "lucide-react";
 import {
   useCreatePrediction, useGetDashboardSummary, useListPredictions, useListProfiles, useListRoles,
-  getListPredictionsQueryKey, getGetDashboardSummaryQueryKey, getListProfilesQueryKey, type Segment,
+  getDashboardSummary, listProfiles, getListPredictionsQueryKey, getGetDashboardSummaryQueryKey, getListProfilesQueryKey, type Segment,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -25,8 +25,14 @@ export function Workspace() {
   const [, nav] = useLocation();
   const preset = new URLSearchParams(search).get("new");
   const start = (seg: Segment) => nav(`/onboarding/cv?seg=${seg}`);
-  const profiles = useListProfiles(undefined, { query: { queryKey: getListProfilesQueryKey() } });
-  const sum = useGetDashboardSummary({ query: { queryKey: getGetDashboardSummaryQueryKey() } });
+  const profiles = useListProfiles(undefined, { query: {
+    queryKey: getListProfilesQueryKey(), retry: false,
+    queryFn: ({ signal }) => listProfiles(undefined, { signal: AbortSignal.any([signal, AbortSignal.timeout(45_000)]) }),
+  } });
+  const sum = useGetDashboardSummary({ query: {
+    queryKey: getGetDashboardSummaryQueryKey(), retry: false,
+    queryFn: ({ signal }) => getDashboardSummary({ signal: AbortSignal.any([signal, AbortSignal.timeout(45_000)]) }),
+  } });
   const s = sum.data;
   if (preset === "worker" || preset === "graduate") return <Redirect to={`/onboarding/cv?seg=${preset}`} replace />;
   return (

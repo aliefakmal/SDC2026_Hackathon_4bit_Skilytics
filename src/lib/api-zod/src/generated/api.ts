@@ -93,8 +93,6 @@ export const GetDashboardSummaryResponse = zod.object({
   "planCount": zod.number().int(),
   "predictionCount": zod.number().int(),
   "insightCount": zod.number().int(),
-  "roleCount": zod.number().int(),
-  "courseCount": zod.number().int(),
   "recentActivity": zod.array(zod.object({
   "kind": zod.string(),
   "label": zod.string(),

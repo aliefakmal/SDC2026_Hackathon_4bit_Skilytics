@@ -94,9 +94,7 @@ router.get("/dashboard/summary", async (req, res) => {
   const none = sql`false`;
   const planScope = ids.length ? inArray(plansTable.profileId, ids) : none;
   const insightScope = ids.length ? inArray(insightsTable.profileId, ids) : none;
-  const [roles, courses, [pl], [ins], [pr], recentProfiles, recentPlans, recentPreds, recentInsights] = await Promise.all([
-    loadRoles(),
-    loadCourses(),
+  const [[pl], [ins], [pr], recentProfiles, recentPlans, recentPreds, recentInsights] = await Promise.all([
     db.select({ c: sql<number>`count(*)::int` }).from(plansTable).where(planScope),
     db.select({ c: sql<number>`count(*)::int` }).from(insightsTable).where(insightScope),
     db.select({ c: sql<number>`count(*)::int` }).from(predictionsTable).where(predScope),
@@ -120,8 +118,6 @@ router.get("/dashboard/summary", async (req, res) => {
     planCount: pl.c,
     predictionCount: pr.c,
     insightCount: ins.c,
-    roleCount: roles.length,
-    courseCount: courses.length,
     recentActivity: activity,
   });
 });
