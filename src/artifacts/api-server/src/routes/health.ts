@@ -37,4 +37,22 @@ router.get("/healthz/db", async (_req, res) => {
   }
 });
 
+router.get("/healthz/ai-probe", async (_req, res) => {
+  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  if (!geminiKey) {
+    res.json({ error: "no_gemini_key" });
+    return;
+  }
+  try {
+    const modelsRes = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/models", {
+      headers: { Authorization: `Bearer ${geminiKey}` },
+      signal: AbortSignal.timeout(10000),
+    });
+    const modelsJson = await modelsRes.json();
+    res.json({ status: "ok", models: modelsJson });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
