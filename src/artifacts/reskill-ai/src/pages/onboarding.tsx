@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AiWait, Brand, ErrorBox, LangToggle, Markdown, Meter, Rows, StepLoadingSkeleton, StatusTag } from "@/components/kit";
+import { useToast } from "@/hooks/use-toast";
 import { useAuth, portalHome } from "@/lib/auth";
 import {
   CV_MAX_BYTES, CV_OK, OB_STEPS, clearDraft, getObProfile, obScope, readDraft, setObProfile, writeDraft, type ObStep,
@@ -460,14 +461,28 @@ function CvStep({
   const { t, lang } = useT();
   const et = useErrText();
   const qc = useQueryClient();
+  const { toast } = useToast();
   const [, nav] = useLocation();
   const { go, upd } = useAdvance(p, scope, onProfileReady);
   const ref = useRef<HTMLInputElement>(null);
+  const consentRef = useRef<HTMLLabelElement>(null);
   const [consent, setConsent] = useState(false);
+  const [highlightConsent, setHighlightConsent] = useState(false);
   const [local, setLocal] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
   const [since, setSince] = useState<number | null>(null);
   const lastFile = useRef<File | null>(null);
+
+  const promptConsent = () => {
+    setHighlightConsent(true);
+    toast({
+      title: t("ob.cv.consentTitle"),
+      description: t("ob.cv.consentDesc"),
+      variant: "destructive",
+    });
+    consentRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   useEffect(() => {
     // Ping AI endpoint in background to warm up when user reaches CV step
     const base = import.meta.env.VITE_API_URL || "";
@@ -503,7 +518,7 @@ function CvStep({
   const send = async (file: File) => {
     setLocal(null);
     if (!consent) {
-      setLocal(t("ob.cv.consentNeeded"));
+      promptConsent();
       return;
     }
     if (!CV_OK.test(file.name)) { setLocal(t("ob.cv.badType")); return; }
@@ -584,16 +599,61 @@ function CvStep({
     <>
       <StepHead title={t("ob.cv.title")} sub={t("ob.cv.sub")} />
       {p.cvFileName && <div className="mb-4 flex items-center gap-2 rounded-xl bg-muted/60 px-3 py-2 text-sm" data-testid="text-cv-existing"><BadgeCheck className="h-4 w-4 text-accent" /><span className="truncate">{t("ob.cv.already", { name: p.cvFileName })}</span></div>}
-      <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border bg-background p-4 text-sm leading-relaxed">
-        <Checkbox checked={consent} onCheckedChange={(v) => { setConsent(v === true); setLocal(null); }} className="mt-0.5 h-5 w-5" data-testid="checkbox-consent" />
-        <span>{t("ob.cv.consent")}</span>
+      <label
+        ref={consentRef}
+        className={cn(
+          "relative flex cursor-pointer items-start gap-3.5 rounded-2xl border p-4 text-sm leading-relaxed transition-all duration-300",
+          highlightConsent
+            ? "border-primary bg-[hsl(var(--maroon-soft))]/40 ring-4 ring-primary/30 shadow-lg scale-[1.01]"
+            : "border-border bg-background hover:border-primary/50"
+        )}
+      >
+        <div className="relative mt-0.5 flex shrink-0 items-center justify-center">
+          <Checkbox
+            checked={consent}
+            onCheckedChange={(v) => {
+              setConsent(v === true);
+              if (v === true) {
+                setHighlightConsent(false);
+                setLocal(null);
+              }
+            }}
+            className={cn(
+              "h-5 w-5 rounded-md transition-all",
+              highlightConsent && "border-primary ring-4 ring-primary ring-offset-2 scale-110 shadow-md"
+            )}
+            data-testid="checkbox-consent"
+          />
+          {highlightConsent && (
+            <>
+              {/* Outer circular glowing/pulsing ring to circle the area to be ticked */}
+              <span className="pointer-events-none absolute -inset-2.5 rounded-full border-2 border-primary animate-ping opacity-75" />
+              <span className="pointer-events-none absolute -inset-2.5 rounded-full border-2 border-dashed border-primary animate-spin [animation-duration:6s]" />
+            </>
+          )}
+        </div>
+        <div className="min-w-0">
+          <span className={cn(highlightConsent ? "font-semibold text-primary" : "text-foreground")}>
+            {t("ob.cv.consent")}
+          </span>
+          {highlightConsent && (
+            <motion.p
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-primary"
+            >
+              <span className="flex h-2 w-2 rounded-full bg-primary animate-ping" />
+              {t("ob.cv.consentNeeded")}
+            </motion.p>
+          )}
+        </div>
       </label>
       <button
         type="button"
         disabled={up.isPending}
         onClick={() => {
           if (!consent) {
-            setLocal(t("ob.cv.consentNeeded"));
+            promptConsent();
             return;
           }
           setLocal(null);
@@ -608,7 +668,7 @@ function CvStep({
           const f = e.dataTransfer.files[0];
           if (!f) return;
           if (!consent) {
-            setLocal(t("ob.cv.consentNeeded"));
+            promptConsent();
             return;
           }
           send(f);
@@ -627,7 +687,7 @@ function CvStep({
           const f = e.target.files?.[0];
           if (f) {
             if (!consent) {
-              setLocal(t("ob.cv.consentNeeded"));
+              promptConsent();
             } else {
               send(f);
             }
