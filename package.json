@@ -2,7 +2,7 @@
   "name": "skilytics-root",
   "private": true,
   "scripts": {
-    "build": "npx -y pnpm --dir src install --no-frozen-lockfile && npx -y pnpm --dir src run build && node scripts/copy-dist.js",
+    "build": "npx -y pnpm --dir src install --no-frozen-lockfile && npx -y pnpm --dir src --filter @workspace/reskill-ai run build && node scripts/copy-dist.js",
     "dev": "pnpm --dir src run dev",
     "dev:api": "pnpm --dir src run dev:api",
     "db:push": "pnpm --dir src run db:push",
