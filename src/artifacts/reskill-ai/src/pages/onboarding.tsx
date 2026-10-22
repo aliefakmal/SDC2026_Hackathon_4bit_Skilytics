@@ -647,33 +647,99 @@ function splitEntries(text: string | null | undefined, type: "education" | "expe
     if (parts.length > 1) return parts;
   }
 
-  // 2. If distinct lines contain header keywords (universities/degrees or job roles/companies/dates)
   const lines = trimmed.split("\n").map((s) => s.trim()).filter(Boolean);
   if (lines.length <= 1) return [trimmed];
 
-  const groups: string[] = [];
-  let current: string[] = [];
+  const hasDate = (line: string) =>
+    /\b(19\d\d|20\d\d)\s*[-–—/]\s*(19\d\d|20\d\d|present|current|kini)\b/i.test(line) ||
+    /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}\b/i.test(line);
 
-  const isEduHeader = (line: string) =>
-    /(?:University|Universiti|College|Kolej|Institute|Institut|Bachelor|Master|Diploma|Degree|PhD|Doctorate|SPM|STPM|Matriculation|Matrikulasi|\b\d{4}\s*[-–—]\s*(?:\d{4}|present|current|kini)\b)/i.test(line);
-  const isExpHeader = (line: string) =>
-    /(?:Engineer|Developer|Manager|Scientist|Analyst|Consultant|Intern|Specialist|Director|Officer|Executive|Lead|Head|Designer|Admin|Coordinator|Technician|Pekerja|Pengurus|Jurutera|Eksekutif|Pegawai|\b(?:Sdn\s+Bhd|Bhd|Inc|Corp|LLC|Ltd)\b|\b\d{4}\s*[-–—]\s*(?:\d{4}|present|current|kini)\b)/i.test(line) &&
+  // Education patterns
+  const isInstitution = (line: string) =>
+    /(?:University|Universiti|College|Kolej|Institute|Institut|Politeknik|Polytechnic|Academy|Akademi|School|Sekolah)\b/i.test(line) &&
+    !line.startsWith("•") && !line.startsWith("-");
+  const isDegree = (line: string) =>
+    /(?:Bachelor|Master|Doctorate|PhD|Diploma|Degree|SPM|STPM|Matriculation|Matrikulasi|Sarjana|Ijazah|Sijil|Certificate)\b/i.test(line) &&
     !line.startsWith("•") && !line.startsWith("-");
 
-  const isHeader = type === "education" ? isEduHeader : isExpHeader;
+  // Experience patterns
+  const isRole = (line: string) =>
+    /(?:Engineer|Developer|Manager|Scientist|Analyst|Consultant|Intern|Internship|Specialist|Director|Officer|Executive|Lead|Head|Designer|Admin|Administrator|Coordinator|Technician|Pekerja|Pengurus|Jurutera|Eksekutif|Pegawai)\b/i.test(line) &&
+    !line.startsWith("•") && !line.startsWith("-");
+  const isCompany = (line: string) =>
+    /\b(?:Sdn\.?\s*Bhd\.?|Bhd\.?|Inc\.?|Corp\.?|LLC|Ltd\.?|Technologies|Solutions|Group|Consulting|Bank|Hospital)\b/i.test(line) &&
+    !line.startsWith("•") && !line.startsWith("-");
+
+  const groups: string[] = [];
+  let current: string[] = [];
+  let curHasInst = false;
+  let curHasDeg = false;
+  let curHasDate = false;
+  let curHasRole = false;
+  let curHasCompany = false;
 
   for (const line of lines) {
-    if (isHeader(line) && current.length > 0 && current.some((l) => isHeader(l))) {
-      groups.push(current.join("\n"));
-      current = [line];
+    const isBullet = line.startsWith("•") || line.startsWith("-") || line.startsWith("*");
+
+    if (type === "education") {
+      const lineInst = isInstitution(line);
+      const lineDeg = isDegree(line);
+      const lineDate = hasDate(line);
+
+      // A new education entry starts ONLY if this line represents a distinct new qualification:
+      // - It has an institution and the current group ALREADY has an institution
+      // - OR it has a degree and the current group ALREADY has a degree
+      // - OR it has a date and either institution/degree, and current group ALREADY has a date
+      const isNew = current.length > 0 && !isBullet && (
+        (curHasInst && lineInst) ||
+        (curHasDeg && lineDeg) ||
+        (curHasDate && lineDate && (lineInst || lineDeg))
+      );
+
+      if (isNew) {
+        groups.push(current.join("\n"));
+        current = [line];
+        curHasInst = lineInst;
+        curHasDeg = lineDeg;
+        curHasDate = lineDate;
+      } else {
+        current.push(line);
+        if (lineInst) curHasInst = true;
+        if (lineDeg) curHasDeg = true;
+        if (lineDate) curHasDate = true;
+      }
     } else {
-      current.push(line);
+      const lineRole = isRole(line);
+      const lineComp = isCompany(line);
+      const lineDate = hasDate(line);
+
+      // A new experience entry starts if:
+      // - It has a role title and current group ALREADY has a role title
+      // - OR it has a company and current group ALREADY has a company
+      // - OR it has a date and (role or company) and current group ALREADY has a date
+      const isNew = current.length > 0 && !isBullet && (
+        (curHasRole && lineRole) ||
+        (curHasCompany && lineComp) ||
+        (curHasDate && lineDate && (lineRole || lineComp))
+      );
+
+      if (isNew) {
+        groups.push(current.join("\n"));
+        current = [line];
+        curHasRole = lineRole;
+        curHasCompany = lineComp;
+        curHasDate = lineDate;
+      } else {
+        current.push(line);
+        if (lineRole) curHasRole = true;
+        if (lineComp) curHasCompany = true;
+        if (lineDate) curHasDate = true;
+      }
     }
   }
-  if (current.length > 0) groups.push(current.join("\n"));
-  if (groups.length > 1) return groups;
 
-  return [trimmed];
+  if (current.length > 0) groups.push(current.join("\n"));
+  return groups.length > 1 ? groups : [trimmed];
 }
 
 function initReviewForm(p: Profile, scope: string): ReviewForm {
