@@ -21,6 +21,7 @@ import { agentRoutes } from "./agent-routing";
 import { loadCourses, loadRoles, loadSkills, roleToApi } from "./catalog";
 import { profileToApi } from "./profiles";
 import { scoreRole } from "./scoring";
+import { RIASEC_QUESTIONS } from "../data/riasec";
 
 let server: Server;
 let base: string;
@@ -200,3 +201,38 @@ test("rate-limited prediction returns Retry-After and a readable explanation", a
   assert.match(result.body.message, /request limit.*try again/i);
   assert.equal(result.body.retryAfterSeconds, Number(result.retryAfter));
 });
+
+test("holland ELI5 insight never fails: returns 200 OK with grounded fallback even when rate limited", async () => {
+  const guestToken = newGuestToken();
+  const [profileRow] = await db
+    .insert(profilesTable)
+    .values({
+      name: "Holland Tester",
+      segment: "worker",
+      weeklyHours: 5,
+      budgetMyr: 0,
+      guestToken,
+      riasecAnswers: RIASEC_QUESTIONS.map((q) => ({ questionId: q.id, value: q.type === "C" ? 4 : q.type === "I" ? 4 : q.type === "R" ? 4 : 2 })),
+      riasecCode: "CIR",
+      riasecScores: { R: 3.6, I: 3.8, A: 2.4, S: 3.4, E: 2.0, C: 4.0 },
+      cvEvidence: [
+        { skill: "Property Valuation", quote: "Bachelor of Real Estate at Universiti Teknologi Malaysia", source: "education" },
+      ],
+    })
+    .returning();
+  profileIds.push(profileRow!.id);
+
+  // Consume the quota so that rate limit is reached
+  assert.equal(consumeAiRequest("guest", guestToken).allowed, true);
+  assert.equal(consumeAiRequest("guest", guestToken).allowed, false);
+
+  // Request holland insights while rate limited
+  const result = await request(`/profiles/${profileRow!.id}/insights`, guestToken, { agent: "holland", lang: "en" });
+  assert.equal(result.status, 200, "holland agent must return 200 OK fallback instead of 429 or 500");
+  assert.equal(result.body.model, "local-rag");
+  assert.match(result.body.content, /The Interest Mix/i);
+  assert.match(result.body.content, /Evidence from CV/i);
+  assert.match(result.body.content, /One Easy Thing to Try/i);
+  assert.match(result.body.content, /Universiti Teknologi Malaysia/);
+});
+

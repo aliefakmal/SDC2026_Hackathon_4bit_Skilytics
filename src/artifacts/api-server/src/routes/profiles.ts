@@ -20,7 +20,7 @@ import { agentRoutes } from "../lib/agent-routing";
 import { scoreRole } from "../lib/scoring";
 import { buildPlan } from "../lib/planner";
 import { canAccessProfile, getLatestPlan, getProfileRow, planToApi, profileScope, profileToApi, type ProfileRow } from "../lib/profiles";
-import { agentPrompt, agentTier, hashInput, SOURCE_AEI, type AgentName, type Lang } from "../lib/agents";
+import { agentPrompt, agentTier, generateHollandFallback, hashInput, SOURCE_AEI, type AgentName, type Lang } from "../lib/agents";
 import { chat, AiNotConnectedError, AiTimeoutError, AiVisionUnsupportedError } from "../lib/llm";
 import { consumeAiRequest } from "../lib/ai-rate-limit";
 import { SDG_TARGETS } from "../data/courses";
@@ -492,6 +492,15 @@ router.post("/profiles/:id/insights", async (req, res) => {
   res.setHeader("X-RateLimit-Limit", String(rateLimit.limit));
   res.setHeader("X-RateLimit-Remaining", String(rateLimit.remaining));
   if (!rateLimit.allowed) {
+    if (agent === "holland") {
+      const fallbackContent = generateHollandFallback(p.riasecCode || "CIR", p.riasecScores, (p.cvEvidence as any[]) || [], lang);
+      const [row] = await db
+        .insert(insightsTable)
+        .values({ profileId: id, agent, lang, inputHash, content: fallbackContent, sources, model: "local-rag" })
+        .returning();
+      res.json(insightToApi(row));
+      return;
+    }
     res.setHeader("Retry-After", String(rateLimit.retryAfterSeconds));
     res.status(429).json({
       error: "ai_rate_limited",
@@ -509,6 +518,16 @@ router.post("/profiles/:id/insights", async (req, res) => {
       .returning();
     res.json(insightToApi(row));
   } catch (err) {
+    if (agent === "holland") {
+      req.log.warn({ profileId: id, err: String(err) }, "Holland AI chat failed; using grounded fallback generator");
+      const fallbackContent = generateHollandFallback(p.riasecCode || "CIR", p.riasecScores, (p.cvEvidence as any[]) || [], lang);
+      const [row] = await db
+        .insert(insightsTable)
+        .values({ profileId: id, agent, lang, inputHash, content: fallbackContent, sources, model: "local-rag" })
+        .returning();
+      res.json(insightToApi(row));
+      return;
+    }
     if (err instanceof AiNotConnectedError) {
       res.status(503).json({ error: "ai_not_connected", detail: err.message });
       return;

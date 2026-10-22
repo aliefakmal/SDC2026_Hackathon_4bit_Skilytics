@@ -3,7 +3,7 @@ import { Link, Redirect, useLocation, useParams, useSearch } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, CheckCircle2, FileCheck, FileImage, FileText, FileUp, HelpCircle, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
+  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, BarChart2, Check, CheckCircle2, Compass, Copy, FileCheck, FileImage, FileText, FileUp, GraduationCap, HelpCircle, Lightbulb, Loader2, PlusCircle, Quote, RotateCw, Sparkles, Volume2, VolumeX, X,
 } from "lucide-react";
 import {
   createProfile, useGetProfile, useListRiasecQuestions, useRunProfileAgent, useSubmitRiasec, useUpdateProfile, useUploadCv,
@@ -1389,6 +1389,62 @@ function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; 
   );
 }
 
+interface ParsedHollandSection {
+  title: string;
+  body: string;
+  icon: "compass" | "cv" | "action";
+}
+
+function parseHollandSections(content: string, lang: string): ParsedHollandSection[] {
+  const lines = content.split("\n");
+  const sections: ParsedHollandSection[] = [];
+  let currentTitle = "";
+  let currentBody: string[] = [];
+
+  const determineIcon = (title: string): "compass" | "cv" | "action" => {
+    const t = title.toLowerCase();
+    if (t.includes("evidence") || t.includes("cv") || t.includes("bukti") || t.includes("简历")) return "cv";
+    if (t.includes("easy") || t.includes("try") || t.includes("langkah") || t.includes("cuba") || t.includes("尝试") || t.includes("action") || t.includes("cadangan")) return "action";
+    return "compass";
+  };
+
+  for (const line of lines) {
+    const headerMatch = line.match(/^#{1,4}\s+(.+)$/) || line.match(/^\*\*(.+)\*\*$/);
+    if (headerMatch) {
+      if (currentTitle || currentBody.some((b) => b.trim())) {
+        sections.push({
+          title: currentTitle || (lang === "ms" ? "Kombinasi Minat" : lang === "zh" ? "兴趣概述" : "The Interest Mix"),
+          body: currentBody.join("\n").trim(),
+          icon: determineIcon(currentTitle),
+        });
+        currentBody = [];
+      }
+      currentTitle = headerMatch[1].replace(/\*\*/g, "").trim();
+    } else {
+      currentBody.push(line);
+    }
+  }
+
+  if (currentTitle || currentBody.some((b) => b.trim())) {
+    sections.push({
+      title: currentTitle || (lang === "ms" ? "Rumusan" : lang === "zh" ? "总结" : "Summary"),
+      body: currentBody.join("\n").trim(),
+      icon: determineIcon(currentTitle),
+    });
+  }
+
+  const valid = sections.filter((s) => s.body.length > 0);
+  if (valid.length === 0 && content.trim()) {
+    valid.push({
+      title: lang === "ms" ? "Analisis Minat & CV" : lang === "zh" ? "兴趣与简历分析" : "The Interest Mix",
+      body: content.trim(),
+      icon: "compass",
+    });
+  }
+
+  return valid;
+}
+
 /* ---------- 5. results ---------- */
 function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string; onProfileReady?: (np: Profile) => void }) {
   const { t, tk, lang } = useT();
@@ -1401,9 +1457,13 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
   const [fresh, setFresh] = useState<{ key: string; ins: AgentInsight } | null>(null);
   const [since, setSince] = useState<number | null>(null);
   const [selectedLetter, setSelectedLetter] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
   const scoreKey = scores ? `${code}:${RIASEC.map((k) => scores[k].toFixed(2)).join(",")}:${p.cvExtractionKey ?? ""}` : "";
   const run = useRunProfileAgent({
     mutation: {
+      retry: 1,
       onSuccess: (r) => { setSince(null); setFresh({ key: scoreKey, ins: r }); },
       onError: () => setSince(null),
     },
@@ -1411,6 +1471,41 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
   const insight = fresh && fresh.key === scoreKey && fresh.ins.lang === lang ? fresh.ins : null;
   const explain = () => { setSince(Date.now()); run.mutate({ id: p.id, data: { agent: "holland", lang } }); };
   const selectedType = code[selectedLetter] ?? code[0];
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const toggleSpeech = (text: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      window.speechSynthesis.cancel();
+      const cleanText = text.replace(/[#*`_\[\]()]/g, " ").replace(/\s+/g, " ").trim();
+      const utter = new SpeechSynthesisUtterance(cleanText);
+      utter.lang = lang === "ms" ? "ms-MY" : lang === "zh" ? "zh-CN" : "en-US";
+      utter.rate = 0.95;
+      utter.onend = () => setIsSpeaking(false);
+      utter.onerror = () => setIsSpeaking(false);
+      window.speechSynthesis.speak(utter);
+      setIsSpeaking(true);
+    }
+  };
+
+  const copySummary = (text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <>
       <div className="mb-6 flex flex-wrap items-end gap-4">
@@ -1431,43 +1526,146 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
         <p className="mt-1 font-bold">{selectedType} · {tk("riasec", selectedType)}</p>
         <p className="mt-1 text-sm text-muted-foreground">{t(`ob.results.type.${selectedType}` as Parameters<typeof t>[0])}</p>
       </div>}
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-accent">{t("ob.results.scores")}</h2>
-          {scores ? (
-            <div className="mt-3 space-y-2.5">
-              {RIASEC.map((k) => (
-                <div key={k} className="grid grid-cols-[1.5rem_minmax(0,7rem)_1fr] items-center gap-2 text-sm" data-testid={`meter-riasec-${k}`}>
-                  <span className="font-bold text-primary">{k}</span><span className="truncate">{tk("riasec", k)}</span>
-                  <Meter value={scores[k]} max={max} tone={code.includes(k) ? "maroon" : "gold"} label={scores[k].toFixed(1)} />
-                </div>
+
+      {/* 1. YOUR SIX SCORES SECTION */}
+      <div className="mb-6 rounded-2xl border border-border bg-card p-5 md:p-6 shadow-xs">
+        <div className="flex items-center justify-between pb-3 border-b border-border/40">
+          <div className="flex items-center gap-2">
+            <BarChart2 className="h-4 w-4 text-accent" />
+            <h2 className="text-sm font-bold uppercase tracking-wider text-accent">{t("ob.results.scores")}</h2>
+          </div>
+          <span className="text-xs text-muted-foreground">{t("ob.results.exploreCode")}</span>
+        </div>
+        {scores ? (
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5">
+            {RIASEC.map((k) => (
+              <div key={k} className="grid grid-cols-[1.5rem_minmax(0,7.5rem)_1fr] items-center gap-2 text-sm" data-testid={`meter-riasec-${k}`}>
+                <span className="font-bold text-primary">{k}</span>
+                <span className="truncate font-medium">{tk("riasec", k)}</span>
+                <Meter value={scores[k]} max={max} tone={code.includes(k) ? "maroon" : "gold"} label={scores[k].toFixed(1)} />
+              </div>
+            ))}
+          </div>
+        ) : <p className="mt-3 text-sm text-muted-foreground">-</p>}
+        <p className="mt-4 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">{t("riasec.disclaimer")}</p>
+      </div>
+
+      {/* 2. RAG AI AGENT SUMMARY ELI-5 SECTION (FULL WIDTH BELOW SCORES) */}
+      <div className="mb-6 rounded-2xl border border-accent/30 bg-gradient-to-br from-card via-card to-[hsl(var(--gold-soft))]/20 p-5 md:p-6 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-accent/20">
+          <div>
+            <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Sparkles className="h-4 w-4 text-accent" />
+              {t("ob.results.explainTitle")}
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t("ob.results.explainNote")}</p>
+          </div>
+          {insight && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-2.5 py-1 text-xs font-medium" data-testid="text-insight-lang">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                {t("ob.results.lang", { lang: LANG_NAME[insight.lang as Lang] ?? insight.lang })}
+              </span>
+              {insight.cached && (
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                  {t("common.cached")}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => copySummary(insight.content)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer"
+                title={lang === "ms" ? "Salin ringkasan" : lang === "zh" ? "复制内容" : "Copy summary"}
+              >
+                {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                <span>{copied ? (lang === "ms" ? "Disalin!" : lang === "zh" ? "已复制!" : "Copied!") : (lang === "ms" ? "Salin" : lang === "zh" ? "复制" : "Copy")}</span>
+              </button>
+              {typeof window !== "undefined" && "speechSynthesis" in window && (
+                <button
+                  type="button"
+                  onClick={() => toggleSpeech(insight.content)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer",
+                    isSpeaking ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:bg-muted"
+                  )}
+                  title={isSpeaking ? (lang === "ms" ? "Henti bacaan" : "Stop speech") : (lang === "ms" ? "Dengar bacaan" : "Listen aloud")}
+                >
+                  {isSpeaking ? <VolumeX className="h-3.5 w-3.5 animate-pulse" /> : <Volume2 className="h-3.5 w-3.5" />}
+                  <span>{isSpeaking ? (lang === "ms" ? "Henti" : lang === "zh" ? "停止" : "Stop") : (lang === "ms" ? "Dengar" : lang === "zh" ? "朗读" : "Listen")}</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4">
+          {insight ? (
+            <div data-testid="text-holland-insight" aria-live="polite" className="space-y-4">
+              {parseHollandSections(insight.content, lang).map((sec, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 + idx * 0.08 }}
+                  className={cn(
+                    "relative overflow-hidden rounded-2xl border p-4 md:p-5 transition-all duration-200 hover:shadow-xs",
+                    sec.icon === "compass" && "border-primary/20 bg-card/70",
+                    sec.icon === "cv" && "border-blue-500/25 bg-blue-500/5",
+                    sec.icon === "action" && "border-amber-500/25 bg-amber-500/5"
+                  )}
+                >
+                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-border/40">
+                    <div className={cn(
+                      "flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold shadow-2xs",
+                      sec.icon === "compass" && "bg-primary/10 text-primary",
+                      sec.icon === "cv" && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+                      sec.icon === "action" && "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    )}>
+                      {sec.icon === "compass" && <Compass className="h-4 w-4" />}
+                      {sec.icon === "cv" && <GraduationCap className="h-4 w-4" />}
+                      {sec.icon === "action" && <Lightbulb className="h-4 w-4" />}
+                    </div>
+                    <h3 className="font-bold text-sm md:text-base tracking-tight text-foreground">{sec.title}</h3>
+                  </div>
+                  <div className="mt-3 text-sm leading-relaxed text-muted-foreground prose-sk">
+                    <Markdown>{sec.body}</Markdown>
+                  </div>
+                </motion.div>
               ))}
             </div>
-          ) : <p className="mt-3 text-sm text-muted-foreground">-</p>}
-          <p className="mt-3 text-[11px] text-muted-foreground">{t("riasec.disclaimer")}</p>
-        </div>
-        <div className="rounded-2xl border border-accent/40 bg-[hsl(var(--gold-soft))]/40 p-4 md:p-5">
-          <h2 className="flex items-center gap-2 font-bold"><Sparkles className="h-4 w-4 text-accent" />{t("ob.results.explainTitle")}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">{t("ob.results.explainNote")}</p>
-          <div className="mt-4">
-            {insight ? (
-              <div data-testid="text-holland-insight" aria-live="polite" className="rounded-xl border border-accent/30 bg-card p-4">
-                <div className="mb-2 flex flex-wrap gap-1.5 text-[11px]">
-                  <span className="rounded-full border border-border bg-card px-2 py-0.5" data-testid="text-insight-lang">{t("ob.results.lang", { lang: LANG_NAME[insight.lang as Lang] ?? insight.lang })}</span>
-                  {insight.cached && <span className="rounded-full bg-card px-2 py-0.5 font-semibold">{t("common.cached")}</span>}
+          ) : run.isPending && since ? (
+            <AiWait since={since} />
+          ) : run.isError ? (
+            /* ONLY ONE BUTTON APPEARS HERE: Retry */
+            <div className="rounded-xl border border-destructive/40 bg-card p-4 text-sm" role="alert" data-testid="status-explain-error">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 shrink-0 text-destructive mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-destructive">{t("ob.results.explainFail")}</p>
+                  <Button
+                    variant="outline"
+                    className="mt-3 min-h-11 border-destructive/30 text-destructive hover:bg-destructive/10"
+                    onClick={explain}
+                    data-testid="button-explain-retry"
+                  >
+                    <RotateCw className="mr-1.5 h-4 w-4" />
+                    {t("ob.results.explainRetry")}
+                  </Button>
                 </div>
-                <Markdown>{insight.content}</Markdown>
               </div>
-            ) : run.isPending && since ? <AiWait since={since} /> : (
-              <Button className="min-h-11" onClick={explain} disabled={!scores} data-testid="button-explain">{t("ob.results.explainBtn")}</Button>
-            )}
-            {run.isError && !insight && !run.isPending && (
-              <div className="mt-3 rounded-xl border border-destructive/40 bg-card p-3 text-sm" role="alert" data-testid="status-explain-error">
-                <p>{t("ob.results.explainFail")}</p>
-                <Button variant="outline" className="mt-2 min-h-11" onClick={explain} data-testid="button-explain-retry"><RotateCw className="mr-1.5 h-4 w-4" />{t("ob.results.explainRetry")}</Button>
-              </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            /* ONLY ONE BUTTON APPEARS HERE: Connect / Explain */
+            <Button
+              className="min-h-12 px-6 font-semibold shadow-xs"
+              onClick={explain}
+              disabled={!scores}
+              data-testid="button-explain"
+            >
+              <Sparkles className="mr-2 h-4 w-4 text-accent" />
+              {t("ob.results.explainBtn")}
+            </Button>
+          )}
         </div>
       </div>
       <NavBar back="holland" pid={p.id}>
