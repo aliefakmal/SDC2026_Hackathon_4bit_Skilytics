@@ -323,7 +323,7 @@ function Frame({ step, maxIdx = 0, pid, children }: { step?: ObStep; maxIdx?: nu
         </div>
       </header>
       <main className="relative z-[1] mx-auto grid max-w-6xl items-start gap-6 px-4 pb-16 md:grid-cols-[15rem_1fr] md:px-8">
-        <aside aria-label={t("ob.title")} className="self-start md:sticky md:top-6">
+        <aside aria-label={t("ob.title")} className="self-start md:sticky md:top-6 md:z-10 md:max-h-[calc(100vh-3rem)] md:overflow-y-auto">
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent">{t("ob.title")}</div>
           {step && <div className="tnum mt-1 text-sm text-muted-foreground" data-testid="text-step-count">{t("ob.stepOf", { n: cur + 1, total: OB_STEPS.length })}</div>}
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted md:hidden"><div className="h-full rounded-full bg-primary transition-transform duration-500 origin-left" style={{ transform: `scaleX(${(cur + 1) / OB_STEPS.length})` }} /></div>
