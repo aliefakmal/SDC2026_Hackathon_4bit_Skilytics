@@ -17,6 +17,7 @@ import { and, desc, eq } from "drizzle-orm";
 import app from "../app";
 import { consumeAiRequest } from "./ai-rate-limit";
 import { hashInput, type AgentName, type Lang } from "./agents";
+import { agentRoutes } from "./agent-routing";
 import { loadCourses, loadRoles, loadSkills, roleToApi } from "./catalog";
 import { profileToApi } from "./profiles";
 import { scoreRole } from "./scoring";
@@ -142,7 +143,6 @@ async function insertCachedProfilerInsight(guestToken: string) {
       matlamat: profile.goals,
       jamSeminggu: profile.weeklyHours,
       bajetMyr: profile.budgetMyr,
-      layakHrdc: profile.hrdcEligible,
     },
     kemahiran: profile.skills.map((s) => ({ nama: s.name, status: s.status })),
     riasec: null,
@@ -151,7 +151,7 @@ async function insertCachedProfilerInsight(guestToken: string) {
   };
   const agent: AgentName = "profiler";
   const lang: Lang = "en";
-  const inputHash = hashInput(agent, lang, ctx);
+  const inputHash = hashInput(agent, lang, ctx, null, agentRoutes().find((route) => route.agent === agent));
   await db.insert(insightsTable).values({
     profileId: profileRow!.id,
     agent,

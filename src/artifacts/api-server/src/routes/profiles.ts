@@ -249,7 +249,10 @@ router.post("/profiles/:id/cv", async (req, res) => {
         ? await extractCvMultimodalProfile(pages!, lang)
         : await extractCvProfile(text!, lang);
     } catch (modelErr) {
-      if (modelErr instanceof CvError) {
+      if (modelErr instanceof CvProfileFactsMissingError) {
+        throw modelErr;
+      }
+      if (modelErr instanceof CvError && modelErr.message !== "cv_unreadable") {
         throw modelErr;
       }
       // Vision gets the original image before OCR can introduce spelling errors.
@@ -259,8 +262,12 @@ router.post("/profiles/:id/cv", async (req, res) => {
       }
       const fallbackText = text?.trim() || pages?.map((page) => page.text).filter(Boolean).join("\n\n") || "";
       if (fallbackText.trim().length >= 20) {
-        req.log.warn({ profileId: id, err: String(modelErr) }, "AI model extraction failed; using deterministic fallback parser");
-        result = extractCvProfileFallback(fallbackText, lang);
+        req.log.warn({ profileId: id, err: String(modelErr) }, "AI vision extraction failed; falling back to OCR + parser");
+        try {
+          result = await extractCvProfile(fallbackText, lang);
+        } catch {
+          result = extractCvProfileFallback(fallbackText, lang);
+        }
       } else {
         throw modelErr;
       }

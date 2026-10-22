@@ -119,11 +119,13 @@ test("Employee and Educators cannot see each other or individual CV organisation
 });
 
 test("image and scanned-PDF CV uploads use one vision call, save sourced text, and discard image bytes", async () => {
-  const envKeys = ["RUNPOD_API_KEY", "RUNPOD_LLM_ENDPOINT_ID", "RUNPOD_LIGHT_ENDPOINT_ID", "RUNPOD_LLM_MODEL", "RUNPOD_LIGHT_MODEL"] as const;
+  const envKeys = ["RUNPOD_API_KEY", "RUNPOD_LLM_ENDPOINT_ID", "RUNPOD_LIGHT_ENDPOINT_ID", "RUNPOD_LLM_MODEL", "RUNPOD_LIGHT_MODEL", "RUNPOD_ENABLE_GENERATION", "AI_PROVIDER"] as const;
   const savedEnv = Object.fromEntries(envKeys.map((key) => [key, process.env[key]]));
   const savedFetch = globalThis.fetch;
   process.env["RUNPOD_API_KEY"] = "test-only-key";
   process.env["RUNPOD_LLM_ENDPOINT_ID"] = "test-only-vision-endpoint";
+  process.env["RUNPOD_ENABLE_GENERATION"] = "true";
+  process.env["AI_PROVIDER"] = "runpod";
   delete process.env["RUNPOD_LIGHT_ENDPOINT_ID"];
   delete process.env["RUNPOD_LLM_MODEL"];
   delete process.env["RUNPOD_LIGHT_MODEL"];
@@ -193,11 +195,13 @@ test("image and scanned-PDF CV uploads use one vision call, save sourced text, a
 });
 
 test("multimodal uploads fall back to grounded text extraction and reject empty profiles without saving", async () => {
-  const envKeys = ["RUNPOD_API_KEY", "RUNPOD_LLM_ENDPOINT_ID", "RUNPOD_LIGHT_ENDPOINT_ID", "RUNPOD_LLM_MODEL", "RUNPOD_LIGHT_MODEL"] as const;
+  const envKeys = ["RUNPOD_API_KEY", "RUNPOD_LLM_ENDPOINT_ID", "RUNPOD_LIGHT_ENDPOINT_ID", "RUNPOD_LLM_MODEL", "RUNPOD_LIGHT_MODEL", "RUNPOD_ENABLE_GENERATION", "AI_PROVIDER"] as const;
   const savedEnv = Object.fromEntries(envKeys.map((key) => [key, process.env[key]]));
   const savedFetch = globalThis.fetch;
   process.env["RUNPOD_API_KEY"] = "test-only-key";
   process.env["RUNPOD_LLM_ENDPOINT_ID"] = "test-only-vision-endpoint";
+  process.env["RUNPOD_ENABLE_GENERATION"] = "true";
+  process.env["AI_PROVIDER"] = "runpod";
   delete process.env["RUNPOD_LIGHT_ENDPOINT_ID"];
   delete process.env["RUNPOD_LLM_MODEL"];
   delete process.env["RUNPOD_LIGHT_MODEL"];

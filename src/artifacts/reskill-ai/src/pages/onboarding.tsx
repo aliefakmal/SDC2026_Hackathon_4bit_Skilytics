@@ -3,7 +3,7 @@ import { Link, Redirect, useLocation, useParams, useSearch } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, CheckCircle2, FileCheck, FileUp, HelpCircle, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
+  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, CheckCircle2, FileCheck, FileImage, FileText, FileUp, HelpCircle, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
 } from "lucide-react";
 import {
   createProfile, useGetProfile, useListRiasecQuestions, useRunProfileAgent, useSubmitRiasec, useUpdateProfile, useUploadCv,
@@ -467,10 +467,8 @@ function CvStep({
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const handleAtsConfirm = () => {
-    if (!consent) {
-      promptConsent();
-      return;
-    }
+    setConsent(true);
+    setHighlightConsent(false);
     setShowAtsNotice(false);
     if (pendingFile) {
       const f = pendingFile;
@@ -479,6 +477,25 @@ function CvStep({
     } else {
       setLocal(null);
       ref.current?.click();
+    }
+  };
+
+  const loadDemoCv = async (demoPath: string, fileName: string) => {
+    setConsent(true);
+    setHighlightConsent(false);
+    setLocal(null);
+    try {
+      setSince(Date.now());
+      const res = await fetch(demoPath);
+      if (!res.ok) throw new Error("demo_fetch_failed");
+      const blob = await res.blob();
+      const file = new File([blob], fileName, {
+        type: blob.type || (fileName.endsWith(".pdf") ? "application/pdf" : "image/jpeg"),
+      });
+      await send(file);
+    } catch (err) {
+      setSince(null);
+      setLocal(et(err));
     }
   };
 
@@ -685,6 +702,75 @@ function CvStep({
         <div className="mt-3 text-sm font-semibold">{up.isPending ? t("ob.cv.reading") : p.cvFileName ? t("ob.cv.replace") : t("ob.cv.pick")}</div>
         <div className="mt-1 text-xs text-muted-foreground">{t("ob.cv.formats")}</div>
       </button>
+
+      <div className="mt-4 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.04] via-muted/30 to-background p-4 shadow-sm">
+        <div className="flex items-center justify-between gap-2 mb-2.5">
+          <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            {lang === "ms" ? "Uji Cepat Dengan Fail Demo CV:" : lang === "zh" ? "使用演示简历快速测试：" : "Quick Test with Demo CVs:"}
+          </span>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+            {lang === "ms" ? "1-Klik Sedia" : lang === "zh" ? "一键可用" : "1-Click Ready"}
+          </span>
+        </div>
+        <p className="text-[11px] text-muted-foreground mb-3">
+          {lang === "ms"
+            ? "Pilih mana-mana sampel CV di bawah untuk menguji pengekstrak AI Vision & OCR secara langsung:"
+            : "Select any sample CV below to test multimodal AI Vision & OCR extraction instantly:"}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={up.isPending}
+            onClick={() => loadDemoCv("/demo/demo-cv-1.pdf", "demo cv 1.pdf")}
+            className="h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left bg-background/90 hover:bg-background border-border/80 hover:border-primary transition-all shadow-xs"
+            data-testid="button-demo-cv-1"
+          >
+            <span className="font-semibold text-primary flex items-center gap-1.5 text-xs">
+              <FileText className="h-3.5 w-3.5" /> Demo 1
+            </span>
+            <span className="text-[10px] text-muted-foreground font-medium">
+              Scanned PDF (Vision + OCR)
+            </span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={up.isPending}
+            onClick={() => loadDemoCv("/demo/demo-cv-2.jpeg", "demo cv 2.jpeg")}
+            className="h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left bg-background/90 hover:bg-background border-border/80 hover:border-primary transition-all shadow-xs"
+            data-testid="button-demo-cv-2"
+          >
+            <span className="font-semibold text-primary flex items-center gap-1.5 text-xs">
+              <FileImage className="h-3.5 w-3.5" /> Demo 2
+            </span>
+            <span className="text-[10px] text-muted-foreground font-medium">
+              Pure Image (JPEG)
+            </span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={up.isPending}
+            onClick={() => loadDemoCv("/demo/demo-cv-3.pdf", "demo cv 3.pdf")}
+            className="h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left bg-background/90 hover:bg-background border-border/80 hover:border-primary transition-all shadow-xs"
+            data-testid="button-demo-cv-3"
+          >
+            <span className="font-semibold text-primary flex items-center gap-1.5 text-xs">
+              <FileText className="h-3.5 w-3.5" /> Demo 3
+            </span>
+            <span className="text-[10px] text-muted-foreground font-medium">
+              Digital Text PDF
+            </span>
+          </Button>
+        </div>
+      </div>
 
       <Dialog open={showAtsNotice} onOpenChange={(open) => { if (!open) handleAtsCancel(); else setShowAtsNotice(true); }}>
         <DialogContent className="sm:max-w-md">

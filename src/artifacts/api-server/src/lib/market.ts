@@ -6,7 +6,7 @@ import {
   aiUsageTable,
   aiUsageOverallTable,
 } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { logger } from "./logger";
 import { endpointHealth } from "./llm";
 import { loadCourses } from "./catalog";
@@ -277,13 +277,13 @@ export async function checkCourseLinks(): Promise<void> {
     const available = courses.filter((c) => c.provider === provider);
     const latest = available[0];
     await setSource(id, {
-      status: latest && !latest.catalogStale ? "ok" : "error",
+      status: available.length > 0 ? "ok" : "error",
       lastFetchedAt: latest ? new Date(latest.lastVerified) : undefined,
       dataDate: latest?.lastVerified.slice(0, 10) ?? null,
       version: provider === "Microsoft Learn" ? "microsoft-learn-public" : provider === "freeCodeCamp" ? "freecodecamp-curriculum-main" : provider === "GitHub Skills" ? "github-skills-public" : "huggingface-learn-public",
       recordCount: available.length,
       detail: latest ? "Public provider metadata. Direct course URLs; SDG associations are editorial." : null,
-      error: latest?.catalogStale ? "provider_refresh_failed_using_last_snapshot" : latest ? null : "course_catalogue_unavailable",
+      error: latest?.catalogStale ? "provider_refresh_failed_using_last_snapshot" : available.length > 0 ? null : "course_catalogue_unavailable",
     });
   }
 }
@@ -351,11 +351,11 @@ const SIX_HOURS = 6 * 60 * 60 * 1000;
 
 export function startMarketScheduler(): void {
   void (async () => {
-    const [courseCat] = await db
+    const courseCatRows = await db
       .select()
       .from(marketSourcesTable)
-      .where(eq(marketSourcesTable.id, "course_catalogue"));
-    if (!courseCat || courseCat.status !== "ok" || courseCat.recordCount === 0) {
+      .where(inArray(marketSourcesTable.id, ["course_catalogue", "freecodecamp_catalogue", "githubskills_catalogue", "huggingface_catalogue"]));
+    if (courseCatRows.length < 4 || courseCatRows.some((r) => r.status !== "ok" || (r.recordCount ?? 0) === 0)) {
       await checkCourseLinks().catch((err) => logger.error({ err }, "Initial course catalogue check failed"));
     }
     const [{ count }] = await db

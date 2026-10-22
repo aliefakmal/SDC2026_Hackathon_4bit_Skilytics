@@ -90,3 +90,29 @@ test("provider refreshes independently and retains stale snapshots on failure", 
     assert.equal(calls, 10);
   } finally { globalThis.fetch = originalFetch; Date.now = originalNow; }
 });
+
+test("SDG mapping accurately attributes specialized domains with mapped skills", () => {
+  assert.ok(courseSdg("Machine learning algorithms", [{ name: "Machine Learning" }]).includes("9.5"));
+  assert.ok(courseSdg("Machine learning algorithms", [{ name: "Machine Learning" }]).includes("8.2"));
+  assert.ok(courseSdg("Cybersecurity and network defenses", [{ name: "Cybersecurity" }]).includes("9.c"));
+  assert.ok(courseSdg("Industrial robotics with LeRobot", [{ name: "PLC and Industrial Automation" }]).includes("9.2"));
+  assert.ok(courseSdg("Financial accounting and bookkeeping", [{ name: "Financial Accounting" }]).includes("8.10"));
+  assert.ok(courseSdg("Version control and open source workflows", [{ name: "Version Control (Git)" }]).includes("17.9"));
+  assert.ok(courseSdg("Occupational health and safety guidelines", [{ name: "Occupational Safety and Health" }]).includes("8.8"));
+  assert.ok(courseSdg("Supply chain and warehouse operations", [{ name: "Supply Chain Management" }]).includes("9.1"));
+});
+
+test("Hugging Face card parsing extracts both title and descriptive text", () => {
+  const html = '<a href="/learn/agents-course"><h3>Agents Course</h3><p>Learn to build and deploy your own AI agents</p></a>' +
+    '<a href="/learn/deep-rl-course"><h3>Deep RL Course</h3><p>Learn about deep reinforcement learning with PyTorch</p></a>';
+  const allSkills = [
+    { id: 1, name: "Generative AI Tools", category: "Digital" },
+    { id: 2, name: "Machine Learning", category: "Digital" }
+  ];
+  const courses = mapHuggingFaceLearn(html, allSkills, "now");
+  assert.equal(courses.length, 2);
+  assert.equal(courses[0].title, "Agents Course");
+  assert.deepEqual(courses[0].skills.map(s => s.name), ["Generative AI Tools"]);
+  assert.equal(courses[1].title, "Deep RL Course");
+  assert.deepEqual(courses[1].skills.map(s => s.name), ["Machine Learning"]);
+});

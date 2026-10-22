@@ -169,9 +169,27 @@ export async function terminateOcrWorker(): Promise<void> {
 
 export async function recognizeCvImage(image: CvImageInput | Buffer): Promise<string> {
   try {
+    let input = Buffer.isBuffer(image) ? image : Buffer.from(image.base64, "base64");
+    try {
+      const { createCanvas, loadImage } = await import("@napi-rs/canvas");
+      const img = await loadImage(input);
+      const maxDim = Math.max(img.width, img.height);
+      if (maxDim > 1800) {
+        const scale = 1800 / maxDim;
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = createCanvas(w, h);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        input = canvas.toBuffer("image/jpeg", 85);
+      }
+    } catch {}
     const worker = await getOcrWorker();
-    const input = Buffer.isBuffer(image) ? image : Buffer.from(image.base64, "base64");
-    const ret = await worker.recognize(input);
+    const ocrPromise = worker.recognize(input);
+    const timeoutPromise = new Promise<null>((_, reject) =>
+      setTimeout(() => reject(new Error("ocr_timeout")), 12000)
+    );
+    const ret = (await Promise.race([ocrPromise, timeoutPromise])) as any;
     scheduleWorkerCleanup();
     return normalizeCvText(ret?.data?.text || "");
   } catch {
@@ -296,32 +314,62 @@ export async function extractCvDocument(
         const viewport = page.getViewport({ scale: 1 });
         const scale = safeScannedPageScale(viewport.width, viewport.height);
         let imageInput: CvImageInput | undefined;
+
+        // 1. Direct embedded image extraction (fast, memory-light, never crashes native canvas)
         try {
-          const canvasImport = () => import("@napi-rs/canvas");
-          const png = Buffer.from(await renderPageAsImage(pdf, pageNumber, { canvasImport, scale }));
-          const { createCanvas, loadImage } = await canvasImport();
-          const source = await loadImage(png);
-          const canvas = createCanvas(source.width, source.height);
-          const context = canvas.getContext("2d");
-          context.drawImage(source, 0, 0);
-          const jpeg = canvas.toBuffer("image/jpeg", 75);
-          imageInput = {
-            mediaType: "image/jpeg" as const,
-            base64: jpeg.toString("base64"),
-          };
-        } catch (renderErr) {
-          if (renderErr instanceof CvError) throw renderErr;
-          // Fallback: extract embedded image directly without native canvas dependency
           const extracted = await extractImages(pdf, pageNumber);
           if (extracted.length > 0) {
             const best = extracted.sort((a, b) => (b.width * b.height) - (a.width * a.height))[0];
-            const pngBuf = encodeRawImageToPng(best.width, best.height, best.channels, best.data);
+            if (best && best.width >= 64 && best.height >= 64) {
+              const rawPng = encodeRawImageToPng(best.width, best.height, best.channels, best.data);
+              try {
+                const { createCanvas, loadImage } = await import("@napi-rs/canvas");
+                const source = await loadImage(rawPng);
+                const targetScale = Math.min(
+                  1,
+                  SCANNED_PAGE_RENDER_WIDTH / source.width,
+                  MAX_SCANNED_PAGE_RENDER_DIMENSION / Math.max(source.width, source.height)
+                );
+                const outWidth = Math.max(64, Math.round(source.width * targetScale));
+                const outHeight = Math.max(64, Math.round(source.height * targetScale));
+                const canvas = createCanvas(outWidth, outHeight);
+                const context = canvas.getContext("2d");
+                context.drawImage(source, 0, 0, outWidth, outHeight);
+                const jpeg = canvas.toBuffer("image/jpeg", 80);
+                imageInput = {
+                  mediaType: "image/jpeg" as const,
+                  base64: jpeg.toString("base64"),
+                };
+              } catch {
+                imageInput = {
+                  mediaType: "image/png" as const,
+                  base64: rawPng.toString("base64"),
+                };
+              }
+            }
+          }
+        } catch {}
+
+        // 2. Fallback to renderPageAsImage only if no embedded images exist on the scanned page
+        if (!imageInput) {
+          try {
+            const canvasImport = () => import("@napi-rs/canvas");
+            const png = Buffer.from(await renderPageAsImage(pdf, pageNumber, { canvasImport, scale }));
+            const { createCanvas, loadImage } = await canvasImport();
+            const source = await loadImage(png);
+            const canvas = createCanvas(source.width, source.height);
+            const context = canvas.getContext("2d");
+            context.drawImage(source, 0, 0);
+            const jpeg = canvas.toBuffer("image/jpeg", 75);
             imageInput = {
-              mediaType: "image/png" as const,
-              base64: pngBuf.toString("base64"),
+              mediaType: "image/jpeg" as const,
+              base64: jpeg.toString("base64"),
             };
+          } catch (renderErr) {
+            if (renderErr instanceof CvError) throw renderErr;
           }
         }
+
         if (!imageInput) {
           if (searchableText.length >= 40 && /[\p{L}]{2}/u.test(searchableText)) {
             return { text: searchableText };
