@@ -386,34 +386,34 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
     if (!c.geminiKey) throw new AiNotConnectedError("Google Gemini API key not configured. Set GEMINI_API_KEY.");
     const requestStartedAt = performance.now();
     let res: Response;
+    const parts: any[] = [{ text: user }];
+    if (images?.length) {
+      for (const img of images) {
+        parts.push({
+          inline_data: {
+            mime_type: img.mediaType,
+            data: img.base64,
+          },
+        });
+      }
+    }
+    const isJsonTask = system.includes("JSON") || system.includes("json");
     try {
-      res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(c.geminiModel)}:generateContent?key=${encodeURIComponent(c.geminiKey)}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${c.geminiKey}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: c.geminiModel,
-          temperature: images ? 0.1 : 0.2,
-          max_tokens: 4096,
-          messages: [
-            { role: "system", content: system },
-            {
-              role: "user",
-              content: images
-                ? [
-                    { type: "text", text: user },
-                    ...images.map((img) => ({
-                      type: "image_url" as const,
-                      image_url: { url: `data:${img.mediaType};base64,${img.base64}` },
-                    })),
-                  ]
-                : user,
-            },
-          ],
+          system_instruction: {
+            parts: [{ text: system }],
+          },
+          contents: [{ parts }],
+          generationConfig: {
+            temperature: images ? 0.1 : 0.2,
+            maxOutputTokens: 8192,
+            ...(isJsonTask ? { responseMimeType: "application/json" } : {}),
+          },
         }),
-        signal: AbortSignal.timeout(45_000),
+        signal: AbortSignal.timeout(60_000),
       });
     } catch (err) {
       if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) {
@@ -425,8 +425,10 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
       const errTxt = await res.text().catch(() => "");
       throw new Error(`Google Gemini request failed with HTTP ${res.status}: ${errTxt}`);
     }
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const content = (json.choices?.[0]?.message?.content ?? "").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+    const json = (await res.json()) as {
+      candidates?: { content?: { parts?: { text?: string }[] } }[];
+    };
+    const content = (json.candidates?.[0]?.content?.parts?.[0]?.text ?? "").trim();
     if (!content) throw new Error("Google Gemini returned an empty response.");
     const endpointRequestMs = Math.round(performance.now() - requestStartedAt);
     return {
@@ -593,8 +595,7 @@ export async function endpointHealth(tier: Tier): Promise<EndpointHealth> {
   if (c.provider === "gemini") {
     if (!c.geminiKey) return { status: "not_configured", detail: null, error: null };
     try {
-      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/models", {
-        headers: { Authorization: `Bearer ${c.geminiKey}` },
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(c.geminiKey)}`, {
         signal: AbortSignal.timeout(10_000),
       });
       if (!res.ok) return { status: "error", detail: null, error: `Gemini API returned HTTP ${res.status}.` };
