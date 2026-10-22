@@ -401,9 +401,24 @@ function NavBar({ back, pid, children }: { back?: ObStep; pid?: number; children
   const { t } = useT();
   const backHref = back ? `/onboarding/${back}${pid ? `?pid=${pid}` : ""}` : undefined;
   return (
-    <div className="mt-8 flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-      {backHref ? <Link href={backHref} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary" data-testid="link-back"><ArrowLeft className="h-4 w-4" />{t("ob.back")}</Link> : <span />}
-      <div className="flex flex-col gap-2 sm:flex-row">{children}</div>
+    <div className="mt-8 flex items-center justify-between gap-3 border-t border-border pt-5">
+      {backHref ? (
+        <Link
+          href={backHref}
+          className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-xs transition-all hover:border-primary hover:text-primary active:scale-95 sm:min-w-0 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:gap-1.5 sm:text-sm sm:font-medium sm:active:scale-100"
+          aria-label={t("ob.back")}
+          title={t("ob.back")}
+          data-testid="link-back"
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" />
+          <span className="hidden sm:inline">{t("ob.back")}</span>
+        </Link>
+      ) : (
+        <span className="hidden sm:block" />
+      )}
+      <div className="flex flex-1 items-center justify-end gap-2 sm:flex-initial [&>button]:flex-1 sm:[&>button]:flex-initial [&>button]:justify-center">
+        {children}
+      </div>
     </div>
   );
 }
@@ -886,8 +901,17 @@ function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; 
         </>
       )}
       {sub.error && <div className="mt-4"><ErrorBox message={et(sub.error)} retry={submit} /></div>}
+      {done < total && (
+        <p className="mt-3 text-right text-xs text-muted-foreground sm:hidden" data-testid="text-holland-all-mobile">
+          {t("ob.holland.all", { n: total })}
+        </p>
+      )}
       <NavBar back="goals" pid={p.id}>
-        {done < total && <span className="self-center text-xs text-muted-foreground">{t("ob.holland.all", { n: total })}</span>}
+        {done < total && (
+          <span className="hidden self-center text-xs text-muted-foreground sm:inline">
+            {t("ob.holland.all", { n: total })}
+          </span>
+        )}
         <Button className="min-h-11" disabled={!total || done < total || sub.isPending} onClick={submit} data-testid="button-holland-submit">
           {sub.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t("ob.holland.submit")}<ArrowRight className="ml-1.5 h-4 w-4" />
         </Button>
