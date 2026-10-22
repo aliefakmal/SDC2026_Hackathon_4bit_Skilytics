@@ -7,7 +7,7 @@ const { Pool } = pg;
 import fs from "node:fs";
 
 if (!process.env.DATABASE_URL) {
-  for (const envFile of [".env", "../../.env", "../../../src/.env"]) {
+  for (const envFile of [".env", "src/.env", "../../.env", "../../../src/.env"]) {
     if (fs.existsSync(envFile) && typeof process.loadEnvFile === "function") {
       try {
         process.loadEnvFile(envFile);
@@ -23,30 +23,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const NEON_DEFAULT_URL =
-  "postgresql://neondb_owner:npg_5UVvJISyL0Wu@ep-royal-shape-aol47eri-pooler.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require";
-
 let connectionString = (process.env.DATABASE_URL || "").trim();
 if (
   (connectionString.startsWith('"') && connectionString.endsWith('"')) ||
   (connectionString.startsWith("'") && connectionString.endsWith("'"))
 ) {
   connectionString = connectionString.slice(1, -1).trim();
-}
-
-// In Render / cloud environment, or when localhost is specified in cloud, fallback to Neon
-const isCloudRuntime = Boolean(
-  process.env.RENDER ||
-    process.env.NODE_ENV === "production" ||
-    process.env.PORT === "10000" ||
-    connectionString.includes("localhost:5432/skilytics")
-);
-
-if (
-  isCloudRuntime &&
-  (connectionString.includes("localhost") || connectionString.includes("127.0.0.1"))
-) {
-  connectionString = NEON_DEFAULT_URL;
 }
 
 // Remove channel_binding parameter as node-postgres can fail on some Linux/OpenSSL runtimes
