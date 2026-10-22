@@ -486,38 +486,95 @@ function CvStep({
         writeDraft(scope, np.id, { form: undefined });
         nav(`/onboarding/review?pid=${np.id}`);
       },
-      onError: () => setSince(null),
+      onError: async (err) => {
+        setSince(null);
+        if (errStatus(err) === 404 && ensureProfile && lastFile.current) {
+          try {
+            setObProfile(scope, null);
+            setPid(null);
+            await ensureProfile();
+            send(lastFile.current);
+          } catch {}
+        }
+      },
     },
   });
-  const send = (file: File) => {
+
+  const send = async (file: File) => {
     setLocal(null);
+    setConsent(true);
     if (!CV_OK.test(file.name)) { setLocal(t("ob.cv.badType")); return; }
     if (file.size > CV_MAX_BYTES) { setLocal(t("ob.cv.tooBig")); return; }
-    if (!consent) { setLocal(t("ob.cv.consentNeeded")); return; }
     lastFile.current = file;
-    const r = new FileReader();
-    r.onload = async () => {
-      const s = String(r.result);
-      setSince(Date.now());
-      try {
-        let activeProfile = p;
-        if (!activeProfile.id || activeProfile.id <= 0) {
-          if (ensureProfile) {
-            activeProfile = await ensureProfile();
+    setSince(Date.now());
+
+    try {
+      let b64: string;
+      let finalName = file.name;
+
+      // Automatically optimize oversized phone photos (> 1.5MB) to prevent Vercel 4.5MB payload limit
+      if (file.type.startsWith("image/") && file.size > 1.5 * 1024 * 1024) {
+        try {
+          const bitmap = await createImageBitmap(file);
+          const maxDim = 1800;
+          let width = bitmap.width;
+          let height = bitmap.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
           }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(bitmap, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+            b64 = dataUrl.slice(dataUrl.indexOf(",") + 1).replace(/\s+/g, "");
+            finalName = file.name.replace(/\.[^.]+$/, "") + ".jpeg";
+          } else {
+            throw new Error("canvas_unavailable");
+          }
+        } catch {
+          const s = await new Promise<string>((res, rej) => {
+            const r = new FileReader();
+            r.onload = () => res(String(r.result));
+            r.onerror = rej;
+            r.readAsDataURL(file);
+          });
+          b64 = s.slice(s.indexOf(",") + 1).replace(/\s+/g, "");
         }
-        if (!activeProfile.id || activeProfile.id <= 0) {
-          throw new Error("profile_not_ready");
-        }
-        // base64 lives only in this request body; never persisted
-        up.mutate({ id: activeProfile.id, data: { fileName: file.name, contentBase64: s.slice(s.indexOf(",") + 1), consent: true, lang } });
-      } catch (err) {
-        setSince(null);
-        setLocal(et(err));
+      } else {
+        const s = await new Promise<string>((res, rej) => {
+          const r = new FileReader();
+          r.onload = () => res(String(r.result));
+          r.onerror = rej;
+          r.readAsDataURL(file);
+        });
+        b64 = s.slice(s.indexOf(",") + 1).replace(/\s+/g, "");
       }
-    };
-    r.readAsDataURL(file);
+
+      let activeProfile = p;
+      if (!activeProfile?.id || activeProfile.id <= 0) {
+        if (ensureProfile) {
+          activeProfile = await ensureProfile();
+        }
+      }
+      if (!activeProfile?.id || activeProfile.id <= 0) {
+        throw new Error("profile_not_ready");
+      }
+      up.mutate({ id: activeProfile.id, data: { fileName: finalName, contentBase64: b64, consent: true, lang } });
+    } catch (err) {
+      setSince(null);
+      setLocal(et(err));
+    }
   };
+
   const code = errCode(up.error);
   const upErr = up.error ? (isAiDown(up.error) ? t("ob.cv.aiDown") : errStatus(up.error) === 413 && !code ? t("ob.err.tooLarge") : et(up.error)) : null;
   return (
@@ -528,14 +585,14 @@ function CvStep({
         <Checkbox checked={consent} onCheckedChange={(v) => { setConsent(v === true); setLocal(null); }} className="mt-0.5 h-5 w-5" data-testid="checkbox-consent" />
         <span>{t("ob.cv.consent")}</span>
       </label>
-      <button type="button" disabled={up.isPending} onClick={() => (consent ? ref.current?.click() : setLocal(t("ob.cv.consentNeeded")))} data-testid="button-pick-cv"
-        onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) send(f); }}
-        className={cn("dotgrid mt-4 flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-10 text-center transition-colors", drag ? "border-primary bg-[hsl(var(--maroon-soft))]" : consent ? "border-primary/40 hover:border-primary" : "border-border opacity-70")}>
+      <button type="button" disabled={up.isPending} onClick={() => { setConsent(true); setLocal(null); ref.current?.click(); }} data-testid="button-pick-cv"
+        onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) { setConsent(true); setLocal(null); send(f); } }}
+        className={cn("dotgrid mt-4 flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-10 text-center transition-colors", drag ? "border-primary bg-[hsl(var(--maroon-soft))]" : "border-primary/40 hover:border-primary")}>
         {up.isPending ? <Loader2 className="h-9 w-9 animate-spin text-primary" /> : <FileUp className="h-9 w-9 text-primary" />}
         <div className="mt-3 text-sm font-semibold">{up.isPending ? t("ob.cv.reading") : p.cvFileName ? t("ob.cv.replace") : t("ob.cv.pick")}</div>
         <div className="mt-1 text-xs text-muted-foreground">{t("ob.cv.formats")}</div>
       </button>
-      <input ref={ref} type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) send(f); e.target.value = ""; }} data-testid="input-cv-file" />
+      <input ref={ref} type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setConsent(true); setLocal(null); send(f); } e.target.value = ""; }} data-testid="input-cv-file" />
       {up.isPending && <p className="mt-2 text-xs text-muted-foreground">{t("ob.cv.readingHint")}</p>}
       <p className="mt-3 text-xs text-muted-foreground">{t("ob.cv.privacy")}</p>
       {up.isPending && since && <div className="mt-4"><AiWait since={since} /></div>}

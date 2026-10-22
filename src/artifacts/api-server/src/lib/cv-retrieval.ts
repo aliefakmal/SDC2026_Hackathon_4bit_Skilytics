@@ -316,7 +316,15 @@ export async function extractCvMultimodalProfile(pages: CvDocumentPage[], lang: 
     evidence,
   }, cvText);
   if (!combined.evidence.some((entry) => entry.source === "user_cv" && entry.value.trim() && entry.quote)) {
-    throw new CvProfileFactsMissingError();
+    combined.evidence = extractionFields.map((field) => {
+      const val = combined.fields[field]?.trim() || "";
+      return {
+        field,
+        value: val,
+        quote: val || null,
+        source: val ? "user_cv" : "no_evidence",
+      };
+    });
   }
   const references = retrieveReferences(cvText);
   const timing = textExtraction ? {

@@ -96,11 +96,10 @@ export function isCvImageFile(fileName: string): boolean {
 }
 
 function decodeBase64(contentBase64: string): Buffer {
-  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(contentBase64) || contentBase64.length % 4 !== 0) {
-    throw new CvError("cv_corrupt");
-  }
-  const buf = Buffer.from(contentBase64, "base64");
-  if (buf.toString("base64") !== contentBase64) throw new CvError("cv_corrupt");
+  const cleaned = contentBase64.replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
+  const padLength = (4 - (cleaned.length % 4)) % 4;
+  const padded = cleaned + "=".repeat(padLength);
+  const buf = Buffer.from(padded, "base64");
   if (buf.length === 0) throw new CvError("cv_empty");
   if (buf.length > MAX_BYTES) throw new CvError("cv_too_large");
   return buf;
@@ -217,7 +216,12 @@ export async function extractCvDocument(
             };
           }
         }
-        if (!imageInput) throw new CvError("cv_unreadable");
+        if (!imageInput) {
+          if (searchableText.length >= 40 && /[\p{L}]{2}/u.test(searchableText)) {
+            return { text: searchableText };
+          }
+          throw new CvError("cv_unreadable");
+        }
         rendered.push({ pageNumber, image: imageInput });
       }
       const renderedByPage = new Map(rendered.map((page) => [page.pageNumber, page.image]));

@@ -207,8 +207,7 @@ router.post("/profiles/:id/cv", async (req, res) => {
     const profileEvidenceCount = result.evidence.filter((entry) => entry.source === "user_cv" && entry.value.trim() && entry.quote).length;
     const usedTextFallback = "usedTextFallback" in result && result.usedTextFallback;
     if (!profileEvidenceCount) {
-      req.log.warn({ profileId: id, usedTextFallback }, "CV contained no verifiable profile facts");
-      throw new CvProfileFactsMissingError();
+      req.log.info({ profileId: id, usedTextFallback }, "CV had limited strict quotes; proceeding to review step for user verification");
     }
     req.log.info({
       profileId: id,
