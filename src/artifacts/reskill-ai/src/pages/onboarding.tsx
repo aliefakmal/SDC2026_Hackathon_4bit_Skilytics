@@ -321,8 +321,8 @@ function Frame({ step, maxIdx = 0, pid, children }: { step?: ObStep; maxIdx?: nu
           <Link href={user ? "/me" : "/"} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:text-primary" aria-label={t("ob.exit")} data-testid="link-exit"><X className="h-4 w-4" /></Link>
         </div>
       </header>
-      <main className="relative z-[1] mx-auto grid max-w-6xl gap-6 px-4 pb-16 md:grid-cols-[15rem_1fr] md:px-8">
-        <aside aria-label={t("ob.title")}>
+      <main className="relative z-[1] mx-auto grid max-w-6xl items-start gap-6 px-4 pb-16 md:grid-cols-[15rem_1fr] md:px-8">
+        <aside aria-label={t("ob.title")} className="self-start md:sticky md:top-6">
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent">{t("ob.title")}</div>
           {step && <div className="tnum mt-1 text-sm text-muted-foreground" data-testid="text-step-count">{t("ob.stepOf", { n: cur + 1, total: OB_STEPS.length })}</div>}
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted md:hidden"><div className="h-full rounded-full bg-primary transition-transform duration-500 origin-left" style={{ transform: `scaleX(${(cur + 1) / OB_STEPS.length})` }} /></div>
@@ -502,7 +502,10 @@ function CvStep({
 
   const send = async (file: File) => {
     setLocal(null);
-    setConsent(true);
+    if (!consent) {
+      setLocal(t("ob.cv.consentNeeded"));
+      return;
+    }
     if (!CV_OK.test(file.name)) { setLocal(t("ob.cv.badType")); return; }
     if (file.size > CV_MAX_BYTES) { setLocal(t("ob.cv.tooBig")); return; }
     lastFile.current = file;
@@ -585,14 +588,54 @@ function CvStep({
         <Checkbox checked={consent} onCheckedChange={(v) => { setConsent(v === true); setLocal(null); }} className="mt-0.5 h-5 w-5" data-testid="checkbox-consent" />
         <span>{t("ob.cv.consent")}</span>
       </label>
-      <button type="button" disabled={up.isPending} onClick={() => { setConsent(true); setLocal(null); ref.current?.click(); }} data-testid="button-pick-cv"
-        onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) { setConsent(true); setLocal(null); send(f); } }}
+      <button
+        type="button"
+        disabled={up.isPending}
+        onClick={() => {
+          if (!consent) {
+            setLocal(t("ob.cv.consentNeeded"));
+            return;
+          }
+          setLocal(null);
+          ref.current?.click();
+        }}
+        data-testid="button-pick-cv"
+        onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDrag(false);
+          const f = e.dataTransfer.files[0];
+          if (!f) return;
+          if (!consent) {
+            setLocal(t("ob.cv.consentNeeded"));
+            return;
+          }
+          send(f);
+        }}
         className={cn("dotgrid mt-4 flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-10 text-center transition-colors", drag ? "border-primary bg-[hsl(var(--maroon-soft))]" : "border-primary/40 hover:border-primary")}>
         {up.isPending ? <Loader2 className="h-9 w-9 animate-spin text-primary" /> : <FileUp className="h-9 w-9 text-primary" />}
         <div className="mt-3 text-sm font-semibold">{up.isPending ? t("ob.cv.reading") : p.cvFileName ? t("ob.cv.replace") : t("ob.cv.pick")}</div>
         <div className="mt-1 text-xs text-muted-foreground">{t("ob.cv.formats")}</div>
       </button>
-      <input ref={ref} type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setConsent(true); setLocal(null); send(f); } e.target.value = ""; }} data-testid="input-cv-file" />
+      <input
+        ref={ref}
+        type="file"
+        accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) {
+            if (!consent) {
+              setLocal(t("ob.cv.consentNeeded"));
+            } else {
+              send(f);
+            }
+          }
+          e.target.value = "";
+        }}
+        data-testid="input-cv-file"
+      />
       {up.isPending && <p className="mt-2 text-xs text-muted-foreground">{t("ob.cv.readingHint")}</p>}
       <p className="mt-3 text-xs text-muted-foreground">{t("ob.cv.privacy")}</p>
       {up.isPending && since && <div className="mt-4"><AiWait since={since} /></div>}
@@ -747,21 +790,35 @@ function initReviewForm(p: Profile, scope: string): ReviewForm {
   const prev = !!p.verified;
 
   let initialEduList: string[] = [""];
+  const freshEduList = p.education ? splitEntries(p.education, "education") : [];
   if (Array.isArray(d.educationList) && d.educationList.length > 0) {
-    initialEduList = d.educationList;
+    const joinedDraft = d.educationList.map((s) => s.trim()).filter(Boolean).join("\n\n");
+    const rawProfile = (p.education ?? "").trim();
+    if (freshEduList.length > 0 && joinedDraft.replace(/\s+/g, " ") === rawProfile.replace(/\s+/g, " ")) {
+      initialEduList = freshEduList;
+    } else {
+      initialEduList = d.educationList;
+    }
   } else if (typeof d.education === "string" && d.education.trim()) {
     initialEduList = splitEntries(d.education, "education");
-  } else if (p.education) {
-    initialEduList = splitEntries(p.education, "education");
+  } else if (freshEduList.length > 0) {
+    initialEduList = freshEduList;
   }
 
   let initialExpList: string[] = [""];
+  const freshExpList = p.experience ? splitEntries(p.experience, "experience") : [];
   if (Array.isArray(d.experienceList) && d.experienceList.length > 0) {
-    initialExpList = d.experienceList;
+    const joinedDraft = d.experienceList.map((s) => s.trim()).filter(Boolean).join("\n\n");
+    const rawProfile = (p.experience ?? "").trim();
+    if (freshExpList.length > 0 && joinedDraft.replace(/\s+/g, " ") === rawProfile.replace(/\s+/g, " ")) {
+      initialExpList = freshExpList;
+    } else {
+      initialExpList = d.experienceList;
+    }
   } else if (typeof d.experience === "string" && d.experience.trim()) {
     initialExpList = splitEntries(d.experience, "experience");
-  } else if (p.experience) {
-    initialExpList = splitEntries(p.experience, "experience");
+  } else if (freshExpList.length > 0) {
+    initialExpList = freshExpList;
   }
 
   const base: ReviewForm = {
