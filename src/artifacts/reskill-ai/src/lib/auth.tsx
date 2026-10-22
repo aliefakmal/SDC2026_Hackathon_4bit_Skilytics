@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { getGetMeQueryKey, logout as apiLogout, useGetMe, type AuthSession, type AuthUser } from "@workspace/api-client-react";
 import { setActiveProfile } from "@/lib/fmt";
 import { clearAllOb } from "@/lib/onboarding";
+import { rescopeSession } from "./session-cache";
 
 const TOKEN = "skilytics.token";
 
@@ -25,9 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const meKey = getGetMeQueryKey();
 
   const rescope = useCallback(async (user: AuthUser | null) => {
-    qc.removeQueries({ type: "inactive" });
-    qc.setQueryData(meKey, user);
-    await qc.resetQueries({ predicate: (q) => q.queryKey[0] !== meKey[0] });
+    await rescopeSession(qc, meKey, user);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qc]);
 
