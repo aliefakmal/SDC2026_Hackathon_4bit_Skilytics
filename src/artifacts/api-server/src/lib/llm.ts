@@ -43,7 +43,10 @@ function cfg() {
   }
 
   const geminiKey = process.env["GEMINI_API_KEY"]?.trim();
-  const geminiModel = process.env["GEMINI_MODEL"]?.trim() || "gemini-3.8-flash";
+  let geminiModel = process.env["GEMINI_MODEL"]?.trim() || "gemini-3.8-flash";
+  if (geminiModel === "gemini-2.0-flash") {
+    geminiModel = "gemini-3.8-flash";
+  }
 
   const groqKey = process.env["GROQ_API_KEY"]?.trim();
   const groqModel = process.env["GROQ_MODEL"]?.trim() || "llama-3.3-70b-versatile";
