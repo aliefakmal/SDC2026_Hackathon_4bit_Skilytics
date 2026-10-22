@@ -1,6 +1,8 @@
 import { db, profilesTable, plansTable, usersTable, type SkillRow } from "@workspace/db";
 import { and, eq, desc, isNull, sql, type SQL } from "drizzle-orm";
 import type { Request } from "express";
+import { loadCourses } from "./catalog";
+import { hasCurrentRiasec } from "./riasec-scoring";
 import { SDG_TARGETS } from "../data/courses";
 
 export type ProfileRow = typeof profilesTable.$inferSelect;
@@ -8,6 +10,10 @@ export type PlanRow = typeof plansTable.$inferSelect;
 
 export async function getProfileRow(id: number): Promise<ProfileRow | undefined> {
   const [row] = await db.select().from(profilesTable).where(eq(profilesTable.id, id));
+  if (row && !hasCurrentRiasec(row.riasecAnswers)) {
+    row.riasecScores = null; row.riasecCode = null;
+    if (["results", "save", "complete"].includes(row.onboardingStep ?? "")) row.onboardingStep = "holland";
+  }
   return row;
 }
 
@@ -17,6 +23,7 @@ export async function getLatestPlan(profileId: number): Promise<PlanRow | undefi
 }
 
 export function profileToApi(p: ProfileRow, skills: SkillRow[]) {
+  const current = hasCurrentRiasec(p.riasecAnswers);
   const name = new Map(skills.map((s) => [s.id, s.name]));
   return {
     id: p.id,
@@ -43,8 +50,8 @@ export function profileToApi(p: ProfileRow, skills: SkillRow[]) {
     skills: p.skills
       .filter((s) => name.has(s.skillId))
       .map((s) => ({ skillId: s.skillId, name: name.get(s.skillId)!, status: s.status, evidence: s.evidence })),
-    riasecScores: p.riasecScores,
-    riasecCode: p.riasecCode,
+    riasecScores: current ? p.riasecScores : null,
+    riasecCode: current ? p.riasecCode : null,
     targetRoleId: p.targetRoleId,
     createdAt: p.createdAt.toISOString(),
   };
@@ -53,18 +60,21 @@ export function profileToApi(p: ProfileRow, skills: SkillRow[]) {
 type SdgTarget = (typeof SDG_TARGETS)[number];
 const sdgByCode = new Map(SDG_TARGETS.map((t) => [t.code, t]));
 
-export function planToApi(p: PlanRow) {
+export async function planToApi(p: PlanRow) {
+  const current = new Map((await loadCourses()).map((c) => [c.id, c]));
+  const valid = p.items.filter((i) => current.get(i.courseId)?.url === i.url);
+  const verified = valid.length === p.items.length && valid.length > 0;
   return {
     id: p.id,
     profileId: p.profileId,
     roleId: p.roleId,
     roleTitle: p.roleTitle,
-    totalWeeks: null,
-    totalCostMyr: null,
-    verificationStatus: "unverified" as const,
+    totalWeeks: verified ? p.totalWeeks : null,
+    totalCostMyr: verified ? p.totalCostMyr : null,
+    verificationStatus: verified ? "verified" as const : "unverified" as const,
     // Historical plans are retained, but unverified prices/durations are withheld.
-    uncoveredSkills: [...new Set([...p.uncoveredSkills, ...p.items.flatMap((i) => i.skills)])],
-    items: ([] as PlanRow["items"]).map(({ sdgCodes, ...i }) => ({
+    uncoveredSkills: [...new Set([...p.uncoveredSkills, ...p.items.filter((i) => !valid.includes(i)).flatMap((i) => i.skills)])],
+    items: valid.map(({ sdgCodes, ...i }) => ({
       ...i,
       sdgTargets: sdgCodes.map((c) => sdgByCode.get(c)).filter((t): t is SdgTarget => !!t),
     })),

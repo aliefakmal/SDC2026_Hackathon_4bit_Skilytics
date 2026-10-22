@@ -57,10 +57,10 @@ export const SOURCES: SourceDef[] = [
   },
   {
     id: "course_catalogue",
-    name: "Course catalogue links",
+    name: "Microsoft Learn live catalogue",
     kind: "catalogue",
-    url: "/courses",
-    description: "Curated free, low-cost and HRD Corp-relevant courses. Each course URL is checked to confirm it still opens.",
+    url: "https://learn.microsoft.com/api/catalog/?locale=en-us&type=learningPaths",
+    description: "Live provider learning paths, durations and direct URLs. Six-hour refresh; unavailable data is withheld.",
     refreshCadence: "links_6h",
     consumers: ["pathway", "agent_planner", "agent_sdg", "cohort"],
   },
@@ -245,65 +245,18 @@ async function ingestUsage(force: boolean): Promise<void> {
   logger.info({ release, period: latest, rows: rows.length }, "AI usage ingested");
 }
 
-async function checkUrl(url: string): Promise<boolean> {
-  const opts = { redirect: "follow" as const, headers: { "User-Agent": "Mozilla/5.0 (compatible; Skilytics link check)" } };
-  try {
-    const head = await fetch(url, { ...opts, method: "HEAD", signal: AbortSignal.timeout(10_000) });
-    if (head.ok) return true;
-  } catch {
-    // fall through to GET
-  }
-  try {
-    const res = await fetch(url, { ...opts, method: "GET", signal: AbortSignal.timeout(15_000) });
-    await res.body?.cancel();
-    // 403/429 from bot protection still means the page exists.
-    return res.ok || res.status === 403 || res.status === 429;
-  } catch {
-    return false;
-  }
-}
-
 export async function checkCourseLinks(): Promise<void> {
   const courses = await loadCourses();
   if (!courses.length) {
-    await setSource("course_catalogue", { status: "not_configured", recordCount: 0, detail: null, error: "provider_verification_required" });
+    await setSource("course_catalogue", { status: "error", recordCount: 0, detail: null, error: "course_catalogue_unavailable" });
     return;
   }
-  const broken: string[] = [];
-  const uniqueUrls = Array.from(new Set(courses.map((c) => c.url)));
-  const reachableMap = new Map<string, boolean>();
-  for (const url of uniqueUrls) {
-    reachableMap.set(url, true);
-  }
-  const checkWorkers = uniqueUrls.map(async (u) => {
-    try {
-      const ok = await checkUrl(u);
-      reachableMap.set(u, ok);
-    } catch {
-      reachableMap.set(u, true);
-    }
-  });
-  await Promise.race([
-    Promise.all(checkWorkers),
-    new Promise((resolve) => setTimeout(resolve, 6000)),
-  ]);
-
-  for (const c of courses) {
-    if (reachableMap.get(c.url) === false) {
-      broken.push(c.title);
-    }
-  }
-
-  const ok = courses.length - broken.length;
-  const isHealthy = broken.length <= courses.length / 2;
   await setSource("course_catalogue", {
-    status: isHealthy ? "ok" : "error",
-    lastFetchedAt: new Date(),
-    dataDate: "2026-10",
-    version: "2026-10",
+    status: "ok", lastFetchedAt: new Date(courses[0].lastVerified),
+    dataDate: courses[0].lastVerified.slice(0,10), version: "microsoft-learn-live",
     recordCount: courses.length,
-    detail: `${ok}/${courses.length} verified${broken.length ? ` (${broken.length} provider links protected/slow)` : ""}`,
-    error: isHealthy ? null : `Unreachable: ${broken.join("; ")}`,
+    detail: "Provider catalogue metadata refreshed every six hours; direct learning path URLs. SDG associations are editorial.",
+    error: null,
   });
 }
 

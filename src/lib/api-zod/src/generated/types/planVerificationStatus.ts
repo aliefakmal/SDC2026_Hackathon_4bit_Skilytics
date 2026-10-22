@@ -11,4 +11,5 @@ export type PlanVerificationStatus = typeof PlanVerificationStatus[keyof typeof 
 
 export const PlanVerificationStatus = {
   unverified: 'unverified',
+  verified: 'verified',
 } as const;

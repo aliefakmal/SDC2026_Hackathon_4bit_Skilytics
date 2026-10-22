@@ -1,5 +1,6 @@
 import type { SkillRow, StoredProfileSkill, StoredRiasec } from "@workspace/db";
 import type { CourseView, RoleSkillView, RoleView } from "./catalog";
+import { hasCurrentRiasec } from "./riasec-scoring";
 
 // Deterministic, explainable match score (0-100). No GPU involved.
 // Weights: skills 40, transferable 15, interest 20, preferences 10, feasibility 15.
@@ -8,6 +9,7 @@ export const WEIGHTS = { skills: 40, transferable: 15, interest: 20, preferences
 const STATUS_CREDIT: Record<StoredProfileSkill["status"], number> = { evidenced: 1, self_reported: 0.8, inferred: 0.6 };
 
 export type ProfileForScoring = {
+  riasecAnswers?: { questionId: number; value: number }[];
   skills: StoredProfileSkill[];
   riasecScores: StoredRiasec | null;
   goals: string | null;
@@ -59,7 +61,7 @@ export function scoreRole(profile: ProfileForScoring, role: RoleView, skills: Sk
   const transferableImp = gaps.filter((g) => haveCategories.has(category.get(g.skillId))).reduce((a, s) => a + s.importance, 0);
   const transferable = gapImp === 0 ? WEIGHTS.transferable : (transferableImp / gapImp) * WEIGHTS.transferable;
 
-  const interest = profile.riasecScores
+  const interest = profile.riasecScores && (!profile.riasecAnswers || hasCurrentRiasec(profile.riasecAnswers))
     ? riasecCongruence(profile.riasecScores, role.riasecCode) * WEIGHTS.interest
     : WEIGHTS.interest / 2;
 

@@ -167,6 +167,7 @@ function evLabel(p: Profile, field: string, current: string): "supported" | "sel
 /** Read-only summary of the saved CV review (education, experience, HRD Corp, evidence). */
 function SavedReviewPanel({ p }: { p: Profile }) {
   const { t } = useT();
+  const { user } = useAuth();
   const hrdc = p.hrdcEligibilityStatus ?? null;
   const fields = [
     { key: "currentRole", label: "ob.review.role", v: p.currentRole },
@@ -191,11 +192,11 @@ function SavedReviewPanel({ p }: { p: Profile }) {
             </div>
           );
         })}
-        <div className="rounded-xl bg-muted/40 p-3">
+        {user?.role === "hr" && <div className="rounded-xl bg-muted/40 p-3">
           <dt className="text-xs text-muted-foreground">{t("ob.review.hrdc")}</dt>
           <dd className="mt-1 font-medium" data-testid="text-hrdc-status">{hrdc === "yes" ? t("ob.review.hrdcYes") : hrdc === "no" ? t("ob.review.hrdcNo") : hrdc === "unknown" ? t("ob.review.hrdcUnknown") : <span className="text-muted-foreground">{t("ob.saved.empty")}</span>}</dd>
           {hrdc === "unknown" && <p className="mt-1 text-[11px] text-muted-foreground">{t("ob.review.hrdcUnknownNote")}</p>}
-        </div>
+        </div>}
       </dl>
     </Panel>
   );
@@ -720,7 +721,7 @@ function PlanView({ pl, onRebuild, rebuilding }: { pl: Plan; onRebuild: () => vo
         <div className="rounded-2xl border border-card-border bg-card p-4"><div className="text-xs text-muted-foreground">{t("pathway.duration")}</div><div className="tnum mt-1 text-2xl font-bold">{pl.totalWeeks == null ? <span className="text-base">{t("ob.plan.notVerified")}</span> : t("common.weeks", { n: pl.totalWeeks })}</div></div>
         <div className="rounded-2xl border border-card-border bg-card p-4"><div className="text-xs text-muted-foreground">{t("pathway.cost")}</div><div className="tnum mt-1 text-2xl font-bold text-accent">{pl.totalCostMyr == null ? <span className="text-base text-muted-foreground">{t("ob.plan.notVerified")}</span> : f.myr(pl.totalCostMyr)}</div></div>
       </div>
-      <Panel title={t("pathway.timeline", { n: pl.items.length })} meta={t("pathway.hrdcNote")}
+      <Panel title={t("pathway.timeline", { n: pl.items.length })} meta={t("courses.live")}
         actions={<Button variant="outline" className="min-h-11" disabled={rebuilding} onClick={onRebuild} data-testid="button-rebuild">{rebuilding ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}<span className="ml-1.5 hidden sm:inline">{t("pathway.rebuild")}</span></Button>}>
         {!pl.items.length ? <Empty title={t("pathway.noItems")} /> : (
           <ol className="relative space-y-3">
@@ -737,7 +738,7 @@ function PlanView({ pl, onRebuild, rebuilding }: { pl: Plan; onRebuild: () => vo
                   </div>
                   <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
                     <span className="truncate whitespace-nowrap">{it.provider}</span>
-                    <span className="tnum font-semibold text-foreground">{it.costMyr === 0 ? t("ob.plan.priceUnverified") : f.myr(it.costMyr)}</span>
+                    <span className="tnum font-semibold text-foreground">{it.costMyr === 0 ? t("cost.free") : f.myr(it.costMyr)}</span>
                     {it.costMyr > 0 && <CostBadge type={it.costMyr <= 200 ? "low_cost" : "paid"} />}
                     <HrdcBadge status={it.hrdcStatus} />
                   </div>

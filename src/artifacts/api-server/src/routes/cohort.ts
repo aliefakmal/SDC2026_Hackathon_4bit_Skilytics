@@ -5,6 +5,7 @@ import { requireRole } from "../lib/auth";
 import { profileScope } from "../lib/profiles";
 import { loadCourses, loadRoles, loadSkills } from "../lib/catalog";
 import { scoreRole } from "../lib/scoring";
+import { hasCurrentRiasec } from "../lib/riasec-scoring";
 
 const router: IRouter = Router();
 
@@ -33,6 +34,7 @@ router.get("/cohort/summary", requireRole("hr", "tvet"), async (req, res) => {
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
   const members = profiles.map((p) => {
+    if (!hasCurrentRiasec(p.riasecAnswers)) { p.riasecCode = null; p.riasecScores = null; }
     segCount.set(p.segment, (segCount.get(p.segment) ?? 0) + 1);
     if (p.riasecCode) riasecCount.set(p.riasecCode[0], (riasecCount.get(p.riasecCode[0]) ?? 0) + 1);
     const scored = roles.map((r) => ({ r, s: scoreRole(p, r, skills, courses) })).sort((a, b) => b.s.score - a.s.score);

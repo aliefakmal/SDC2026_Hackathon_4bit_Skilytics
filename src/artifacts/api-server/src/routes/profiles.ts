@@ -60,7 +60,7 @@ router.post("/profiles", async (req, res) => {
       goals: body.goals ?? null,
       weeklyHours: body.weeklyHours,
       budgetMyr: body.budgetMyr,
-      hrdcEligible: body.hrdcEligible ?? false,
+      hrdcEligible: u?.role === "hr" && (body.hrdcEligible ?? false),
       onboardingStep: "cv",
     })
     .returning();
@@ -88,6 +88,7 @@ router.patch("/profiles/:id", async (req, res) => {
   const body = UpdateProfileBody.parse(req.body);
   const p = await requireProfile(id, req, res);
   if (!p) return;
+  if (req.user?.role !== "hr") { body.hrdcEligible = false; body.hrdcEligibilityStatus = "no"; }
   const step = body.onboardingStep;
   if (body.verified && !(body.name ?? p.name).trim()) {
     res.status(400).json({ error: "invalid_input" }); return;
@@ -314,7 +315,7 @@ router.get("/profiles/:id/plan", async (req, res) => {
   const p = await requireProfile(id, req, res);
   if (!p) return;
   const plan = await getLatestPlan(id);
-  res.json(plan ? planToApi(plan) : null);
+  res.json(plan ? await planToApi(plan) : null);
 });
 
 router.post("/profiles/:id/plan", async (req, res) => {
@@ -330,13 +331,13 @@ router.post("/profiles/:id/plan", async (req, res) => {
     return;
   }
   const { gapSkills } = scoreRole(p, role, skills, courses);
-  const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: p.hrdcEligible });
+  const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: req.user?.role === "hr" && p.hrdcEligible });
   const [row] = await db
     .insert(plansTable)
     .values({ profileId: id, roleId, roleTitle: role.title, ...plan })
     .returning();
   await db.update(profilesTable).set({ targetRoleId: roleId }).where(eq(profilesTable.id, id));
-  res.status(201).json(planToApi(row));
+  res.status(201).json(await planToApi(row));
 });
 
 router.get("/profiles/:id/insights", async (req, res) => {
@@ -384,10 +385,10 @@ router.post("/profiles/:id/insights", async (req, res) => {
   const targetId = body.roleId ?? p.targetRoleId;
   const [targetRole] = targetId ? await db.select().from(rolesTable).where(eq(rolesTable.id, targetId)) : [];
   const plan = await getLatestPlan(id);
-  const planView = plan ? planToApi(plan) : null;
+  const planView = plan ? await planToApi(plan) : null;
 
   const base = {
-    profil: { nama: profile.name, segmen: profile.segment, peranan: profile.currentRole, matlamat: profile.goals, jamSeminggu: profile.weeklyHours, bajetMyr: profile.budgetMyr, layakHrdc: profile.hrdcEligible },
+    profil: { nama: profile.name, segmen: profile.segment, peranan: profile.currentRole, matlamat: profile.goals, jamSeminggu: profile.weeklyHours, bajetMyr: profile.budgetMyr, ...(req.user?.role === "hr" ? { layakHrdc: profile.hrdcEligible } : {}) },
     kemahiran: profile.skills.map((s) => ({ nama: s.name, status: s.status })),
   };
   const ctx: Record<string, unknown> = { ...base };

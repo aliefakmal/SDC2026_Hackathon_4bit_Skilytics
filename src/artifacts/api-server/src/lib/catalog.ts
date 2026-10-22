@@ -1,4 +1,5 @@
 import { ROLE_TITLE_ZH } from "../data/roles-zh";
+import { liveCourses } from "./live-courses";
 import {
   db,
   skillsTable,
@@ -79,7 +80,7 @@ export async function loadRoles(): Promise<RoleView[]> {
 }
 
 export async function loadCourses(): Promise<CourseView[]> {
-  return loadDemoCourses();
+  return liveCourses(await loadSkills());
 }
 
 export async function loadDemoCourses(): Promise<CourseView[]> {
@@ -127,6 +128,5 @@ export function roleToApi(r: RoleView) {
 }
 
 export function courseToApi(c: CourseView) {
-  const { sdgCodes: _sdg, ...rest } = c;
-  return rest;
+  return c;
 }

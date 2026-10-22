@@ -52,7 +52,10 @@ const DOCS: Doc[] = [
     { label: "docs.f.license", k: ["docs.onet.license"], url: "https://www.onetcenter.org/license_db.html" },
     { label: "docs.f.cadence", k: ["docs.onet.cadence"] },
   ] },
-  { id: "courses", types: ["external", "static"], name: "src.course_catalogue.name", sourceIds: ["course_catalogue"], rows: [
+  { id: "courses", types: ["external"], name: "src.course_catalogue.name", sourceIds: ["course_catalogue"], rows: [
+    { label: "docs.f.publisher", ref: "Microsoft Learn" },
+    { label: "docs.f.api", url: "https://learn.microsoft.com/api/catalog/?locale=en-us&type=learningPaths" },
+    { label: "docs.f.dataset", url: "https://learn.microsoft.com/en-us/training/support/integrations-learn-platform-api-catalog" },
     { label: "docs.f.method", k: ["docs.course.status"] },
     { label: "docs.f.limits", k: ["docs.course.limits"] },
     { label: "docs.f.license", k: ["docs.course.license"] },
@@ -65,6 +68,9 @@ const DOCS: Doc[] = [
     { label: "docs.f.privacy", k: ["docs.ai.privacy"] },
   ] },
   { id: "riasec", types: ["static", "user"], name: "docs.name.riasec", rows: [
+    { label: "docs.f.publisher", ref: "USDOL/ETA — O*NET Interest Profiler; contextual adaptation by Skilytics" },
+    { label: "docs.f.dataset", url: "https://www.onetcenter.org/dl_files/Mini-IP.pdf" },
+    { label: "docs.f.license", url: "https://www.onetcenter.org/license_tools.html" },
     { label: "docs.f.method", k: ["docs.riasec.items", "docs.riasec.scoring"] },
     { label: "docs.f.limits", k: ["docs.riasec.limits"] },
   ] },
@@ -75,6 +81,8 @@ const DOCS: Doc[] = [
   { id: "sdg", types: ["static"], name: "docs.name.sdg", rows: [
     { label: "docs.f.publisher", ref: "United Nations, Sustainable Development Goals" },
     { label: "docs.f.dataset", url: "https://sdgs.un.org/goals" },
+    { label: "docs.f.files", url: "https://www.un.org/sustainabledevelopment/news/communications-material/" },
+    { label: "docs.f.license", url: "/sdg/NOTICE.md" },
     { label: "docs.f.method", k: ["docs.sdg.method"] },
     { label: "docs.f.limits", k: ["docs.sdg.limits"] },
   ] },
@@ -85,6 +93,13 @@ const DOCS: Doc[] = [
 ];
 
 const TYPES: DocType[] = ["external", "static", "derived", "demo", "user"];
+const CATEGORIES = [
+  { key: "market", ids: ["dosm", "aei_usage", "aei_exposure"] },
+  { key: "career", ids: ["onet", "riasec", "match"] },
+  { key: "learning", ids: ["courses", "sdg"] },
+  { key: "infrastructure", ids: ["runpod"] },
+  { key: "privacy", ids: ["demo"] },
+] as const;
 const TYPE_TONE: Record<DocType, string> = {
   external: "bg-[hsl(var(--maroon-soft))] text-primary",
   static: "bg-muted text-foreground",
@@ -198,7 +213,15 @@ export function SourceDocumentation({ sources, ai }: { sources: MarketSource[]; 
       <dl className="mb-4 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-5" data-testid="docs-types">
         {TYPES.map((ty) => <div key={ty} className="space-y-1"><dt><TypeTag type={ty} /></dt><dd className="text-muted-foreground">{t(`docs.typeDesc.${ty}` as DictKey)}</dd></div>)}
       </dl>
-      <div className="space-y-2">{DOCS.map((d) => <DocItem key={d.id} d={d} live={sources} ai={ai} />)}</div>
+      <div className="space-y-6">{CATEGORIES.map((category) => (
+        <section key={category.key} aria-labelledby={`sources-category-${category.key}`}>
+          <h3 id={`sources-category-${category.key}`} className="mb-2 text-sm font-semibold text-primary">{t(`docs.category.${category.key}` as DictKey)}</h3>
+          <div className="space-y-2">{category.ids.map((id) => {
+            const d = DOCS.find((entry) => entry.id === id)!;
+            return <DocItem key={d.id} d={d} live={sources} ai={ai} />;
+          })}</div>
+        </section>
+      ))}</div>
     </Panel>
   );
 }

@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { ErrorBox } from "@/components/kit";
 import { useToast } from "@/hooks/use-toast";
 import { useT } from "@/i18n";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
 
 export function ProfileFormDialog({ open, onOpenChange, profile, segment = "worker", lockSegment, onDone }: Props) {
   const { t, tk } = useT();
+  const { user } = useAuth();
   const qc = useQueryClient();
   const { toast } = useToast();
   const [f, setF] = useState({ name: "", segment: segment as Segment, currentRole: "", goals: "", weeklyHours: "6", budgetMyr: "300", hrdcEligible: false });
@@ -56,7 +58,7 @@ export function ProfileFormDialog({ open, onOpenChange, profile, segment = "work
     e.preventDefault();
     if (!valid) return;
     const data = {
-      name: f.name.trim(), segment: f.segment, weeklyHours: Math.round(hours), budgetMyr: budget, hrdcEligible: f.hrdcEligible,
+      name: f.name.trim(), segment: f.segment, weeklyHours: Math.round(hours), budgetMyr: budget, hrdcEligible: user?.role === "hr" && f.hrdcEligible,
       ...(f.currentRole.trim() ? { currentRole: f.currentRole.trim() } : {}),
       ...(f.goals.trim() ? { goals: f.goals.trim() } : {}),
     };
@@ -96,7 +98,7 @@ export function ProfileFormDialog({ open, onOpenChange, profile, segment = "work
             <div className="space-y-1.5"><Label htmlFor="pf-b">{t("profile.budget")}</Label>
               <Input id="pf-b" type="number" inputMode="decimal" min={0} value={f.budgetMyr} onChange={(e) => setF({ ...f, budgetMyr: e.target.value })} className="min-h-11" data-testid="input-profile-budget" /></div>
           </div>
-          {f.segment === "worker" && (
+          {user?.role === "hr" && (
             <label className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border px-3 py-2">
               <span className="min-w-0"><span className="block text-sm font-medium">{t("profile.hrdc")}</span><span className="block text-[11px] text-muted-foreground">{t("profile.hrdcHint")}</span></span>
               <Switch checked={f.hrdcEligible} onCheckedChange={(v) => setF({ ...f, hrdcEligible: v })} data-testid="switch-hrdc" />

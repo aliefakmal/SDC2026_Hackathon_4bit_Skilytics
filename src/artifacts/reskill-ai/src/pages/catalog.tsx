@@ -120,9 +120,9 @@ export function Courses({ hr }: { hr?: boolean }) {
   const { t, tk } = useT();
   const f = useFmt();
   const [cost, setCost] = useState("all");
-  const [hrdc, setHrdc] = useState(!!hr);
-  const params = { ...(cost !== "all" ? { costType: cost as CostType } : {}), ...(hrdc ? { hrdcOnly: true } : {}) };
-  const q = useListCourses(params, { query: { queryKey: getListCoursesQueryKey(params) } });
+  const [hrdc, setHrdc] = useState(false);
+  const params = { ...(cost !== "all" ? { costType: cost as CostType } : {}), ...(hr && hrdc ? { hrdcOnly: true } : {}) };
+  const q = useListCourses(params, { query: { queryKey: getListCoursesQueryKey(params), refetchInterval: 300000 } });
   const costs: CostType[] = ["free", "low_cost", "paid"];
   return (
     <>
@@ -132,7 +132,7 @@ export function Courses({ hr }: { hr?: boolean }) {
           <SelectTrigger className="min-h-11 w-48" data-testid="select-cost"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">{t("courses.allCosts")}</SelectItem>{costs.map((c) => <SelectItem key={c} value={c}>{tk("cost", c)}</SelectItem>)}</SelectContent>
         </Select>
-        <label className="flex min-h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm"><Switch checked={hrdc} onCheckedChange={setHrdc} data-testid="switch-hrdc-only" />{t("courses.hrdcOnly")}</label>
+        {hr && <label className="flex min-h-11 items-center gap-2 rounded-xl border border-border bg-card px-3 text-sm"><Switch checked={hrdc} onCheckedChange={setHrdc} data-testid="switch-hrdc-only" />{t("courses.hrdcOnly")}</label>}
         <span className="tnum text-xs text-muted-foreground">{t("courses.count", { n: q.data?.length ?? 0 })}</span>
       </div>
       {q.isLoading ? <Rows n={6} h="h-24" /> : q.isError ? <ErrorBox error={q.error} retry={() => q.refetch()} /> : !q.data?.length ? <Empty title={t("courses.empty")}>{t("courses.emptyBody")}</Empty> : (
@@ -142,9 +142,10 @@ export function Courses({ hr }: { hr?: boolean }) {
               className={cn("rise min-w-0 rounded-2xl border bg-card p-4 shadow-xs", hr && c.hrdcStatus !== "not_claimable" ? "border-accent/60" : "border-card-border")}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0"><div title={c.title} className="truncate whitespace-nowrap font-semibold">{c.title}</div>
-                  <div className="truncate whitespace-nowrap text-xs text-muted-foreground">{c.provider} · {c.level} · {c.language}</div></div>
+                  <div className="truncate whitespace-nowrap text-xs text-muted-foreground">{c.provider} · {tk("level", c.level.toLowerCase())} · {tk("courseLanguage", c.language)}</div></div>
                 <div className="shrink-0 text-right"><div className="tnum font-bold">{c.costMyr === 0 ? t("cost.free") : f.myr(c.costMyr)}</div><div className="text-[11px] text-muted-foreground">{t("common.hours", { n: c.durationHours })}</div></div>
               </div>
+              <div className="mt-2 flex flex-wrap gap-2">{c.sdgCodes?.filter((code, i, all) => all.findIndex((x) => x.split(".")[0] === code.split(".")[0]) === i).map((code, index) => <span key={code} className="inline-flex items-center gap-1 text-xs"><SdgBadge code={code} title={tk("sdg", code.split(".")[0])} />{t(index === 0 ? "sdg.main" : "sdg.related")}</span>)}</div>
               <div className="mt-2 flex flex-wrap gap-1.5">{c.skills.map((s) => <SkillBadge key={s.id} name={s.name} category={s.category} />)}</div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap gap-1.5"><HrdcBadge status={c.hrdcStatus} /><CostBadge type={c.costType} />{c.certificate && <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold"><Award className="h-3 w-3" />{t("courses.cert")}</span>}</div>
@@ -155,7 +156,9 @@ export function Courses({ hr }: { hr?: boolean }) {
           ))}
         </div>
       )}
-      <p className="mt-4 text-xs text-muted-foreground">{t("courses.hrdcHonest")}</p>
+      <p className="mt-4 text-xs text-muted-foreground">{t("courses.live")}</p>
+      <p className="mt-2 text-xs text-muted-foreground">{t("sdg.notice")}</p>
+      {hr && <p className="mt-2 text-xs text-muted-foreground">{t("courses.hrdcHonest")}</p>}
     </>
   );
 }

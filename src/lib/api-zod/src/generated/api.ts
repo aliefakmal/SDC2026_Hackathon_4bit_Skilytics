@@ -614,7 +614,7 @@ export const GetProfilePlanParams = zod.object({
 })
 
 export const GetProfilePlanResponse = zod.union([zod.object({
-  "verificationStatus": zod.enum(['unverified']).optional(),
+  "verificationStatus": zod.enum(['unverified', 'verified']).optional(),
   "id": zod.number().int(),
   "profileId": zod.number().int(),
   "roleId": zod.number().int(),
@@ -651,7 +651,7 @@ export const CreateProfilePlanBody = zod.object({
 })
 
 export const CreateProfilePlanResponse = zod.object({
-  "verificationStatus": zod.enum(['unverified']).optional(),
+  "verificationStatus": zod.enum(['unverified', 'verified']).optional(),
   "id": zod.number().int(),
   "profileId": zod.number().int(),
   "roleId": zod.number().int(),
@@ -819,6 +819,7 @@ export const ListCoursesQueryParams = zod.object({
 })
 
 export const ListCoursesResponseItem = zod.object({
+  "sdgCodes": zod.array(zod.string()).optional(),
   "id": zod.number().int(),
   "title": zod.string(),
   "provider": zod.string(),

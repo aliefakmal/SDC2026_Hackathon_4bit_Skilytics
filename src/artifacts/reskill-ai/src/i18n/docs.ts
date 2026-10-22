@@ -1,9 +1,14 @@
 // Data Sources documentation strings. URLs, dataset field names, file names and official
 // English titles are reference identifiers and are intentionally kept verbatim.
 export const docsEn = {
+  "docs.category.market": "Labour market and AI research",
+  "docs.category.career": "Career and interest assessment",
+  "docs.category.learning": "Learning catalogue and SDG references",
+  "docs.category.infrastructure": "AI services and infrastructure",
+  "docs.category.privacy": "Demo data and privacy",
   "docs.ai.retrieval": "CV retrieval is local to one profile: up to 60,000 extracted characters, ranked into at most 18 passages. Up to 5 relevant O*NET skill-reference notes are supplied separately (application reference snapshot content-model-reference-2026-10). These are stable attributed reference notes, not live Malaysian demand. The editable skill glossary and aliases are application-authored; published role requirements come only from the imported O*NET records.",
   "docs.title": "How each source works",
-  "docs.sub": "Expand a source for publisher, coverage, method, licence, refresh and limits. Nothing on this site is real-time.",
+  "docs.sub": "Sources are grouped by purpose. Expand one for its publisher, method, licence, refresh schedule and limits. Live catalogues refresh periodically; check the last successful fetch time.",
   "docs.expand": "Show documentation", "docs.collapse": "Hide documentation",
   "docs.type.external": "External dataset", "docs.type.static": "Static method", "docs.type.derived": "Derived by this app", "docs.type.demo": "Demo data", "docs.type.user": "Your own input",
   "docs.typeDesc.external": "Fetched from a named publisher. We show the last successful fetch and its date.",
@@ -45,9 +50,9 @@ export const docsEn = {
   "docs.onet.license": "CC BY 4.0 with attribution. This app's changes (selection and rescaling above) are disclosed here.",
   "docs.onet.cadence": "Publisher updates quarterly. This app checks every 6 hours, but the version stays pinned.",
 
-  "docs.course.status": "No verified feed of provider prices, durations or HRD Corp claim status is configured. The seed catalogue is withheld from public pages and from the pathway planner.",
-  "docs.course.limits": "A reachable link does not prove the content, price, HRD Corp status or licence. A missing price never means free.",
-  "docs.course.license": "No market feed licence is asserted.",
+  "docs.course.status": "Microsoft Learn learning paths are fetched from the live provider catalogue with a six-hour cache. Titles, direct destination URLs and durations come from the provider; only paths with mapped app skills are included. Self-paced learning is free; credentials and examinations are not included.",
+  "docs.course.limits": "Expired catalogues are withheld when refresh fails. A provider may change a page between refreshes. Course names remain in the teaching language. SDG themes are editorial associations, not measured impact.",
+  "docs.course.license": "Provider metadata is attributed to Microsoft Learn. SDG icons are UN communications assets; the UN has not approved this content and it does not reflect UN views. See /sdg/NOTICE.md.",
 
   "docs.ai.checks": "Status checks read model metadata and health only. They do not generate text, so a healthy status does not prove a reply will succeed.",
   "docs.ai.cold": "A health check may wake a sleeping server. We make no claim that idle time is free of GPU cost.",
@@ -55,18 +60,18 @@ export const docsEn = {
   "docs.ai.configured": "Provider, model and health come from the live AI status. If the API key is missing, the service shows as not configured.",
   "docs.ai.privacy": "With your consent, CV text and image content are sent to RunPod for analysis. The original file is discarded and not retained. Extracted text and evidence are retained with your profile; guest profiles are kept for 7 days.",
 
-  "docs.riasec.items": "30 statements written by this app and translated into three languages. They are not the validated, licensed O*NET Interest Profiler. Answers use a 1-5 scale.",
-  "docs.riasec.scoring": "The API needs at least 18 unique answers and at least 3 per dimension; the onboarding wizard asks for all 30. Each dimension is the mean answer, rounded to 2 decimals. Ties break in the fixed order R, I, A, S, E, C.",
-  "docs.riasec.limits": "Not a diagnosis. Never inferred from your CV.",
+  "docs.riasec.items": "30 workplace activities adapted from O*NET Interest Profiler domains, with English, Malay and Mandarin wording. Five items per RIASEC area; response scale 1–5. This adaptation is not the validated Mini-IP.",
+  "docs.riasec.scoring": "All 30 unique answers are required by the API and both assessment screens. Each area uses the average of its five answers, rounded to two decimals. Ties follow R, I, A, S, E, C.",
+  "docs.riasec.limits": "Skilytics adapted the activities and translations under the O*NET Tools Developer License. Independent psychometric validation remains outstanding. USDOL/ETA has not approved, endorsed or tested the modifications. Interests are never inferred from CV text.",
 
   "docs.match.weights": "Weights: skills 40, transferable 15, interest 20, preferences 10, feasibility 15.",
   "docs.match.demand": "Labour demand is not fabricated. Until a verified Malaysian demand source exists it is null and shown as not verified, not zero.",
   "docs.match.feasibility": "When no verified course exists, feasibility is unavailable and gets zero credit. It is not estimated from course durations.",
 
-  "docs.sdg.method": "Static thematic links between sectors and UN Sustainable Development Goals.",
+  "docs.sdg.method": "Course titles and summaries map to ordered SDG targets: the first is the main theme, followed by related themes. Vocational learning maps to 4.4; explicit climate, energy, waste, inclusion and productivity topics receive corresponding targets. Full official UN goal icons are stored locally.",
   "docs.sdg.limits": "Not measured or certified impact, and not SDG statistics.",
 
-  "docs.demo.org": "Employee and Educators demo accounts are tagged as dummy. Their organisations and members are not external facts.",
+  "docs.demo.org": "Employer and Educators demo accounts are tagged as dummy. Their organisations and members are not external facts.",
   "docs.demo.individual": "Dummy individual sign-ups use a unique @example.invalid address. No email is ever sent.",
   "docs.demo.private": "Real inputs from signed-in users and guests are private and are never counted as market statistics.",
 
@@ -77,9 +82,14 @@ export const docsEn = {
 export type DocsKey = keyof typeof docsEn;
 
 export const docsMs: Record<DocsKey, string> = {
+  "docs.category.market": "Pasaran buruh dan penyelidikan AI",
+  "docs.category.career": "Kerjaya dan penilaian minat",
+  "docs.category.learning": "Katalog pembelajaran dan rujukan SDG",
+  "docs.category.infrastructure": "Perkhidmatan dan infrastruktur AI",
+  "docs.category.privacy": "Data demo dan privasi",
   "docs.ai.retrieval": "Retrieval CV terasing kepada satu profil: sehingga 60,000 aksara diekstrak dan diperingkat kepada maksimum 18 petikan. Sehingga 5 nota rujukan kemahiran O*NET yang relevan diberi berasingan (snapshot rujukan aplikasi content-model-reference-2026-10). Ini rujukan stabil beratribusi, bukan permintaan Malaysia semasa. Glosari kemahiran dan alias boleh sunting dikarang aplikasi; keperluan peranan yang diterbitkan datang hanya daripada rekod O*NET yang diimport.",
   "docs.title": "Cara setiap sumber berfungsi",
-  "docs.sub": "Kembangkan sumber untuk penerbit, liputan, kaedah, lesen, kekerapan kemas kini dan had. Tiada apa-apa di laman ini masa nyata.",
+  "docs.sub": "Sumber disusun mengikut tujuan. Kembangkan sumber untuk penerbit, kaedah, lesen, jadual kemas kini dan had. Katalog langsung dikemas kini berkala; semak masa pengambilan terakhir yang berjaya.",
   "docs.expand": "Tunjuk dokumentasi", "docs.collapse": "Sembunyi dokumentasi",
   "docs.type.external": "Set data luaran", "docs.type.static": "Kaedah statik", "docs.type.derived": "Diterbitkan oleh aplikasi ini", "docs.type.demo": "Data demo", "docs.type.user": "Input anda sendiri",
   "docs.typeDesc.external": "Diambil daripada penerbit yang dinamakan. Kami tunjukkan pengambilan berjaya terakhir dan tarikhnya.",
@@ -121,9 +131,9 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.onet.license": "CC BY 4.0 dengan atribusi. Perubahan aplikasi ini (pemilihan dan penskalaan semula di atas) didedahkan di sini.",
   "docs.onet.cadence": "Penerbit mengemas kini setiap suku tahun. Aplikasi ini menyemak setiap 6 jam, tetapi versi kekal dikunci.",
 
-  "docs.course.status": "Tiada suapan disahkan bagi harga, tempoh atau status tuntutan HRD Corp penyedia dikonfigurasi. Katalog benih ditahan daripada halaman awam dan perancang laluan.",
-  "docs.course.limits": "Pautan yang boleh dicapai tidak membuktikan kandungan, harga, status HRD Corp atau lesen. Harga yang tiada tidak bermakna percuma.",
-  "docs.course.license": "Tiada lesen suapan pasaran didakwa.",
+  "docs.course.status": "Laluan Microsoft Learn diambil daripada katalog langsung penyedia dengan cache enam jam. Tajuk, pautan khusus dan tempoh mengikut penyedia; hanya laluan dengan padanan kemahiran aplikasi dimasukkan. Pembelajaran kendiri percuma; kelayakan dan peperiksaan tidak termasuk.",
+  "docs.course.limits": "Katalog luput disembunyikan jika kemas kini gagal. Penyedia boleh mengubah halaman antara semakan. Nama kursus kekal dalam bahasa pengajaran. Tema SDG ialah kaitan editorial, bukan impak yang diukur.",
+  "docs.course.license": "Metadata penyedia dikreditkan kepada Microsoft Learn. Ikon SDG ialah aset komunikasi PBB; PBB tidak meluluskan kandungan ini dan ia tidak mewakili pandangan PBB. Lihat /sdg/NOTICE.md.",
 
   "docs.ai.checks": "Semakan status hanya membaca metadata dan kesihatan model. Ia tidak menjana teks, jadi status sihat tidak membuktikan jawapan akan berjaya.",
   "docs.ai.cold": "Semakan kesihatan mungkin membangunkan pelayan yang tidur. Kami tidak mendakwa masa terbiar bebas kos GPU.",
@@ -131,18 +141,18 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.ai.configured": "Penyedia, model dan kesihatan datang daripada status AI langsung. Jika kunci API tiada, perkhidmatan ditunjukkan sebagai belum dikonfigurasi.",
   "docs.ai.privacy": "Dengan persetujuan anda, teks dan kandungan imej CV dihantar ke RunPod untuk dianalisis. Fail asal dibuang dan tidak disimpan. Teks serta bukti yang diekstrak disimpan bersama profil anda; profil tetamu disimpan selama 7 hari.",
 
-  "docs.riasec.items": "30 kenyataan yang ditulis oleh aplikasi ini dan diterjemah ke tiga bahasa. Ia bukan O*NET Interest Profiler yang disahkan dan berlesen. Jawapan menggunakan skala 1-5.",
-  "docs.riasec.scoring": "API memerlukan sekurang-kurangnya 18 jawapan unik dan sekurang-kurangnya 3 bagi setiap dimensi; wizard onboarding meminta kesemua 30. Setiap dimensi ialah purata jawapan, dibundarkan kepada 2 perpuluhan. Seri diputuskan mengikut susunan tetap R, I, A, S, E, C.",
-  "docs.riasec.limits": "Bukan diagnosis. Tidak pernah disimpulkan daripada CV anda.",
+  "docs.riasec.items": "30 aktiviti kerja diadaptasi daripada domain O*NET Interest Profiler dalam English, Bahasa Melayu dan Mandarin. Lima item bagi setiap kategori RIASEC; skala jawapan 1–5. Adaptasi ini bukan Mini-IP yang telah divalidasi.",
+  "docs.riasec.scoring": "Semua 30 jawapan unik diwajibkan oleh API dan kedua-dua skrin ujian. Setiap kategori menggunakan purata lima jawapan, dibundarkan kepada dua perpuluhan. Seri mengikut susunan R, I, A, S, E, C.",
+  "docs.riasec.limits": "Skilytics mengadaptasi aktiviti dan terjemahan di bawah O*NET Tools Developer License. Pengesahan psikometrik bebas belum dijalankan. USDOL/ETA tidak meluluskan, menyokong atau menguji perubahan ini. Minat tidak disimpulkan daripada teks CV.",
 
   "docs.match.weights": "Pemberat: kemahiran 40, boleh pindah 15, minat 20, keutamaan 10, kebolehlaksanaan 15.",
   "docs.match.demand": "Permintaan buruh tidak direka. Sehingga sumber permintaan Malaysia yang disahkan wujud, ia null dan ditunjukkan sebagai belum disahkan, bukan sifar.",
   "docs.match.feasibility": "Jika tiada kursus disahkan, kebolehlaksanaan tidak tersedia dan diberi kredit sifar. Ia tidak dianggarkan daripada tempoh kursus.",
 
-  "docs.sdg.method": "Pautan tematik statik antara sektor dan Matlamat Pembangunan Mampan PBB.",
+  "docs.sdg.method": "Tajuk dan ringkasan kursus dipetakan kepada sasaran SDG mengikut susunan: tema utama dahulu, kemudian tema berkaitan. Pembelajaran vokasional dipetakan kepada 4.4; topik khusus iklim, tenaga, sisa, keterangkuman dan produktiviti menerima sasaran berkaitan. Ikon rasmi PBB lengkap disimpan secara tempatan.",
   "docs.sdg.limits": "Bukan impak yang diukur atau diperakui, dan bukan statistik SDG.",
 
-  "docs.demo.org": "Akaun demo Kakitangan dan Pendidik ditandakan sebagai contoh. Organisasi dan ahlinya bukan fakta luaran.",
+  "docs.demo.org": "Akaun demo Majikan dan Pendidik ditandakan sebagai contoh. Organisasi, pekerja dan pelajar ialah data contoh.",
   "docs.demo.individual": "Pendaftaran individu contoh menggunakan alamat @example.invalid yang unik. Tiada e-mel pernah dihantar.",
   "docs.demo.private": "Input sebenar pengguna log masuk dan tetamu adalah peribadi dan tidak pernah dikira sebagai statistik pasaran.",
 
@@ -151,9 +161,14 @@ export const docsMs: Record<DocsKey, string> = {
 };
 
 export const docsZh: Record<DocsKey, string> = {
+  "docs.category.market": "劳动力市场与 AI 研究",
+  "docs.category.career": "职业与兴趣评估",
+  "docs.category.learning": "学习目录与 SDG 参考",
+  "docs.category.infrastructure": "AI 服务与基础设施",
+  "docs.category.privacy": "演示数据与隐私",
   "docs.ai.retrieval": "简历检索仅限单个档案：最多提取 60,000 个字符，按相关性选出最多 18 段。另提供最多 5 条相关的 O*NET 技能参考笔记（应用参考快照 content-model-reference-2026-10）。这些是注明出处的稳定参考，并非马来西亚实时需求。可编辑技能词汇和别名由应用编写；公开职位要求仅来自导入的 O*NET 记录。",
   "docs.title": "各数据来源的说明",
-  "docs.sub": "展开来源可查看发布方、覆盖范围、方法、许可、更新频率与限制。本网站内容均非实时。",
+  "docs.sub": "来源按用途分类。展开可查看发布方、方法、许可、刷新安排及限制。实时目录定期刷新，请查看最近一次成功获取时间。",
   "docs.expand": "显示说明", "docs.collapse": "隐藏说明",
   "docs.type.external": "外部数据集", "docs.type.static": "静态方法", "docs.type.derived": "本应用推导", "docs.type.demo": "演示数据", "docs.type.user": "你自己的输入",
   "docs.typeDesc.external": "从指定发布方获取。我们显示最近一次成功获取及其日期。",
@@ -195,9 +210,9 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.onet.license": "CC BY 4.0，需署名。本应用的改动（上述筛选与重新标度）在此披露。",
   "docs.onet.cadence": "发布方每季度更新。本应用每 6 小时检查一次，但版本保持固定。",
 
-  "docs.course.status": "尚未配置经核实的机构价格、时长或 HRD Corp 申领状态数据源。种子课程目录不在公开页面和路径规划中显示。",
-  "docs.course.limits": "链接可访问并不能证明内容、价格、HRD Corp 状态或许可。缺少价格绝不代表免费。",
-  "docs.course.license": "不声称任何市场数据源许可。",
+  "docs.course.status": "Microsoft Learn 学习路径从机构实时目录读取，缓存六小时。名称、直接链接及时长来自机构；只纳入与应用技能匹配的路径。自主学习免费；不包括认证及考试。",
+  "docs.course.limits": "刷新失败时隐藏过期目录。机构可能在两次刷新间更改页面。课程名称保留教学语言。SDG 主题为编辑关联，并非实测影响。",
+  "docs.course.license": "机构元数据注明来自 Microsoft Learn。SDG 图标属于联合国传播素材；本内容未经联合国批准，亦不代表联合国观点。详见 /sdg/NOTICE.md。",
 
   "docs.ai.checks": "状态检查只读取模型元数据和健康状况，不生成文本，因此状态正常并不保证回复一定成功。",
   "docs.ai.cold": "健康检查可能唤醒休眠的服务器。我们不声称空闲时不产生 GPU 费用。",
@@ -205,18 +220,18 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.ai.configured": "服务商、模型与健康状况来自实时 AI 状态。若缺少 API 密钥，服务会显示为未配置。",
   "docs.ai.privacy": "经你同意，简历文字和图像内容会发送至 RunPod 进行分析。原始文件会被丢弃且不会保留。提取的文字与依据随档案保存；访客档案保留 7 天。",
 
-  "docs.riasec.items": "由本应用编写并译成三种语言的 30 个陈述。它不是经过验证并获授权的 O*NET Interest Profiler。答案采用 1-5 分。",
-  "docs.riasec.scoring": "API 需要至少 18 个不重复答案，且每个维度至少 3 个；引导流程要求回答全部 30 题。每个维度取答案平均值，保留 2 位小数。平分时按固定顺序 R、I、A、S、E、C 决定。",
-  "docs.riasec.limits": "并非诊断，也绝不从简历推断。",
+  "docs.riasec.items": "根据 O*NET Interest Profiler 领域改编的 30 项工作活动，提供英语、马来语和中文。每个 RIASEC 领域五题，评分为 1–5。本改编版本并非已验证的 Mini-IP。",
+  "docs.riasec.scoring": "API 及两个评估页面均要求回答全部 30 道不同题目。各领域取五题平均值，保留两位小数。平分时依次按 R、I、A、S、E、C 排序。",
+  "docs.riasec.limits": "Skilytics 按 O*NET Tools Developer License 改编活动与译文，尚未完成独立心理测量验证。USDOL/ETA 未批准、认可或测试这些修改。兴趣绝不从简历文本推断。",
 
   "docs.match.weights": "权重：技能 40、可迁移 15、兴趣 20、偏好 10、可行性 15。",
   "docs.match.demand": "劳动力需求不会被编造。在有经核实的马来西亚需求来源之前，该值为空，并显示为未核实，而非为零。",
   "docs.match.feasibility": "没有经核实的课程时，可行性不可用，得分为零。不会根据课程时长估算。",
 
-  "docs.sdg.method": "行业与联合国可持续发展目标之间的静态主题关联。",
+  "docs.sdg.method": "课程名称及简介映射至有序 SDG 目标：先列主要主题，再列相关主题。职业学习对应 4.4；明确涉及气候、能源、废弃物、包容性及生产力的内容映射至对应目标。完整官方联合国图标保存在本地。",
   "docs.sdg.limits": "并非经测量或认证的影响，也不是 SDG 统计数据。",
 
-  "docs.demo.org": "员工与教育工作者演示账户已标注为示例。其机构与成员并非外部事实。",
+  "docs.demo.org": "雇主与教育工作者演示账户已标注为示例。其机构与成员并非外部事实。",
   "docs.demo.individual": "示例个人注册使用唯一的 @example.invalid 地址，不会发送任何邮件。",
   "docs.demo.private": "已登录用户与访客的真实输入均为私密，绝不计入市场统计。",
 

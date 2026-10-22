@@ -61,7 +61,7 @@ test("both individual paths validate prerequisites, preserve state and reject cr
       name: "TEST ONLY Person", education: "Diploma", experience: "", goals: "Learn programming",
       weeklyHours: 4, budgetMyr: 120, hrdcEligibilityStatus: "unknown", verified: true, onboardingStep: "holland",
     });
-    assert.equal(verified.status, 200); assert.equal(verified.body.hrdcEligibilityStatus, "unknown");
+    assert.equal(verified.status, 200); assert.equal(verified.body.hrdcEligibilityStatus, "no");
     assert.equal(verified.body.hrdcEligible, false);
     assert.equal((await request(`/profiles/${id}/riasec`, "POST", { answers: [...answers, answers[0]] })).status, 400);
     assert.equal((await request(`/profiles/${id}/riasec`, "POST", { answers: answers.slice(0, 29) })).body.error, "riasec_incomplete");

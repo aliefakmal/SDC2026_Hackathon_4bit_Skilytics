@@ -10,6 +10,7 @@ import type { HrdcStatus } from './hrdcStatus';
 import type { Skill } from './skill';
 
 export interface Course {
+  sdgCodes?: string[];
   id: number;
   title: string;
   provider: string;

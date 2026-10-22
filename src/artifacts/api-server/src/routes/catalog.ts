@@ -24,10 +24,11 @@ router.get("/roles/:id", async (req, res) => {
 router.get("/courses", async (req, res) => {
   const q = ListCoursesQueryParams.parse(req.query);
   const courses = await loadCourses();
+  if (!courses.length) { res.status(503).json({ error: "course_catalogue_unavailable" }); return; }
   res.json(
     courses
       .filter((c) => !q.costType || c.costType === q.costType)
-      .filter((c) => !q.hrdcOnly || c.hrdcStatus !== "not_claimable")
+      .filter((c) => req.user?.role !== "hr" || !q.hrdcOnly || c.hrdcStatus !== "not_claimable")
       .map(courseToApi),
   );
 });

@@ -347,6 +347,7 @@ export interface RoleMatch {
 }
 
 export interface Course {
+  sdgCodes?: string[];
   id: number;
   title: string;
   provider: string;
@@ -386,6 +387,7 @@ export type PlanVerificationStatus = typeof PlanVerificationStatus[keyof typeof 
 
 export const PlanVerificationStatus = {
   unverified: 'unverified',
+  verified: 'verified',
 } as const;
 
 export interface Plan {

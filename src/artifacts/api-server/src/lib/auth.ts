@@ -124,14 +124,19 @@ export async function claimGuestData(userId: number, guestToken: string | undefi
 
 export const DEMO_PASSWORD = "Demo@2026";
 export const DEMO_ACCOUNTS = [
-  { email: "hr@skilytics.demo", name: "Demo Employee", role: "hr" as const, organization: "Syarikat Demo Sdn Bhd" },
+  { email: "hr@skilytics.demo", name: "Demo Employer", role: "hr" as const, organization: "Syarikat Demo Sdn Bhd" },
   { email: "tvet@skilytics.demo", name: "Demo Educators", role: "tvet" as const, organization: "Kolej Vokasional Demo" },
 ];
 
 export async function seedDemoAccounts(): Promise<void> {
   for (const a of DEMO_ACCOUNTS) {
     const [existing] = await db.select().from(usersTable).where(eq(usersTable.email, a.email));
-    if (existing) continue;
+    if (existing) {
+      if (a.role === "hr" && existing.name === "Demo Employee") {
+        await db.update(usersTable).set({ name: a.name }).where(eq(usersTable.id, existing.id));
+      }
+      continue;
+    }
     await db.insert(usersTable).values({ ...a, passwordHash: await hashPassword(DEMO_PASSWORD) });
     logger.info({ email: a.email }, "Demo account created");
   }

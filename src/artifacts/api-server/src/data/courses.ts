@@ -74,6 +74,7 @@ export const COURSES: CourseSeed[] = [
 ];
 
 export const SDG_TARGETS: { code: string; title: string; description: string }[] = [
+  { code: "10.2", title: "Social and economic inclusion", description: "Promote social, economic and political inclusion irrespective of age, sex, disability, race, ethnicity, origin, religion or economic or other status." },
   { code: "3.c", title: "Health workforce", description: "Substantially increase health financing and the recruitment, development, training and retention of the health workforce." },
   { code: "4.3", title: "Equal access to TVET and tertiary education", description: "Ensure equal access for all to affordable and quality technical, vocational and tertiary education." },
   { code: "4.4", title: "Relevant skills for decent work", description: "Substantially increase the number of youth and adults who have relevant skills, including technical and vocational skills, for employment, decent jobs and entrepreneurship." },

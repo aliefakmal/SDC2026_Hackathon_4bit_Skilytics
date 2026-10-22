@@ -2,9 +2,8 @@ import type { PlanItemStored } from "@workspace/db";
 import type { CourseView, RoleSkillView } from "./catalog";
 
 // Greedy constraint planner: covers gap skills with the fewest, cheapest,
-// shortest courses inside the user's budget and weekly hours. HRD Corp
-// "check_with_employer" courses do not consume personal budget when the
-// user's employer pays the HRD Corp levy, but stay flagged for confirmation.
+// shortest courses inside the user's budget and weekly hours. Only verified
+// claimable courses may be treated as funded for an eligible employer.
 export function buildPlan(opts: {
   gaps: RoleSkillView[];
   courses: CourseView[];
@@ -19,7 +18,7 @@ export function buildPlan(opts: {
   let budget = opts.budgetMyr;
   const chosen: CourseView[] = [];
 
-  const personalCost = (c: CourseView) => (hrdcEligible && c.hrdcStatus !== "not_claimable" ? 0 : c.costMyr);
+  const personalCost = (c: CourseView) => (hrdcEligible && c.hrdcStatus === "claimable_verified" ? 0 : c.costMyr);
 
   while (remaining.size > 0 && chosen.length < maxCourses) {
     let best: { c: CourseView; value: number } | null = null;

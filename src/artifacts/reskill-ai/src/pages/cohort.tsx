@@ -91,7 +91,7 @@ function GapCourses({ c, wide }: { c: NonNullable<ReturnType<typeof useCohort>["
   const { t } = useT();
   const f = useFmt();
   return (
-    <Panel title={t("cohort.gapCourses")} meta={t("pathway.hrdcNote")} className={wide ? "lg:col-span-2" : undefined}>
+    <Panel title={t("cohort.gapCourses")} meta={t("courses.live")} className={wide ? "lg:col-span-2" : undefined}>
       {!c.gapCourses.length ? <p className="text-sm text-muted-foreground">{t("cohort.noData")}</p> : (
         <div className="space-y-4">
           {c.gapCourses.map((g) => (

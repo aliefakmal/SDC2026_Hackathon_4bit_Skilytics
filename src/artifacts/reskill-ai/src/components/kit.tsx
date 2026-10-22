@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LANG_SHORT, useErrText, useT } from "@/i18n";
 import { useFmt } from "@/lib/fmt";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export function BrandMark({ className }: { className?: string }) {
@@ -184,9 +185,11 @@ const chip = "inline-flex max-w-full items-center gap-1 whitespace-nowrap rounde
 
 export function HrdcBadge({ status }: { status: HrdcStatus }) {
   const { tk } = useT();
+  const { user } = useAuth();
+  if (user?.role !== "hr") return null;
   const c = status === "claimable_verified" ? "bg-primary text-primary-foreground" : status === "check_with_employer" ? "border border-accent bg-[hsl(var(--gold-soft))] text-foreground" : "bg-muted text-muted-foreground";
   const label = tk("hrdc", status);
-  return <span title={label} className={cn(chip, c)}><span className="truncate">{label}</span></span>;
+  return <span title={label} className={cn(chip, c)}><Briefcase aria-hidden="true" className="h-3 w-3" /><span className="truncate">{label}</span></span>;
 }
 export function CostBadge({ type }: { type: CostType }) {
   const { tk } = useT();
@@ -203,7 +206,15 @@ export function StatusTag({ s }: { s: SkillStatus }) {
   return <span className={cn(chip, c)}>{tk("status", s)}</span>;
 }
 export function SdgBadge({ code, title }: { code: string; title?: string }) {
-  return <span title={title ?? `SDG ${code}`} className={cn(chip, "bg-accent text-accent-foreground")}>SDG {code}</span>;
+  const { tk } = useT();
+  const goal = Number(code.split(".")[0]);
+  if (!Number.isInteger(goal) || goal < 1 || goal > 17) return null;
+  const label = title ?? tk("sdg", String(goal));
+  return <a href={`https://sdgs.un.org/goals/goal${goal}`} target="_blank" rel="noopener noreferrer" title={label}
+    className="inline-flex items-center gap-1 rounded border border-border bg-card p-1 text-xs">
+    <img src={`/sdg/${goal}.png`} alt={`SDG ${goal}: ${label}`} className="h-14 w-14 object-contain" loading="lazy" />
+    <span>SDG {code}</span>
+  </a>;
 }
 
 const CAT_ICON: Record<string, LucideIcon> = {

@@ -855,7 +855,7 @@ components:
         sourceVersion: { type: ["string", "null"] }
         officialTitle: { type: ["string", "null"] }
         sourceFetchedAt: { type: ["string", "null"] }
-        myColStatus: { type: string, enum: [unverified] }
+        myColStatus: { type: string, enum: [unverified, verified] }
         id: { type: integer }
         socCode: { type: string }
         title: { type: string }
@@ -906,6 +906,9 @@ components:
       type: object
       required: [id, title, provider, url, costMyr, costType, hrdcStatus, durationHours, level, language, skills, lastVerified]
       properties:
+        sdgCodes:
+          type: array
+          items: { type: string }
         id: { type: integer }
         title: { type: string }
         provider: { type: string }

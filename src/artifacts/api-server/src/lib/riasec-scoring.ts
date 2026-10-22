@@ -1,6 +1,10 @@
 import { RIASEC_QUESTIONS, type RiasecType } from "../data/riasec";
 import type { StoredRiasec } from "@workspace/db";
 
+export function hasCurrentRiasec(answers: { questionId: number; value: number }[]) {
+  try { scoreRiasec(answers); return true; } catch { return false; }
+}
+
 export function scoreRiasec(answers: { questionId: number; value: number }[]) {
   const sums: Record<RiasecType, number[]> = { R: [], I: [], A: [], S: [], E: [], C: [] };
   const ids = new Set<number>();
