@@ -32,6 +32,7 @@ async function buildAll() {
       "@napi-rs/canvas",
       "@napi-rs/canvas-*",
       "pdfjs-dist",
+      "tesseract.js",
       "sharp",
       "better-sqlite3",
       "sqlite3",

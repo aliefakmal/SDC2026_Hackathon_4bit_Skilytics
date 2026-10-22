@@ -3,7 +3,7 @@ import { Link, Redirect, useLocation, useParams, useSearch } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, FileUp, HelpCircle, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
+  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, CheckCircle2, FileCheck, FileUp, HelpCircle, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
 } from "lucide-react";
 import {
   useCreateProfile, useGetProfile, useListRiasecQuestions, useRunProfileAgent, useSubmitRiasec, useUpdateProfile, useUploadCv,
@@ -15,6 +15,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 import { AiWait, Brand, ErrorBox, LangToggle, Markdown, Meter, Rows, StepLoadingSkeleton, StatusTag } from "@/components/kit";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, portalHome } from "@/lib/auth";
@@ -472,6 +475,25 @@ function CvStep({
   const [drag, setDrag] = useState(false);
   const [since, setSince] = useState<number | null>(null);
   const lastFile = useRef<File | null>(null);
+  const [showAtsNotice, setShowAtsNotice] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  const handleAtsConfirm = () => {
+    setShowAtsNotice(false);
+    if (pendingFile) {
+      const f = pendingFile;
+      setPendingFile(null);
+      send(f);
+    } else {
+      setLocal(null);
+      ref.current?.click();
+    }
+  };
+
+  const handleAtsCancel = () => {
+    setShowAtsNotice(false);
+    setPendingFile(null);
+  };
 
   const promptConsent = () => {
     setHighlightConsent(true);
@@ -656,8 +678,8 @@ function CvStep({
             promptConsent();
             return;
           }
-          setLocal(null);
-          ref.current?.click();
+          setPendingFile(null);
+          setShowAtsNotice(true);
         }}
         data-testid="button-pick-cv"
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
@@ -671,13 +693,64 @@ function CvStep({
             promptConsent();
             return;
           }
-          send(f);
+          setPendingFile(f);
+          setShowAtsNotice(true);
         }}
         className={cn("dotgrid mt-4 flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-10 text-center transition-colors", drag ? "border-primary bg-[hsl(var(--maroon-soft))]" : "border-primary/40 hover:border-primary")}>
         {up.isPending ? <Loader2 className="h-9 w-9 animate-spin text-primary" /> : <FileUp className="h-9 w-9 text-primary" />}
         <div className="mt-3 text-sm font-semibold">{up.isPending ? t("ob.cv.reading") : p.cvFileName ? t("ob.cv.replace") : t("ob.cv.pick")}</div>
         <div className="mt-1 text-xs text-muted-foreground">{t("ob.cv.formats")}</div>
       </button>
+
+      <Dialog open={showAtsNotice} onOpenChange={(open) => { if (!open) handleAtsCancel(); else setShowAtsNotice(true); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <FileCheck className="h-6 w-6" />
+            </div>
+            <DialogTitle className="text-center text-lg font-bold">
+              {t("ob.cv.atsModalTitle")}
+            </DialogTitle>
+            <DialogDescription className="text-center text-xs text-muted-foreground">
+              {t("ob.cv.atsModalSub")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="my-2 space-y-2.5 rounded-xl border border-border/60 bg-muted/30 p-3.5 text-xs">
+            <div className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              <span>{t("ob.cv.atsTip1")}</span>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              <span>{t("ob.cv.atsTip2")}</span>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              <span>{t("ob.cv.atsTip3")}</span>
+            </div>
+          </div>
+
+          <DialogFooter className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAtsCancel}
+              data-testid="button-ats-cancel"
+            >
+              {t("ob.cv.atsCancel")}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleAtsConfirm}
+              data-testid="button-ats-confirm"
+            >
+              <Check className="mr-1.5 h-4 w-4" />
+              {t("ob.cv.atsConfirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <input
         ref={ref}
         type="file"

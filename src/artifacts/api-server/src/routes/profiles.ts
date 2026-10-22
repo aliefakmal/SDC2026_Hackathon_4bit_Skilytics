@@ -13,7 +13,7 @@ import {
   RunProfileAgentBody,
 } from "@workspace/api-zod";
 import { loadCourses, loadRoles, loadSkills, roleToApi } from "../lib/catalog";
-import { extractCvDocument, extractSkills, CvError, isCvImageFile, validateCvImage, type CvDocumentPage } from "../lib/cv";
+import { extractCvDocument, extractSkills, CvError, isCvImageFile, validateCvImage, recognizeCvImage, type CvDocumentPage } from "../lib/cv";
 import { RIASEC_QUESTIONS } from "../data/riasec";
 import { scoreRiasec } from "../lib/riasec-scoring";
 import { scoreRole } from "../lib/scoring";
@@ -23,7 +23,7 @@ import { agentPrompt, agentTier, hashInput, SOURCE_AEI, type AgentName, type Lan
 import { chat, AiNotConnectedError, AiTimeoutError, AiVisionUnsupportedError } from "../lib/llm";
 import { consumeAiRequest } from "../lib/ai-rate-limit";
 import { SDG_TARGETS } from "../data/courses";
-import { CvAiOutputError, CvProfileFactsMissingError, cvExtractionKey, extractCvMultimodalProfile, extractCvProfile, retrieveCv, retrieveReferences } from "../lib/cv-retrieval";
+import { CvAiOutputError, CvProfileFactsMissingError, cvExtractionKey, extractCvMultimodalProfile, extractCvProfile, extractCvProfileFallback, retrieveCv, retrieveReferences } from "../lib/cv-retrieval";
 
 const router: IRouter = Router();
 const cvRequests = new Map<number, Promise<unknown>>();
@@ -150,11 +150,18 @@ router.post("/profiles/:id/cv", async (req, res) => {
   const documentProcessingStartedAt = performance.now();
   try {
     if (isCvImageFile(body.fileName)) {
-      pages = [{ pageNumber: 1, text: "", image: validateCvImage(body.fileName, body.contentBase64) }];
+      const validated = validateCvImage(body.fileName, body.contentBase64);
+      const ocrText = await recognizeCvImage(validated);
+      pages = [{ pageNumber: 1, text: ocrText, image: validated }];
+      text = ocrText;
     } else {
       const document = await extractCvDocument(body.fileName, body.contentBase64);
-      if ("pages" in document) pages = document.pages;
-      else text = document.text;
+      if ("pages" in document) {
+        pages = document.pages;
+        text = document.pages.map((page) => page.text).filter(Boolean).join("\n\n");
+      } else {
+        text = document.text;
+      }
     }
   } catch (err) {
     req.log.info(
@@ -200,14 +207,28 @@ router.post("/profiles/:id/cv", async (req, res) => {
   const work = (async () => {
     const multimodal = images.length > 0;
     const cvModelStageStartedAt = performance.now();
-    const result = multimodal
-      ? await extractCvMultimodalProfile(pages!, lang)
-      : await extractCvProfile(text!, lang);
+    let result: any;
+    try {
+      result = multimodal
+        ? await extractCvMultimodalProfile(pages!, lang)
+        : await extractCvProfile(text!, lang);
+    } catch (modelErr) {
+      if (modelErr instanceof CvError) {
+        throw modelErr;
+      }
+      const fallbackText = text ?? pages?.map((page) => page.text).filter(Boolean).join("\n\n") ?? "";
+      if (fallbackText.trim().length >= 20) {
+        req.log.warn({ profileId: id, err: String(modelErr) }, "AI model extraction failed; using deterministic fallback parser");
+        result = extractCvProfileFallback(fallbackText, lang);
+      } else {
+        throw modelErr;
+      }
+    }
     const cvModelStageMs = Math.round(performance.now() - cvModelStageStartedAt);
-    const profileEvidenceCount = result.evidence.filter((entry) => entry.source === "user_cv" && entry.value.trim() && entry.quote).length;
-    const usedTextFallback = "usedTextFallback" in result && result.usedTextFallback;
+    const profileEvidenceCount = result.evidence.filter((entry: any) => entry.source === "user_cv" && entry.value.trim() && entry.quote).length;
+    const usedTextFallback = ("usedTextFallback" in result && result.usedTextFallback) || result.model === "local-parser";
     if (!profileEvidenceCount) {
-      req.log.info({ profileId: id, usedTextFallback }, "CV had limited strict quotes; proceeding to review step for user verification");
+      throw new CvProfileFactsMissingError();
     }
     req.log.info({
       profileId: id,
@@ -217,14 +238,14 @@ router.post("/profiles/:id/cv", async (req, res) => {
       scannedPageCount: images.length,
       profileEvidenceCount,
       usedTextFallback,
-      endpointTier: result.timing.endpointTier,
-      modelResolutionMs: result.timing.modelResolutionMs,
-      endpointRequestMs: result.timing.endpointRequestMs,
-      endpointWarmBeforeRequest: result.timing.endpointWarmBeforeRequest,
-      endpointStartupMs: result.timing.endpointStartupMs,
-      readyToResponseMs: result.timing.readyToResponseMs,
+      endpointTier: result.timing?.endpointTier ?? "light",
+      modelResolutionMs: result.timing?.modelResolutionMs ?? 0,
+      endpointRequestMs: result.timing?.endpointRequestMs ?? 0,
+      endpointWarmBeforeRequest: result.timing?.endpointWarmBeforeRequest ?? true,
+      endpointStartupMs: result.timing?.endpointStartupMs ?? 0,
+      readyToResponseMs: result.timing?.readyToResponseMs ?? 0,
     }, "CV upload timing");
-    const cvText = multimodal ? (result as Awaited<ReturnType<typeof extractCvMultimodalProfile>>).text : text!;
+    const cvText = result.text || (multimodal ? (pages?.map((page) => page.text).filter(Boolean).join("\n\n") || "") : text!);
     const allSkills = await loadSkills();
     const extracted = extractSkills(cvText, allSkills);
     const manual = p.skills.filter((s) => s.status === "self_reported" && !extracted.some((e) => e.skillId === s.skillId));

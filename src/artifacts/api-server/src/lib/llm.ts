@@ -272,19 +272,44 @@ async function waitForEndpointStartup(
 function mockGenerateChat(system: string, user: string, images?: ChatImage[]): string {
   // 1. Multimodal CV extraction
   if (system.includes("imagePages") || system.includes("mixed text and image pages")) {
+    let sourceText = "";
+    try {
+      const parsed = JSON.parse(user) as { textPages?: { text: string }[] };
+      if (parsed.textPages?.length) {
+        sourceText = parsed.textPages.map((p) => p.text).filter(Boolean).join("\n\n");
+      }
+    } catch {}
+
+    const textToUse = sourceText || "Ungku Babas bin Ungku Samad\nSINE DORBY\nBusiness Operation Intern\nOct 2023 - Mar 2024\nUniversiti Teknologi Malaysia\nBachelor of Real Estate\nJuly, 2019 - Oct, 2024\n\nSPM : 8A 1B\nGained experience in managing daily operations, coordinating tasks, analysing business processes, and improving workflow efficiency.";
+
+    const findMatch = (pattern: RegExp): { value: string; quote: string } | null => {
+      const m = pattern.exec(textToUse);
+      if (m) {
+        const val = (m[1] || m[0]).trim();
+        return { value: val, quote: val };
+      }
+      return null;
+    };
+
+    const name = findMatch(/\b([A-Z][a-zA-Z'./-]+(?:\s+(?:A\/L|A\/P|bin|binti|[A-Z][a-zA-Z'./-]+)){1,4})\b/) || { value: "Ungku Babas bin Ungku Samad", quote: "Ungku Babas bin Ungku Samad" };
+    const currentRole = findMatch(/\b((?:Senior\s+|Junior\s+|Lead\s+)?(?:Machine\s+Learning\s+Engineer|Data\s+Analyst|Software\s+Engineer|Business\s+Operation\s+Intern|Operations\s+Intern|Project\s+Manager|Machine\s+Operator|Executive|Consultant|Intern(?:ship)?|Officer|Coordinator|Technician))\b/i) || { value: "Business Operation Intern", quote: "Business Operation Intern" };
+    const organization = findMatch(/\b(Inari\s+Amertron\s+Berhad|Inari\s+Amertron|SINE\s+DORBY|Universiti\s+Teknologi\s+Malaysia|Monash\s+University|MMU|Petronas|Intel)\b/i) || { value: "SINE DORBY", quote: "SINE DORBY" };
+    const education = findMatch(/\b((?:Master|Bachelor|Diploma|Doctorate|SPM|Degree)\s+(?:of|in)?\s+[^\n\r,]+)/i) || { value: "Bachelor of Real Estate", quote: "Bachelor of Real Estate" };
+    const experience = findMatch(/(?:Business Operation Intern|Lead ML Engineer|Led cross-functional|Gained experience)[^\n\r.]*/i) || { value: "Business Operation Intern", quote: "Business Operation Intern" };
+
     return JSON.stringify({
       imagePages: [
         {
           pageNumber: 1,
-          text: "Ungku Babas bin Ungku Samad\nSINE DORBY\nBusiness Operation Intern\nOct 2023 - Mar 2024\nUniversiti Teknologi Malaysia\nBachelor of Real Estate\nJuly, 2019 - Oct, 2024\n\nSPM : 8A 1B\nGained experience in managing daily operations, coordinating tasks, analysing business processes, and improving workflow efficiency.",
+          text: textToUse,
         },
       ],
       profile: {
-        name: { value: "Ungku Babas bin Ungku Samad", quote: "Ungku Babas bin Ungku Samad" },
-        currentRole: { value: "Business Operation Intern", quote: "Business Operation Intern" },
-        organization: { value: "SINE DORBY", quote: "SINE DORBY" },
-        education: { value: "Bachelor of Real Estate", quote: "Bachelor of Real Estate" },
-        experience: { value: "Business Operation Intern", quote: "Business Operation Intern" },
+        name,
+        currentRole,
+        organization,
+        education,
+        experience,
       },
     });
   }
@@ -315,25 +340,28 @@ function mockGenerateChat(system: string, user: string, images?: ChatImage[]): s
 
     const name = findPattern([
       /(?:Name|Nama):\s*([^\n\r]+)/i,
+      /^([A-Z\s]{4,40})/m,
       /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/m,
+      /\b([A-Z][a-zA-Z'./-]+(?:\s+(?:A\/L|A\/P|bin|binti|[A-Z][a-zA-Z'./-]+)){1,4})\b/,
       /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/,
     ]);
     const currentRole = findPattern([
       /(?:Current role|Position|Title|Jawatan):\s*([^\n\r]+)/i,
-      /\b((?:Senior\s+|Junior\s+|Lead\s+)?(?:Data\s+Analyst|Software\s+Engineer|Business\s+Operation\s+Intern|Operations\s+Intern|Project\s+Manager|Machine\s+Operator|Executive|Consultant|Intern(?:ship)?|Officer|Coordinator|Technician))\b/i,
+      /\b((?:Senior\s+|Junior\s+|Lead\s+)?(?:Machine\s+Learning\s+Engineer|ML\s+Engineer|Data\s+Analyst|Software\s+Engineer|Business\s+Operation\s+Intern|Operations\s+Intern|Project\s+Manager|Machine\s+Operator|Executive|Consultant|Intern(?:ship)?|Officer|Coordinator|Technician))\b/i,
       /\b(Bachelor(?:\s+of|\s+in)\s+[^\n\r,]+|Diploma(?:\s+in)?\s+[^\n\r,]+|Degree(?:\s+in)?\s+[^\n\r,]+)\b/i,
     ]);
     const organization = findPattern([
       /(?:Organization|Company|Organisasi|Majikan|Institution|Institusi):\s*([^\n\r]+)/i,
-      /\b(SINE\s+DORBY|Sample\s+Research\s+Lab|Tech\s+Solutions|Petronas|Intel|Universiti\s+Teknologi\s+Malaysia|Universiti\s+[^\n\r,]+)\b/i,
+      /\b(Inari\s+Amertron\s+Berhad|Inari\s+Amertron|SINE\s+DORBY|Sample\s+Research\s+Lab|Tech\s+Solutions|Petronas|Intel|Universiti\s+Teknologi\s+Malaysia|Universiti\s+[^\n\r,]+)\b/i,
     ]);
     const education = findPattern([
       /(?:Education|Pendidikan):\s*([^\n\r]+)/i,
-      /\b((?:Bachelor|Diploma|Master|Doctorate|SPM|Degree)\s+(?:of|in)\s+[^\n\r,]+)/i,
-      /\b(Universiti\s+[^\n\r,]+)/i,
+      /\b((?:Master|Bachelor|Diploma|Doctorate|SPM|Degree)\s+(?:of|in)?\s+[^\n\r,]+)/i,
+      /\b(Universiti\s+[^\n\r,]+|Monash\s+University|Multimedia\s+University)/i,
     ]);
     const experience = findPattern([
       /(?:Experience|Pengalaman):\s*([^\n\r]+)/i,
+      /(Led cross-functional deployment[^\n\r.]+)/i,
       /(Prepared monthly reports[^\n\r.]+)/i,
       /(Gained experience in[^\n\r.]+)/i,
     ]);

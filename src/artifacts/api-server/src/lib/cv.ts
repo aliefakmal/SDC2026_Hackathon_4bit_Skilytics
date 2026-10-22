@@ -121,8 +121,113 @@ export function validateCvImage(fileName: string, contentBase64: string): CvImag
   return { mediaType: signatureMime, base64: contentBase64 };
 }
 
+let ocrWorkerPromise: Promise<any> | undefined;
+let ocrIdleTimer: NodeJS.Timeout | undefined;
+
+async function getOcrWorker(): Promise<any> {
+  if (ocrIdleTimer) {
+    clearTimeout(ocrIdleTimer);
+    ocrIdleTimer = undefined;
+  }
+  if (!ocrWorkerPromise) {
+    ocrWorkerPromise = (async () => {
+      try {
+        const { createWorker } = await import("tesseract.js");
+        const worker = await createWorker("eng");
+        return worker;
+      } catch (err) {
+        ocrWorkerPromise = undefined;
+        throw err;
+      }
+    })();
+  }
+  return ocrWorkerPromise;
+}
+
+function scheduleWorkerCleanup(): void {
+  if (ocrIdleTimer) clearTimeout(ocrIdleTimer);
+  ocrIdleTimer = setTimeout(async () => {
+    await terminateOcrWorker();
+  }, 2000);
+  ocrIdleTimer.unref();
+}
+
+export async function terminateOcrWorker(): Promise<void> {
+  if (ocrIdleTimer) {
+    clearTimeout(ocrIdleTimer);
+    ocrIdleTimer = undefined;
+  }
+  if (ocrWorkerPromise) {
+    const p = ocrWorkerPromise;
+    ocrWorkerPromise = undefined;
+    try {
+      const worker = await p;
+      await worker.terminate();
+    } catch {}
+  }
+}
+
+export async function recognizeCvImage(image: CvImageInput | Buffer): Promise<string> {
+  try {
+    const worker = await getOcrWorker();
+    const input = Buffer.isBuffer(image) ? image : Buffer.from(image.base64, "base64");
+    const ret = await worker.recognize(input);
+    scheduleWorkerCleanup();
+    return normalizeCvText(ret?.data?.text || "");
+  } catch {
+    scheduleWorkerCleanup();
+    return "";
+  }
+}
+
+export function repairPdfKerning(text: string): string {
+  if (!text) return "";
+  let res = text.replace(/\uFFFD/g, "-");
+
+  // Fix numbers with spaces: e.g. "201 8" -> "2018", "1 .2" -> "1.2", "1 5%" -> "15%"
+  res = res.replace(/\b(19\d|20\d)\s+(\d)\b/g, "$1$2");
+  res = res.replace(/\b(\d+)\s*\.\s*(\d+)\b/g, "$1.$2");
+  res = res.replace(/\b(\d+)\s+([%MkB])\b/g, "$1$2");
+
+  // Fix single-letter spaced uppercase words: "S E N I O R" -> "Senior", "K A R T H I K" -> "Karthik"
+  res = res.replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\b/g, "$1$2$3$4$5$6$7$8");
+  res = res.replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\b/g, "$1$2$3$4$5$6");
+  res = res.replace(/\b([A-Z])\s+([A-Z])\s+([A-Z])\s+([A-Z])\b/g, "$1$2$3$4");
+
+  // Specific common PDF broken fragments
+  const replacements: [RegExp, string][] = [
+    [/\bS\s*E\s*NI\s*OR\b/gi, "Senior"],
+    [/\bMACHI\s*NE\b/gi, "Machine"],
+    [/\bLEARNI\s*NG\b/gi, "Learning"],
+    [/\bENGI\s*NE\s*E\s*R\b/gi, "Engineer"],
+    [/\bENGI\s*NEER\b/gi, "Engineer"],
+    [/\bSU\s*MMARY\b/gi, "Summary"],
+    [/\bCONT\s*ACT\b/gi, "Contact"],
+    [/\bWORK\s*&\s*TECH\s*N\s*I\s*CAL\s*PROJ\s*E\s*CTS\b/gi, "Work & Technical Projects"],
+    [/\bTECH\s*N\s*I\s*CAL\b/gi, "Technical"],
+    [/\bPROJ\s*E\s*CTS\b/gi, "Projects"],
+    [/\bSKI\s*LLS\b/gi, "Skills"],
+    [/\bEDU\s*CATI\s*ON\b/gi, "Education"],
+    [/\bADDI\s*TI\s*ON\s*AL\b/gi, "Additional"],
+    [/\bI\s*N\s*FORMATI\s*ON\b/gi, "Information"],
+    [/\bLANGU\s*AGES\b/gi, "Languages"],
+    [/\bCERTIFI\s*CATI\s*ON\b/gi, "Certification"],
+    [/\bACHIEVE\s*MENTS\b/gi, "Achievements"],
+    [/\bEXPERI\s*ENCE\b/gi, "Experience"],
+    [/\bPROFESSI\s*ONAL\b/gi, "Professional"],
+    [/\bQUALIFI\s*CATI\s*ONS\b/gi, "Qualifications"],
+  ];
+
+  for (const [re, rep] of replacements) {
+    res = res.replace(re, rep);
+  }
+
+  return res;
+}
+
 export function normalizeCvText(value: string): string {
-  return value.replace(/\u0000/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim().slice(0, 60000);
+  const cleaned = value.replace(/\u0000/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+  return repairPdfKerning(cleaned).slice(0, 60000);
 }
 
 function safeScannedPageScale(width: number, height: number): number {
@@ -224,6 +329,13 @@ export async function extractCvDocument(
           throw new CvError("cv_unreadable");
         }
         rendered.push({ pageNumber, image: imageInput });
+
+        try {
+          const ocrText = await recognizeCvImage(imageInput);
+          if (ocrText && ocrText.length >= MIN_SEARCHABLE_PAGE_CHARS) {
+            pageTexts[pageNumber - 1] = ocrText;
+          }
+        } catch {}
       }
       const renderedByPage = new Map(rendered.map((page) => [page.pageNumber, page.image]));
       const pages = pageTexts.map((text, index) => ({

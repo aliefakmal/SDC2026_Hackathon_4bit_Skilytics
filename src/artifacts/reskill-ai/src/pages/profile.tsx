@@ -3,7 +3,7 @@ import { Link, useLocation, useParams } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, Legend, ResponsiveContainer, Tooltip } from "recharts";
 import {
-  ArrowLeft, ArrowRight, Check, CheckCircle2, ExternalLink, FileUp, Flag, Loader2, Pencil, Plus, RotateCw, Search, Trash2, X,
+  ArrowLeft, ArrowRight, Check, CheckCircle2, ExternalLink, FileCheck, FileUp, Flag, Loader2, Pencil, Plus, RotateCw, Search, Trash2, X,
   AlertTriangle,
 } from "lucide-react";
 import {
@@ -15,6 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 import { CV_MAX_BYTES, CV_OK } from "@/lib/onboarding";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import {
@@ -205,6 +208,8 @@ function CvPanel({ p }: { p: Profile }) {
   const ref = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
   const [consent, setConsent] = useState(false);
+  const [showAtsNotice, setShowAtsNotice] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const refresh = useRefreshProfile(p.id);
@@ -226,18 +231,103 @@ function CvPanel({ p }: { p: Profile }) {
     r.onload = () => { const s = String(r.result); up.mutate({ id: p.id, data: { fileName: file.name, contentBase64: s.slice(s.indexOf(",") + 1), consent: true, lang } as CvUpload }); };
     r.readAsDataURL(file);
   };
+
+  const handleAtsConfirm = () => {
+    setShowAtsNotice(false);
+    if (pendingFile) {
+      const f = pendingFile;
+      setPendingFile(null);
+      handle(f);
+    } else {
+      ref.current?.click();
+    }
+  };
+
+  const handleAtsCancel = () => {
+    setShowAtsNotice(false);
+    setPendingFile(null);
+  };
+
   return (
     <Panel title={t("cv.title")} meta={t("cv.meta")}>
       <label className="mb-3 flex cursor-pointer items-start gap-2.5 rounded-xl border border-border bg-background p-3 text-xs leading-relaxed">
         <Checkbox checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5" data-testid="checkbox-cv-consent" /><span>{t("ob.cv.consent")}</span>
       </label>
-      <button type="button" onClick={() => (consent ? ref.current?.click() : toast({ title: t("ob.cv.consentNeeded"), variant: "destructive" }))} disabled={up.isPending} data-testid="button-upload-cv"
-        onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => { e.preventDefault(); setDrag(false); handle(e.dataTransfer.files[0]); }}
+      <button type="button" onClick={() => {
+        if (!consent) {
+          toast({ title: t("ob.cv.consentNeeded"), variant: "destructive" });
+          return;
+        }
+        setPendingFile(null);
+        setShowAtsNotice(true);
+      }} disabled={up.isPending} data-testid="button-upload-cv"
+        onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={(e) => {
+          e.preventDefault();
+          setDrag(false);
+          const f = e.dataTransfer.files[0];
+          if (!f) return;
+          if (!consent) {
+            toast({ title: t("ob.cv.consentNeeded"), variant: "destructive" });
+            return;
+          }
+          setPendingFile(f);
+          setShowAtsNotice(true);
+        }}
         className={cn("dotgrid flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-8 text-center transition-colors", drag ? "border-primary bg-[hsl(var(--maroon-soft))]" : "border-border hover:border-primary")}>
         {up.isPending ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : p.cvFileName ? <CheckCircle2 className="h-8 w-8 text-accent" /> : <FileUp className="h-8 w-8 text-primary" />}
         <div className="mt-2 max-w-full truncate whitespace-nowrap text-sm font-semibold">{up.isPending ? t("cv.reading") : p.cvFileName ? t("cv.replace") : t("cv.drop")}</div>
         <div className="mt-0.5 text-xs text-muted-foreground">{t("ob.cv.formats")}</div>
       </button>
+
+      <Dialog open={showAtsNotice} onOpenChange={(open) => { if (!open) handleAtsCancel(); else setShowAtsNotice(true); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <FileCheck className="h-6 w-6" />
+            </div>
+            <DialogTitle className="text-center text-lg font-bold">
+              {t("ob.cv.atsModalTitle")}
+            </DialogTitle>
+            <DialogDescription className="text-center text-xs text-muted-foreground">
+              {t("ob.cv.atsModalSub")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="my-2 space-y-2.5 rounded-xl border border-border/60 bg-muted/30 p-3.5 text-xs">
+            <div className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              <span>{t("ob.cv.atsTip1")}</span>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              <span>{t("ob.cv.atsTip2")}</span>
+            </div>
+            <div className="flex items-start gap-2.5">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+              <span>{t("ob.cv.atsTip3")}</span>
+            </div>
+          </div>
+
+          <DialogFooter className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAtsCancel}
+              data-testid="button-ats-cancel"
+            >
+              {t("ob.cv.atsCancel")}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleAtsConfirm}
+              data-testid="button-ats-confirm"
+            >
+              <Check className="mr-1.5 h-4 w-4" />
+              {t("ob.cv.atsConfirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <input ref={ref} type="file" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp" className="hidden" onChange={(e) => { handle(e.target.files?.[0]); e.target.value = ""; }} data-testid="input-cv-file" />
       {up.isPending && <p className="mt-2 text-xs text-muted-foreground">{t("ob.cv.readingHint")}</p>}
       {p.cvFileName && (

@@ -8,6 +8,7 @@ import app from "../app";
 import { hashPassword, issueToken } from "./auth";
 import { RIASEC_QUESTIONS } from "../data/riasec";
 import { imageOnlyCvPdf, syntheticCvJpeg, syntheticCvText } from "./test-cv-fixtures";
+import { terminateOcrWorker } from "./cv";
 
 // Integration fixtures are explicitly test data, not a substitute for a RunPod response.
 let server: Server, base: string;
@@ -29,6 +30,7 @@ before(async () => {
 after(async () => {
   if (profileIds.length) await db.delete(profilesTable).where(inArray(profilesTable.id, profileIds));
   if (userIds.length) await db.delete(usersTable).where(inArray(usersTable.id, userIds));
+  await terminateOcrWorker();
   await new Promise<void>((resolve, reject) => server.close((err) => err ? reject(err) : resolve()));
   await pool.end();
 });
