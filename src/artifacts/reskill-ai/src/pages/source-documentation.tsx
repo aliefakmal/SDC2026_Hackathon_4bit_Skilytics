@@ -69,6 +69,19 @@ const DOCS: Doc[] = [
     { label: "docs.f.limits", k: ["docs.fcc.limits"] },
     { label: "docs.f.license", k: ["docs.fcc.license"], url: "https://github.com/freeCodeCamp/freeCodeCamp/blob/main/LICENSE.md" },
   ] },
+  { id: "githubskills", types: ["external"], name: "src.githubskills_catalogue.name", sourceIds: ["githubskills_catalogue"], rows: [
+    { label: "docs.f.publisher", ref: "GitHub Skills" },
+    { label: "docs.f.dataset", url: "https://learn.github.com/skills" },
+    { label: "docs.f.api", url: "https://api.github.com/orgs/skills/repos?per_page=100&type=public" },
+    { label: "docs.f.method", k: ["docs.githubskills.method"] },
+    { label: "docs.f.limits", k: ["docs.githubskills.limits"] },
+  ] },
+  { id: "huggingface", types: ["external"], name: "src.huggingface_catalogue.name", sourceIds: ["huggingface_catalogue"], rows: [
+    { label: "docs.f.publisher", ref: "Hugging Face" },
+    { label: "docs.f.dataset", url: "https://huggingface.co/learn" },
+    { label: "docs.f.method", k: ["docs.huggingface.method"] },
+    { label: "docs.f.limits", k: ["docs.huggingface.limits"] },
+  ] },
   { id: "runpod", types: ["service", "user"], name: "sources.aiTitle", sourceIds: ["gemini", "runpod_main", "runpod_light"], ai: true, rows: [
     { label: "docs.f.publisher", ref: "Google Gemini API + RunPod Serverless (vLLM, OpenAI-compatible)" },
     { label: "docs.f.api", url: "https://ai.google.dev/gemini-api/docs/models" },
@@ -106,7 +119,7 @@ const TYPES: DocType[] = ["external", "static", "derived", "service", "demo", "u
 const CATEGORIES = [
   { key: "market", ids: ["dosm", "aei_usage", "aei_exposure"] },
   { key: "career", ids: ["onet", "riasec", "match"] },
-  { key: "learning", ids: ["courses", "freecodecamp", "sdg"] },
+  { key: "learning", ids: ["courses", "freecodecamp", "githubskills", "huggingface", "sdg"] },
   { key: "aiService", ids: ["runpod"] },
   { key: "privacy", ids: ["demo"] },
 ] as const;

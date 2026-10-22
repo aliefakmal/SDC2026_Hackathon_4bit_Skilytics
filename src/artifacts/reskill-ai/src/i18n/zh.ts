@@ -221,6 +221,8 @@ export const zh: Record<DictKey, string> = {
   "src.aei_usage.name": "各国 AI 使用", "src.aei_usage.desc": "Anthropic Economic Index 马来西亚与全球使用数据。",
   "src.course_catalogue.name": "Microsoft Learn 公共课程目录", "src.course_catalogue.desc": "机构提供课程名称、直接链接及时长。每六小时更新；故障期间显示上次有效快照。",
   "src.freecodecamp_catalogue.name": "freeCodeCamp 公共课程体系", "src.freecodecamp_catalogue.desc": "官方课程结构提供课程名称和链接；机构未公布时长。",
+  "src.githubskills_catalogue.name": "GitHub Skills 练习", "src.githubskills_catalogue.desc": "GitHub 的公共课程模板；链接打开官方练习仓库。",
+  "src.huggingface_catalogue.name": "Hugging Face Learn", "src.huggingface_catalogue.desc": "发布方 Learn 索引中的公开 AI 课程。",
   "src.gemini.name": "Google Gemini API", "src.gemini.desc": "测试期间全部七个智能体使用的 AI 服务；元数据检查不会生成文本。",
   "src.dosm_lfs_month.name": "月度劳动力", "src.dosm_lfs_month.desc": "通过 OpenDOSM 获取的 DOSM 月度劳动力调查。",
   "src.runpod_light.name": "RunPod 轻量预留配置", "src.runpod_light.desc": "预留的 Qwen 端点；仅使用 Gemini 测试期间不生成内容，也不做健康检查。",

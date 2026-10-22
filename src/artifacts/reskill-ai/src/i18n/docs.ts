@@ -56,6 +56,10 @@ export const docsEn = {
   "docs.fcc.status": "Public curriculum structure and English introduction metadata supply official course titles, direct URLs and certification membership. Only courses mapped to app skills are listed. Refresh every six hours, independently of Microsoft Learn.",
   "docs.fcc.limits": "The publisher does not provide course durations, so no hours or weeks are invented. An unknown-duration pathway item appears without a scheduled time. Last good data remains visible with its check date if refresh fails.",
   "docs.fcc.license": "Course titles and links are attributed to freeCodeCamp. Curriculum materials remain freeCodeCamp copyright; this app links to lessons rather than republishing them. SDG themes are editorial.",
+  "docs.githubskills.method": "Fetch public GitHub Skills repositories every six hours; include active course templates with the skills-course topic and mapped app skills. Links open the publisher's exercise repository directly.",
+  "docs.githubskills.limits": "GitHub's public API has rate limits. Course duration, certificate and paid price are not stated here, so we do not invent them. The last successful snapshot remains available on failure.",
+  "docs.huggingface.method": "Read the publicly accessible Hugging Face Learn index every six hours and link to listed courses matching app skills. SDG themes are editorial associations.",
+  "docs.huggingface.limits": "The public page is not a versioned course API; layout changes can interrupt refresh. Duration and certificates are not inferred. The last successful snapshot remains available on failure.",
   "docs.course.license": "Provider metadata is attributed to Microsoft Learn. SDG icons are UN communications assets; the UN has not approved this content and it does not reflect UN views. See /sdg/NOTICE.md.",
 
   "docs.ai.checks": "Status checks read model metadata and health only. They do not generate text, so a healthy status does not prove a reply will succeed.",
@@ -141,6 +145,10 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.fcc.status": "Struktur kurikulum awam dan metadata pengenalan Inggeris memberikan tajuk rasmi, pautan langsung dan status pensijilan. Hanya kursus yang sepadan dengan kemahiran aplikasi disenaraikan. Kemas kini enam jam secara berasingan daripada Microsoft Learn.",
   "docs.fcc.limits": "Penerbit tidak menyediakan tempoh kursus, jadi jam atau minggu tidak direka. Item pathway tanpa tempoh dipaparkan tanpa jadual masa. Data terakhir serta tarikh semakan kekal dipaparkan jika kemas kini gagal.",
   "docs.fcc.license": "Tajuk dan pautan kursus dikreditkan kepada freeCodeCamp. Bahan kurikulum kekal hak cipta freeCodeCamp; aplikasi ini memaut ke pelajaran tanpa menerbitkannya semula. Tema SDG ialah kaitan editorial.",
+  "docs.githubskills.method": "Ambil repositori awam GitHub Skills setiap enam jam; masukkan templat kursus aktif bertopik skills-course yang sepadan dengan kemahiran aplikasi. Pautan terus ke repositori latihan penerbit.",
+  "docs.githubskills.limits": "API awam GitHub mempunyai had kadar. Tempoh, sijil dan harga berbayar tidak dinyatakan di sini, jadi kami tidak mereka nilainya. Snapshot berjaya terakhir kekal jika pengambilan gagal.",
+  "docs.huggingface.method": "Baca indeks Hugging Face Learn yang terbuka setiap enam jam dan pautkan kursus tersenarai yang sepadan dengan kemahiran aplikasi. Tema SDG ialah kaitan editorial.",
+  "docs.huggingface.limits": "Halaman awam ini bukan API kursus berversi; perubahan susun atur boleh mengganggu kemas kini. Tempoh dan sijil tidak diteka. Snapshot berjaya terakhir kekal jika pengambilan gagal.",
   "docs.course.license": "Metadata penyedia dikreditkan kepada Microsoft Learn. Ikon SDG ialah aset komunikasi PBB; PBB tidak meluluskan kandungan ini dan ia tidak mewakili pandangan PBB. Lihat /sdg/NOTICE.md.",
 
   "docs.ai.checks": "Semakan status hanya membaca metadata dan kesihatan model. Ia tidak menjana teks, jadi status sihat tidak membuktikan jawapan akan berjaya.",
@@ -224,6 +232,10 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.fcc.status": "公共课程结构与英文介绍元数据提供官方课程名称、直接链接和认证名单。仅展示与应用技能匹配的课程。每六小时独立于 Microsoft Learn 更新。",
   "docs.fcc.limits": "发布方未提供课程时长，因此不会编造小时或周数。时长未知的学习路径项目不安排时间。刷新失败时显示上次数据及检查日期。",
   "docs.fcc.license": "课程名称与链接注明来自 freeCodeCamp。课程材料版权仍归 freeCodeCamp；本应用链接至课程，不重新发布内容。SDG 主题属于编辑关联。",
+  "docs.githubskills.method": "每六小时获取 GitHub Skills 公共仓库；仅纳入带有 skills-course 主题且匹配应用技能的有效课程模板。链接直接打开发布方的练习仓库。",
+  "docs.githubskills.limits": "GitHub 公共 API 有速率限制。此处没有公布时长、证书或付费价格，因此不推测。获取失败时保留上次成功的快照。",
+  "docs.huggingface.method": "每六小时读取公开的 Hugging Face Learn 索引，并链接与应用技能匹配的课程。SDG 主题为编辑关联。",
+  "docs.huggingface.limits": "此公共页面并非有版本的课程 API；版式变化可能导致更新中断。不推测时长或证书。获取失败时保留上次成功的快照。",
   "docs.course.license": "机构元数据注明来自 Microsoft Learn。SDG 图标属于联合国传播素材；本内容未经联合国批准，亦不代表联合国观点。详见 /sdg/NOTICE.md。",
 
   "docs.ai.checks": "状态检查只读取模型元数据和健康状况，不生成文本，因此状态正常并不保证回复一定成功。",

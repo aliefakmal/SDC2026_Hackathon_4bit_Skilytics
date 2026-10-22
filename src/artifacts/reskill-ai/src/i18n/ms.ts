@@ -221,6 +221,8 @@ export const ms: Record<DictKey, string> = {
   "src.aei_usage.name": "Penggunaan AI mengikut negara", "src.aei_usage.desc": "Penggunaan Anthropic Economic Index untuk Malaysia dan global.",
   "src.course_catalogue.name": "Katalog kursus awam Microsoft Learn", "src.course_catalogue.desc": "Tajuk, pautan khusus dan tempoh daripada penyedia awam. Kemas kini enam jam; salinan terakhir dipaparkan semasa gangguan.",
   "src.freecodecamp_catalogue.name": "Kurikulum awam freeCodeCamp", "src.freecodecamp_catalogue.desc": "Tajuk dan pautan kursus rasmi daripada struktur kurikulum awam; tempoh tidak diterbitkan.",
+  "src.githubskills_catalogue.name": "Latihan GitHub Skills", "src.githubskills_catalogue.desc": "Templat kursus awam GitHub; pautan membuka repositori latihan rasmi.",
+  "src.huggingface_catalogue.name": "Hugging Face Learn", "src.huggingface_catalogue.desc": "Kursus AI awam yang dipaut daripada indeks Learn penerbit.",
   "src.gemini.name": "API Google Gemini", "src.gemini.desc": "Perkhidmatan AI aktif untuk ketujuh-tujuh ejen semasa ujian; semakan metadata tidak menjana teks.",
   "src.dosm_lfs_month.name": "Tenaga buruh bulanan", "src.dosm_lfs_month.desc": "Survei tenaga buruh bulanan DOSM melalui OpenDOSM.",
   "src.runpod_light.name": "Placeholder RunPod ringan", "src.runpod_light.desc": "Titik akhir Qwen yang disimpan untuk kemudian; penjanaan dan semakan kesihatan dimatikan semasa ujian Gemini sahaja.",

@@ -1,11 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mapLearnPaths, mapFccCourses, courseSdg, liveCourses } from "./live-courses";
+import { mapLearnPaths, mapFccCourses, mapGitHubSkills, mapHuggingFaceLearn, courseSdg, liveCourses } from "./live-courses";
 import { buildPlan } from "./planner";
 import { hasCurrentRiasec, scoreRiasec } from "./riasec-scoring";
 import { RIASEC_QUESTIONS } from "../data/riasec";
 
-const skills = [{ id: 1, name: "Python", category: "Digital" }, { id: 2, name: "SQL", category: "Digital" }];
+const skills = [{ id: 1, name: "Python", category: "Digital" }, { id: 2, name: "SQL", category: "Digital" }, { id: 3, name: "Generative AI Tools", category: "Digital" }];
 const path = { uid: "learn.python", title: "Get started with Python", url: "https://learn.microsoft.com/en-us/training/paths/python/?tracking=1", duration_in_minutes: 90 };
 test("provider courses retain stable IDs, exact destination and sourced duration; reject unsafe or irrelevant entries", () => {
   const courses = mapLearnPaths([path, { ...path, url: "https://evil.example/training/paths/python/" }, { ...path, title: "Introduction to art" }, { ...path, duration_in_minutes: 0 }], skills, "2026-10-23T00:00:00Z");
@@ -51,6 +51,20 @@ test("freeCodeCamp metadata keeps official titles, links and unknown duration", 
   const plan = buildPlan({ gaps: [{ skillId: 1, name: "Python", category: "Digital", importance: 3 }], courses: result, budgetMyr: 0, weeklyHours: 5, hrdcEligible: false });
   assert.equal(plan.items[0].durationWeeks, null);
 });
+
+test("public course indices only admit official direct links with mapped skills", () => {
+  const repos = mapGitHubSkills([
+    { name: "learn-python", html_url: "https://github.com/skills/learn-python", topics: ["skills-course"], is_template: true, description: "Python exercises" },
+    { name: "learn-python", html_url: "https://evil.example/skills/learn-python", topics: ["skills-course"], is_template: true },
+  ], skills, "now");
+  assert.equal(repos.length, 1);
+  assert.equal(repos[0].durationHours, null);
+  assert.deepEqual(repos[0].sdgCodes, ["4.4"]);
+  const hf = mapHuggingFaceLearn('<a href="/learn/llm-course">LLM Course</a><a href="/learn/llm-course">Duplicate</a><a href="https://evil.example/learn/python">Bad</a>',
+    [{ id: 3, name: "Generative AI Tools", category: "Digital" }], "now");
+  assert.equal(hf.length, 1);
+  assert.equal(hf[0].url, "https://huggingface.co/learn/llm-course");
+});
 test("provider refreshes independently and retains stale snapshots on failure", async () => {
   const originalFetch = globalThis.fetch, originalNow = Date.now;
   let calls = 0, clock = originalNow();
@@ -59,18 +73,20 @@ test("provider refreshes independently and retains stale snapshots on failure", 
     calls++;
     const url = String(input);
     if (url.includes("/api/catalog/")) return new Response(JSON.stringify({ learningPaths: [path] }), { status: 200 });
+    if (url.includes("api.github.com/orgs/skills")) return new Response(JSON.stringify([{ name: "learn-python", html_url: "https://github.com/skills/learn-python", topics: ["skills-course"], is_template: true, description: "Python exercises" }]), { status: 200 });
+    if (url.includes("huggingface.co/learn")) return new Response('<a href="/learn/llm-course">LLM Course</a>', { status: 200 });
     if (url.includes("curriculum.json")) return new Response(JSON.stringify({ superblocks: ["learn-python-for-beginners"], certifications: [] }), { status: 200 });
     return new Response(JSON.stringify({ "learn-python-for-beginners": { title: "Learn Python for Beginners", intro: ["Learn Python programming"] } }), { status: 200 });
   };
   try {
     const [a,b] = await Promise.all([liveCourses(skills), liveCourses(skills)]);
-    assert.equal(calls, 3); assert.equal(a.length, 2); assert.deepEqual(a,b);
+    assert.equal(calls, 5); assert.equal(a.length, 4); assert.deepEqual(a,b);
     clock += 6 * 3600000 + 1;
     globalThis.fetch = async () => { calls++; throw new Error("offline"); };
     const stale = await liveCourses(skills);
-    assert.equal(stale.length, 2);
+    assert.equal(stale.length, 4);
     assert.ok(stale.every((course) => course.catalogStale));
     await new Promise((resolve) => setTimeout(resolve, 0));
-    assert.equal(calls, 6);
+    assert.equal(calls, 10);
   } finally { globalThis.fetch = originalFetch; Date.now = originalNow; }
 });

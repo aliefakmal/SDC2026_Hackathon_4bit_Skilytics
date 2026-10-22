@@ -73,6 +73,14 @@ export const SOURCES: SourceDef[] = [
     refreshCadence: "links_6h",
     consumers: ["pathway", "agent_planner", "agent_sdg", "cohort"],
   },
+  { id: "githubskills_catalogue", name: "GitHub Skills public exercises", kind: "catalogue",
+    url: "https://api.github.com/orgs/skills/repos?per_page=100&type=public",
+    description: "Public course-template repositories with official links; unknown duration and no certificate claim.",
+    refreshCadence: "links_6h", consumers: ["pathway", "agent_planner", "agent_sdg", "cohort"] },
+  { id: "huggingface_catalogue", name: "Hugging Face Learn", kind: "catalogue",
+    url: "https://huggingface.co/learn",
+    description: "Public AI course index with direct links; unknown duration and no certificate claim.",
+    refreshCadence: "links_6h", consumers: ["pathway", "agent_planner", "agent_sdg", "cohort"] },
   {
     id: "gemini",
     name: "Google Gemini API",
@@ -265,14 +273,14 @@ async function ingestUsage(force: boolean): Promise<void> {
 
 export async function checkCourseLinks(): Promise<void> {
   const courses = await loadCourses();
-  for (const [id, provider] of [["course_catalogue", "Microsoft Learn"], ["freecodecamp_catalogue", "freeCodeCamp"]] as const) {
+  for (const [id, provider] of [["course_catalogue", "Microsoft Learn"], ["freecodecamp_catalogue", "freeCodeCamp"], ["githubskills_catalogue", "GitHub Skills"], ["huggingface_catalogue", "Hugging Face Learn"]] as const) {
     const available = courses.filter((c) => c.provider === provider);
     const latest = available[0];
     await setSource(id, {
       status: latest && !latest.catalogStale ? "ok" : "error",
       lastFetchedAt: latest ? new Date(latest.lastVerified) : undefined,
       dataDate: latest?.lastVerified.slice(0, 10) ?? null,
-      version: provider === "Microsoft Learn" ? "microsoft-learn-public" : "freecodecamp-curriculum-main",
+      version: provider === "Microsoft Learn" ? "microsoft-learn-public" : provider === "freeCodeCamp" ? "freecodecamp-curriculum-main" : provider === "GitHub Skills" ? "github-skills-public" : "huggingface-learn-public",
       recordCount: available.length,
       detail: latest ? "Public provider metadata. Direct course URLs; SDG associations are editorial." : null,
       error: latest?.catalogStale ? "provider_refresh_failed_using_last_snapshot" : latest ? null : "course_catalogue_unavailable",

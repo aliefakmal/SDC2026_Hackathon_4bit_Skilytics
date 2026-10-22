@@ -5,10 +5,12 @@ import { SKILLS } from "../data/skills";
 export const LEARN_CATALOG_URL = "https://learn.microsoft.com/api/catalog/?locale=en-us&type=learningPaths";
 export const FCC_STRUCTURE_URL = "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/curriculum/structure/curriculum.json";
 export const FCC_INTRO_URL = "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/client/i18n/locales/english/intro.json";
+export const GITHUB_SKILLS_URL = "https://api.github.com/orgs/skills/repos?per_page=100&type=public";
+export const HF_LEARN_URL = "https://huggingface.co/learn";
 const TTL = 6 * 60 * 60 * 1000;
 type Skill = { id: number; name: string; category: string };
-type Provider = "microsoft" | "freecodecamp";
-const providers: Provider[] = ["microsoft", "freecodecamp"];
+type Provider = "microsoft" | "freecodecamp" | "githubskills" | "huggingface";
+const providers: Provider[] = ["microsoft", "freecodecamp", "githubskills", "huggingface"];
 const snapshots = new Map<Provider, { at: number; courses: CourseView[] }>();
 const pending = new Map<Provider, Promise<void>>();
 const retryAfter = new Map<Provider, number>();
@@ -75,12 +77,42 @@ export function mapFccCourses(structure: FccStructure, intro: FccIntro, skills: 
   });
 }
 
+type SkillsRepo = { name?: string; description?: string | null; html_url?: string; topics?: string[]; archived?: boolean; disabled?: boolean; is_template?: boolean };
+export function mapGitHubSkills(repos: SkillsRepo[], skills: Skill[], fetchedAt: string): CourseView[] {
+  return repos.flatMap((repo) => {
+    if (!repo.is_template || repo.archived || repo.disabled || !repo.name || !repo.html_url || !repo.topics?.includes("skills-course")) return [];
+    if (repo.html_url !== `https://github.com/skills/${repo.name}`) return [];
+    const title = repo.name.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    const mapped = matchingSkills(title + " " + (repo.description ?? ""), skills);
+    if (!mapped.length) return [];
+    return [{ id: -500000000 - (createHash("sha256").update(repo.name).digest().readUInt32BE(0) % 400000000),
+      title, provider: "GitHub Skills", url: repo.html_url, costMyr: 0, costType: "free" as const,
+      hrdcStatus: "not_claimable" as const, durationHours: null, level: "self-paced", language: "English",
+      certificate: false, skills: mapped, lastVerified: fetchedAt, sdgCodes: courseSdg(title + " " + (repo.description ?? "")), catalogStale: false }];
+  });
+}
+
+export function mapHuggingFaceLearn(html: string, skills: Skill[], fetchedAt: string): CourseView[] {
+  const urls = [...html.matchAll(/href=["'](\/learn\/[a-z0-9-]+(?:\/en)?)["']/gi)].map((m) => m[1].replace(/\/en$/, ""));
+  return [...new Set(urls)].flatMap((path) => {
+    const slug = path.split("/")[2];
+    if (!slug || slug === "learn") return [];
+    const title = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\bLlm\b/, "LLM").replace(/\bAi\b/, "AI");
+    const mapped = matchingSkills(title, skills);
+    if (!mapped.length) return [];
+    return [{ id: -900000000 - (createHash("sha256").update(slug).digest().readUInt32BE(0) % 400000000),
+      title, provider: "Hugging Face Learn", url: `https://huggingface.co${path}`, costMyr: 0, costType: "free" as const,
+      hrdcStatus: "not_claimable" as const, durationHours: null, level: "self-paced", language: "English",
+      certificate: false, skills: mapped, lastVerified: fetchedAt, sdgCodes: courseSdg(title), catalogStale: false }];
+  });
+}
+
 async function hydrate() {
   if (process.env.NODE_TEST_CONTEXT || process.env.NODE_ENV === "test") return;
   try {
     const { pool } = await import("@workspace/db");
     const result = await pool.query("SELECT provider, fetched_at, payload FROM course_catalog_snapshots");
-    for (const row of result.rows) if ((row.provider === "microsoft" || row.provider === "freecodecamp") && Array.isArray(row.payload))
+    for (const row of result.rows) if (providers.includes(row.provider as Provider) && Array.isArray(row.payload))
       snapshots.set(row.provider, { at: new Date(row.fetched_at).getTime(), courses: row.payload });
   } catch (error) { console.warn("Course snapshot unavailable", error instanceof Error ? error.message : "unknown error"); }
 }
@@ -105,10 +137,18 @@ async function refresh(provider: Provider, skills: Skill[]) {
         const body = await res.json() as { learningPaths?: LearnPath[] };
         if (!Array.isArray(body.learningPaths)) throw new Error("Invalid Microsoft catalogue");
         courses = mapLearnPaths(body.learningPaths, skills, fetchedAt);
-      } else {
+      } else if (provider === "freecodecamp") {
         const [structureRes, introRes] = await Promise.all([FCC_STRUCTURE_URL, FCC_INTRO_URL].map((url) => fetch(url, { signal: AbortSignal.timeout(8000) })));
         if (!structureRes.ok || !introRes.ok) throw new Error("freeCodeCamp catalogue unavailable");
         courses = mapFccCourses(await structureRes.json() as FccStructure, await introRes.json() as FccIntro, skills, fetchedAt);
+      } else if (provider === "githubskills") {
+        const res = await fetch(GITHUB_SKILLS_URL, { headers: { Accept: "application/vnd.github+json", "User-Agent": "Skilytics-Catalogue/1.0" }, signal: AbortSignal.timeout(8000) });
+        if (!res.ok) throw new Error(`GitHub Skills HTTP ${res.status}`);
+        courses = mapGitHubSkills(await res.json() as SkillsRepo[], skills, fetchedAt);
+      } else {
+        const res = await fetch(HF_LEARN_URL, { signal: AbortSignal.timeout(8000) });
+        if (!res.ok) throw new Error(`Hugging Face Learn HTTP ${res.status}`);
+        courses = mapHuggingFaceLearn(await res.text(), skills, fetchedAt);
       }
       if (!courses.length) throw new Error("Empty mapped catalogue");
       const at = Date.now(); snapshots.set(provider, { at, courses }); await save(provider, courses, at);

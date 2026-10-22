@@ -220,6 +220,8 @@ export const en = {
   "src.aei_usage.name": "AI usage by country", "src.aei_usage.desc": "Anthropic Economic Index usage for Malaysia and globally.",
   "src.course_catalogue.name": "Microsoft Learn public course catalogue", "src.course_catalogue.desc": "Public provider titles, direct learning-path URLs and durations. Six-hour refresh with the last good snapshot shown during outages.",
   "src.freecodecamp_catalogue.name": "freeCodeCamp public curriculum", "src.freecodecamp_catalogue.desc": "Official course titles and links from the public curriculum structure; durations are not published.",
+  "src.githubskills_catalogue.name": "GitHub Skills exercises", "src.githubskills_catalogue.desc": "Public course templates from GitHub; links open the official exercise repository.",
+  "src.huggingface_catalogue.name": "Hugging Face Learn", "src.huggingface_catalogue.desc": "Public AI courses linked from the publisher's Learn index.",
   "src.gemini.name": "Google Gemini API", "src.gemini.desc": "Active AI service for all seven agents during testing; metadata checks do not generate text.",
   "src.dosm_lfs_month.name": "Monthly labour force", "src.dosm_lfs_month.desc": "DOSM monthly labour force survey via OpenDOSM.",
   "src.runpod_light.name": "RunPod light placeholder", "src.runpod_light.desc": "Reserved Qwen endpoint; generation and health checks stay off during Gemini-only testing.",
