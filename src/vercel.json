@@ -1,0 +1,35 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "api-server": {
+      "root": "artifacts/api-server",
+      "framework": "express",
+      "functions": {
+        "**": {
+          "maxDuration": 60
+        }
+      }
+    },
+    "mockup-sandbox": {
+      "root": "artifacts/mockup-sandbox",
+      "framework": "vite"
+    },
+    "reskill-ai": {
+      "root": "artifacts/reskill-ai",
+      "framework": "vite",
+      "outputDirectory": "dist/public"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://sdc2026-hackathon-4bit-skilytics.onrender.com/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "reskill-ai"
+      }
+    }
+  ]
+}

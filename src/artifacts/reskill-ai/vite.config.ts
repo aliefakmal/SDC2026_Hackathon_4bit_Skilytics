@@ -30,8 +30,47 @@ export default defineConfig({
         try {
           if (fs.existsSync(indexPath)) {
             fs.copyFileSync(indexPath, fallbackPath);
+
+            const spaRoutes = [
+              'login',
+              'register',
+              'onboarding',
+              'onboarding/cv',
+              'onboarding/review',
+              'onboarding/skills',
+              'onboarding/goals',
+              'onboarding/experience',
+              'onboarding/confirm',
+              'me',
+              'me/outlook',
+              'me/profiles',
+              'roles',
+              'courses',
+              'market',
+              'sources',
+              'hr',
+              'hr/members',
+              'hr/courses',
+              'tvet',
+              'tvet/students',
+              'tvet/programmes',
+              'tvet/market',
+            ];
+
+            for (const r of spaRoutes) {
+              const targetDir = path.resolve(outDir, r);
+              fs.mkdirSync(targetDir, { recursive: true });
+              fs.copyFileSync(indexPath, path.resolve(targetDir, 'index.html'));
+            }
+
+            const serviceVercel = path.resolve(import.meta.dirname, 'vercel.json');
+            if (fs.existsSync(serviceVercel)) {
+              fs.copyFileSync(serviceVercel, path.resolve(outDir, 'vercel.json'));
+            }
           }
-        } catch {}
+        } catch (e) {
+          console.warn('[vite-plugin] fallback copy failed:', e);
+        }
       },
     },
     ...(process.env.NODE_ENV !== 'production' &&
