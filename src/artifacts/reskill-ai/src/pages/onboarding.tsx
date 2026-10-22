@@ -3,7 +3,7 @@ import { Link, Redirect, useLocation, useParams, useSearch } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, FileUp, GraduationCap, HardHat, HelpCircle, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
+  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, FileUp, HelpCircle, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
 } from "lucide-react";
 import {
   useCreateProfile, useGetProfile, useListRiasecQuestions, useRunProfileAgent, useSubmitRiasec, useUpdateProfile, useUploadCv,
@@ -71,27 +71,82 @@ export default function Onboarding() {
   // to the old step. Use the authoritative cache snapshot for this render.
   const p = pid ? qc.getQueryData<Profile>(getGetProfileQueryKey(pid)) ?? q.data : q.data;
   const requested = (OB_STEPS as readonly string[]).includes(params.step ?? "") ? (params.step as ObStep) : null;
+  const create = useCreateProfile();
+  const upd = useUpdateProfile();
+  const preSeg = new URLSearchParams(search).get("seg");
+  const targetSeg: Segment = preSeg === "graduate" ? "graduate" : "worker";
+  const creatingRef = useRef(false);
 
   useEffect(() => {
     if (q.isError && pid && (errStatus(q.error) === 404 || errStatus(q.error) === 403)) { setObProfile(scope, null); setPid(null); }
   }, [q.isError, q.error, pid, scope]);
 
-  if (loading || !ready) return <Frame><Rows n={4} h="h-16" /></Frame>;
+  useEffect(() => {
+    if (!loading && ready && !pid && !creatingRef.current) {
+      creatingRef.current = true;
+      create.mutateAsync({
+        data: {
+          name: t("ob.draftName"),
+          segment: targetSeg,
+          weeklyHours: 1,
+          budgetMyr: 0,
+        },
+      }).then((np) => {
+        setObProfile(scope, np.id);
+        qc.setQueryData(getGetProfileQueryKey(np.id), np);
+        qc.invalidateQueries({ queryKey: ["/api/profiles"] });
+        setPid(np.id);
+        creatingRef.current = false;
+      }).catch((err) => {
+        console.error("Auto create profile failed", err);
+        creatingRef.current = false;
+      });
+    }
+  }, [loading, ready, pid, targetSeg, scope]);
+
+  useEffect(() => {
+    if (p && preSeg && (preSeg === "worker" || preSeg === "graduate") && p.segment !== preSeg && !upd.isPending) {
+      upd.mutateAsync({ id: p.id, data: { segment: preSeg } }).then((np) => {
+        qc.setQueryData(getGetProfileQueryKey(p.id), np);
+        qc.invalidateQueries({ queryKey: ["/api/profiles"] });
+      }).catch(() => {});
+    }
+  }, [p?.id, p?.segment, preSeg]);
+
+  if (params.step === "status") {
+    return <Redirect to={`/onboarding/cv${search ? `?${search}` : ""}`} replace />;
+  }
+
+  if (loading || !ready || (!pid && !create.isError)) return <Frame step="cv" maxIdx={0}><Rows n={4} h="h-16" /></Frame>;
   if (user && user.role !== "individual") return <Redirect to={portalHome(user.role)} />;
 
-  if (!pid) {
-    if (requested && requested !== "status") return <Redirect to={`/onboarding/status${search ? `?${search}` : ""}`} replace />;
-    return <Frame step="status" maxIdx={0}><StatusStep scope={scope} onCreated={(id) => { setPid(id); nav("/onboarding/cv"); }} /></Frame>;
+  if (!pid && create.isError) {
+    return (
+      <Frame step="cv" maxIdx={0}>
+        <div className="space-y-4">
+          <ErrorBox
+            message={t("ob.loadErr")}
+            retry={() => {
+              creatingRef.current = false;
+              setReady(false);
+              setTimeout(() => setReady(true), 50);
+            }}
+          />
+        </div>
+      </Frame>
+    );
   }
-  if (q.isLoading) return <Frame><Rows n={4} h="h-16" /></Frame>;
+
+  if (q.isLoading) return <Frame step="cv" maxIdx={0}><Rows n={4} h="h-16" /></Frame>;
   if (q.isError || !p) {
     const handleStartOver = () => {
       setObProfile(scope, null);
       setPid(null);
-      nav("/onboarding/status");
+      creatingRef.current = false;
+      nav("/onboarding/cv");
     };
     return (
-      <Frame>
+      <Frame step="cv" maxIdx={0}>
         <div className="space-y-4">
           <ErrorBox
             message={t("ob.loadErr")}
@@ -118,10 +173,17 @@ export default function Onboarding() {
   if (!requested) return <Redirect to={`/onboarding/${allowed}`} replace />;
   if (idx(step) > idx(allowed)) return <Redirect to={`/onboarding/${allowed}`} replace />;
 
+  const handleStartOver = () => {
+    setObProfile(scope, null);
+    clearDraft(scope, p.id);
+    setPid(null);
+    creatingRef.current = false;
+    nav("/onboarding/cv");
+  };
+
   return (
     <Frame step={step} maxIdx={idx(allowed)}>
-      {step === "status" && <StatusStep scope={scope} profile={p} onCreated={() => nav("/onboarding/cv")} />}
-      {step === "cv" && <CvStep p={p} scope={scope} />}
+      {step === "cv" && <CvStep p={p} scope={scope} onStartOver={handleStartOver} />}
       {step === "review" && <ReviewStep p={p} scope={scope} />}
       {step === "goals" && <GoalsStep p={p} scope={scope} />}
       {step === "holland" && <HollandStep p={p} scope={scope} />}
@@ -249,63 +311,8 @@ function useAdvance(p: Profile) {
   return { go, upd };
 }
 
-/* ---------- 1. status ---------- */
-function StatusStep({ scope, profile, onCreated }: { scope: string; profile?: Profile; onCreated: (id: number) => void }) {
-  const { t } = useT();
-  const et = useErrText();
-  const search = useSearch();
-  const qc = useQueryClient();
-  const pre = new URLSearchParams(search).get("seg");
-  const [seg, setSeg] = useState<Segment>(profile?.segment === "graduate" || (!profile && pre === "graduate") ? "graduate" : "worker");
-  const create = useCreateProfile();
-  const upd = useUpdateProfile();
-  const [, nav] = useLocation();
-  const busy = create.isPending || upd.isPending;
-  const err = create.error ?? upd.error;
-  const submit = async () => {
-    try {
-      if (profile) {
-        const np = await upd.mutateAsync({ id: profile.id, data: { segment: seg } });
-        qc.setQueryData(getGetProfileQueryKey(profile.id), np);
-        onCreated(np.id);
-        return;
-      }
-      // Draft label is a server marker only; real name comes from CV extraction or review.
-      // Hours/budget are placeholders the review step requires the user to set explicitly.
-      const np = await create.mutateAsync({ data: { name: t("ob.draftName"), segment: seg, weeklyHours: 1, budgetMyr: 0 } });
-      setObProfile(scope, np.id);
-      qc.setQueryData(getGetProfileQueryKey(np.id), np);
-      qc.invalidateQueries({ queryKey: ["/api/profiles"] });
-      onCreated(np.id);
-    } catch { /* surfaced below */ }
-  };
-  const opts: [Segment, typeof HardHat, DictKey, DictKey][] = [["worker", HardHat, "landing.worker", "ob.status.workerSub"], ["graduate", GraduationCap, "landing.grad", "ob.status.gradSub"]];
-  return (
-    <>
-      <StepHead title={t("ob.status.title")} sub={t("ob.status.sub")} />
-      <div className="grid gap-3 sm:grid-cols-2" role="radiogroup">
-        {opts.map(([s, Icon, title, sub]) => (
-          <button key={s} type="button" role="radio" aria-checked={seg === s} onClick={() => setSeg(s)} data-testid={`button-seg-${s}`}
-            className={cn("flex min-h-28 items-start gap-4 rounded-2xl border-2 p-4 text-left transition-all", seg === s ? "border-primary bg-[hsl(var(--maroon-soft))]" : "border-border hover:border-primary/50")}>
-            <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", seg === s ? "bg-primary text-primary-foreground" : "bg-muted text-primary")}><Icon className="h-5 w-5" /></span>
-            <span className="min-w-0"><span className="block font-bold">{t(title)}</span><span className="mt-1 block text-sm text-muted-foreground">{t(sub)}</span></span>
-          </button>
-        ))}
-      </div>
-      <p className="mt-4 text-xs text-muted-foreground">{t("ob.status.noName")}</p>
-      {err && <div className="mt-4"><ErrorBox message={et(err)} /></div>}
-      <NavBar>
-        {profile && <Button variant="ghost" className="min-h-11" onClick={() => { setObProfile(scope, null); clearDraft(scope, profile.id); nav("/onboarding/status", { replace: true }); window.location.reload(); }} data-testid="button-start-over">{t("ob.startOver")}</Button>}
-        <Button className="min-h-11" disabled={busy} onClick={submit} data-testid="button-status-next">
-          {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{profile ? t("ob.next") : t("ob.status.create")}<ArrowRight className="ml-1.5 h-4 w-4" />
-        </Button>
-      </NavBar>
-    </>
-  );
-}
-
-/* ---------- 2. cv ---------- */
-function CvStep({ p, scope }: { p: Profile; scope: string }) {
+/* ---------- 1. cv ---------- */
+function CvStep({ p, scope, onStartOver }: { p: Profile; scope: string; onStartOver?: () => void }) {
   const { t, lang } = useT();
   const et = useErrText();
   const qc = useQueryClient();
@@ -380,14 +387,15 @@ function CvStep({ p, scope }: { p: Profile; scope: string }) {
           {lastFile.current && <Button variant="outline" className="mt-3 min-h-11" onClick={() => lastFile.current && send(lastFile.current)} data-testid="button-cv-retry"><RotateCw className="mr-1.5 h-4 w-4" />{t("ob.cv.retry")}</Button>}
         </div>
       )}
-      <NavBar back="status">
+      <NavBar>
+        {onStartOver && <Button variant="ghost" className="min-h-11" onClick={onStartOver} data-testid="button-start-over">{t("ob.startOver")}</Button>}
         {p.cvExtractionKey && <Button variant="outline" className="min-h-11" disabled={up.isPending || upd.isPending} onClick={() => go("review").catch(() => undefined)} data-testid="button-cv-next">{t("ob.next")}</Button>}
       </NavBar>
     </>
   );
 }
 
-/* ---------- 3. review ---------- */
+/* ---------- 2. review ---------- */
 const REVIEW_FIELDS = [
   ["name", "ob.review.name"],
   ["currentRole", "ob.review.role"],

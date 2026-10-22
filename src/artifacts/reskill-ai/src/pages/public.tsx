@@ -70,7 +70,7 @@ export function Landing() {
         <section className="grid gap-3 md:grid-cols-2" aria-label={t("landing.chooseTitle")}>
           <h2 className="truncate whitespace-nowrap text-lg font-bold md:col-span-2">{t("landing.chooseTitle")}</h2>
           {([["worker", HardHat, "landing.worker", "landing.workerSub"], ["graduate", GraduationCap, "landing.grad", "landing.gradSub"]] as const).map(([seg, Icon, title, sub], i) => (
-            <Link key={seg} href={`/onboarding/status?seg=${seg}`} data-testid={`link-start-${seg}`} style={{ animationDelay: `${i * 80}ms` }}
+            <Link key={seg} href={`/onboarding/cv?seg=${seg}`} data-testid={`link-start-${seg}`} style={{ animationDelay: `${i * 80}ms` }}
               className="rise group flex min-h-24 items-center gap-4 rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground"><Icon className="h-6 w-6" /></span>
               <span className="min-w-0 flex-1"><span className="block truncate whitespace-nowrap font-bold">{t(title)}</span><span className="mt-0.5 block text-sm text-muted-foreground">{t(sub)}</span></span>
@@ -79,10 +79,10 @@ export function Landing() {
           ))}
           {([["hr", Building2, "portal.hr", "landing.hrSub"], ["tvet", School, "portal.tvet", "landing.tvetSub"]] as const).map(([role, Icon, title, sub], i) => (
             <Link key={role} href={`/login?role=${role}`} data-testid={`link-portal-${role}`} style={{ animationDelay: `${160 + i * 80}ms` }}
-              className="rise group flex min-h-20 items-center gap-4 rounded-2xl border border-dashed border-border bg-background p-4 transition-colors hover:border-accent">
+              className="rise group flex min-h-20 items-center gap-4 rounded-2xl border-2 border-accent/70 ring-2 ring-accent/20 bg-card p-4.5 shadow-xs transition-all hover:-translate-y-0.5 hover:border-accent hover:ring-accent/40 hover:shadow-md">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent"><Icon className="h-5 w-5" /></span>
               <span className="min-w-0 flex-1"><span className="block truncate whitespace-nowrap font-semibold">{t(title)}</span><span className="block text-xs text-muted-foreground">{t(sub)}</span></span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <ArrowRight className="h-4 w-4 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
             </Link>
           ))}
         </section>

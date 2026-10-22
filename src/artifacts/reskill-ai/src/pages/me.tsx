@@ -24,11 +24,11 @@ export function Workspace() {
   const search = useSearch();
   const [, nav] = useLocation();
   const preset = new URLSearchParams(search).get("new");
-  const start = (seg: Segment) => nav(`/onboarding/status?seg=${seg}`);
+  const start = (seg: Segment) => nav(`/onboarding/cv?seg=${seg}`);
   const profiles = useListProfiles(undefined, { query: { queryKey: getListProfilesQueryKey() } });
   const sum = useGetDashboardSummary({ query: { queryKey: getGetDashboardSummaryQueryKey() } });
   const s = sum.data;
-  if (preset === "worker" || preset === "graduate") return <Redirect to={`/onboarding/status?seg=${preset}`} replace />;
+  if (preset === "worker" || preset === "graduate") return <Redirect to={`/onboarding/cv?seg=${preset}`} replace />;
   return (
     <>
       <PageHeader eyebrow={t(user ? "portal.individual" : "portal.guest")} title={user ? t("me.hello", { name: user.name }) : t("me.title")} sub={t("me.sub")}
