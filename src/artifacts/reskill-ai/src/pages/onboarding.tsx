@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AiWait, Brand, ErrorBox, LangToggle, Markdown, Meter, Rows, StatusTag } from "@/components/kit";
+import { AiWait, Brand, ErrorBox, LangToggle, Markdown, Meter, Rows, StepLoadingSkeleton, StatusTag } from "@/components/kit";
 import { useAuth, portalHome } from "@/lib/auth";
 import {
   CV_MAX_BYTES, CV_OK, OB_STEPS, clearDraft, getObProfile, obScope, readDraft, setObProfile, writeDraft, type ObStep,
@@ -60,11 +60,29 @@ export default function Onboarding() {
   const [, nav] = useLocation();
   const { t } = useT();
   const scope = obScope(user?.id);
-  const [pid, setPid] = useState<number | null>(null);
-  const [ready, setReady] = useState(false);
-  useEffect(() => { if (!loading) { setPid(getObProfile(scope)); setReady(true); } }, [loading, scope]);
+  const preSeg = new URLSearchParams(search).get("seg");
+  const preNew = new URLSearchParams(search).get("new");
+  const isNew = preNew === "1";
 
-  const q = useGetProfile(pid ?? 0, { query: { enabled: !!pid, queryKey: getGetProfileQueryKey(pid ?? 0), retry: false } });
+  const [pid, setPid] = useState<number | null>(() => {
+    if (isNew) {
+      setObProfile(scope, null);
+      return null;
+    }
+    return getObProfile(scope);
+  });
+  const [ready, setReady] = useState(() => !loading);
+
+  useEffect(() => {
+    if (!loading && !ready) {
+      if (!isNew && !pid) {
+        setPid(getObProfile(scope));
+      }
+      setReady(true);
+    }
+  }, [loading, ready, isNew, pid, scope]);
+
+  const q = useGetProfile(pid ?? 0, { query: { enabled: !!pid && pid > 0, queryKey: getGetProfileQueryKey(pid ?? 0), retry: false } });
   // Mutations update the cache synchronously, but React Query notifies this
   // observer on a later tick. A route change can render before that notice:
   // guarding against q.data alone would redirect a successful advance back
@@ -73,47 +91,61 @@ export default function Onboarding() {
   const requested = (OB_STEPS as readonly string[]).includes(params.step ?? "") ? (params.step as ObStep) : null;
   const create = useCreateProfile();
   const upd = useUpdateProfile();
-  const preSeg = new URLSearchParams(search).get("seg");
-  const preNew = new URLSearchParams(search).get("new");
   const targetSeg: Segment = preSeg === "graduate" ? "graduate" : "worker";
   const creatingRef = useRef(false);
+  const createPromiseRef = useRef<Promise<Profile> | null>(null);
+
+  const ensureProfile = useCallback(async (): Promise<Profile> => {
+    if (p && p.id > 0) return p;
+    if (createPromiseRef.current) return createPromiseRef.current;
+    const promise = create.mutateAsync({
+      data: {
+        name: t("ob.draftName"),
+        segment: targetSeg,
+        weeklyHours: 1,
+        budgetMyr: 0,
+      },
+    }).then((np) => {
+      setObProfile(scope, np.id);
+      qc.setQueryData(getGetProfileQueryKey(np.id), np);
+      qc.invalidateQueries({ queryKey: ["/api/profiles"] });
+      setPid(np.id);
+      createPromiseRef.current = null;
+      return np;
+    }).catch((err) => {
+      createPromiseRef.current = null;
+      throw err;
+    });
+    createPromiseRef.current = promise;
+    return promise;
+  }, [p, create, t, targetSeg, scope, qc]);
 
   useEffect(() => {
-    if (preNew === "1" && pid) {
+    if (isNew && pid) {
       setObProfile(scope, null);
       setPid(null);
     }
-  }, [preNew, pid, scope]);
+  }, [isNew, pid, scope]);
 
   useEffect(() => {
-    if (q.isError && pid && (errStatus(q.error) === 404 || errStatus(q.error) === 403)) { setObProfile(scope, null); setPid(null); }
+    if (q.isError && pid && (errStatus(q.error) === 404 || errStatus(q.error) === 403)) {
+      setObProfile(scope, null);
+      setPid(null);
+    }
   }, [q.isError, q.error, pid, scope]);
 
   useEffect(() => {
-    if (!loading && ready && !pid && !creatingRef.current) {
+    if (!pid && !creatingRef.current) {
       creatingRef.current = true;
-      create.mutateAsync({
-        data: {
-          name: t("ob.draftName"),
-          segment: targetSeg,
-          weeklyHours: 1,
-          budgetMyr: 0,
-        },
-      }).then((np) => {
-        setObProfile(scope, np.id);
-        qc.setQueryData(getGetProfileQueryKey(np.id), np);
-        qc.invalidateQueries({ queryKey: ["/api/profiles"] });
-        setPid(np.id);
-        creatingRef.current = false;
-      }).catch((err) => {
+      ensureProfile().catch((err) => {
         console.error("Auto create profile failed", err);
         creatingRef.current = false;
       });
     }
-  }, [loading, ready, pid, targetSeg, scope]);
+  }, [pid, ensureProfile]);
 
   useEffect(() => {
-    if (p && preSeg && (preSeg === "worker" || preSeg === "graduate") && p.segment !== preSeg && !upd.isPending) {
+    if (p && p.id > 0 && preSeg && (preSeg === "worker" || preSeg === "graduate") && p.segment !== preSeg && !upd.isPending) {
       upd.mutateAsync({ id: p.id, data: { segment: preSeg } }).then((np) => {
         qc.setQueryData(getGetProfileQueryKey(p.id), np);
         qc.invalidateQueries({ queryKey: ["/api/profiles"] });
@@ -121,12 +153,65 @@ export default function Onboarding() {
     }
   }, [p?.id, p?.segment, preSeg]);
 
+  const draftProfile: Profile = useMemo(() => ({
+    id: pid ?? 0,
+    name: t("ob.draftName"),
+    segment: targetSeg,
+    weeklyHours: 1,
+    budgetMyr: 0,
+    hrdcEligible: false,
+    hrdcEligibilityStatus: null,
+    cvFileName: null,
+    education: null,
+    experience: null,
+    cvEvidence: [],
+    cvExtractionKey: null,
+    onboardingStep: "cv",
+    verified: false,
+    riasecAnswers: [],
+    cvUploadedAt: null,
+    isGuest: true,
+    cvWordCount: null,
+    skills: [],
+    riasecScores: null,
+    riasecCode: null,
+    targetRoleId: null,
+    createdAt: new Date().toISOString(),
+  }), [pid, targetSeg, t]);
+
   if (params.step === "status") {
     return <Redirect to={`/onboarding/cv${search ? `?${search}` : ""}`} replace />;
   }
 
-  if (loading || !ready || (!pid && !create.isError)) return <Frame step="cv" maxIdx={0}><Rows n={4} h="h-16" /></Frame>;
   if (user && user.role !== "individual") return <Redirect to={portalHome(user.role)} />;
+
+  const handleStartOver = () => {
+    setObProfile(scope, null);
+    if (p?.id) clearDraft(scope, p.id);
+    setPid(null);
+    creatingRef.current = false;
+    createPromiseRef.current = null;
+    nav("/onboarding/cv?new=1");
+  };
+
+  const isCvStep = requested === "cv" || (!requested && (!pid || !p || !p.cvExtractionKey));
+
+  // If user is on the CV step, render immediately without waiting for network profile fetch!
+  if (isCvStep) {
+    return (
+      <Frame step="cv" maxIdx={0}>
+        <CvStep p={p ?? draftProfile} scope={scope} ensureProfile={ensureProfile} onStartOver={handleStartOver} />
+      </Frame>
+    );
+  }
+
+  if (loading || !ready || (!pid && !create.isError)) {
+    return (
+      <Frame step={requested ?? "cv"} maxIdx={0}>
+        <StepLoadingSkeleton title={t("ob.loadingStep")} n={4} h="h-16" />
+      </Frame>
+    );
+  }
 
   if (!pid && create.isError) {
     return (
@@ -136,8 +221,8 @@ export default function Onboarding() {
             message={t("ob.loadErr")}
             retry={() => {
               creatingRef.current = false;
-              setReady(false);
-              setTimeout(() => setReady(true), 50);
+              createPromiseRef.current = null;
+              ensureProfile().catch(() => {});
             }}
           />
         </div>
@@ -145,16 +230,17 @@ export default function Onboarding() {
     );
   }
 
-  if (q.isLoading) return <Frame step="cv" maxIdx={0}><Rows n={4} h="h-16" /></Frame>;
-  if (q.isError || !p) {
-    const handleStartOver = () => {
-      setObProfile(scope, null);
-      setPid(null);
-      creatingRef.current = false;
-      nav("/onboarding/cv");
-    };
+  if (q.isLoading) {
     return (
-      <Frame step="cv" maxIdx={0}>
+      <Frame step={requested ?? "cv"} maxIdx={0}>
+        <StepLoadingSkeleton title={t("ob.loadingStep")} n={4} h="h-16" />
+      </Frame>
+    );
+  }
+
+  if (q.isError || !p) {
+    return (
+      <Frame step={requested ?? "cv"} maxIdx={0}>
         <div className="space-y-4">
           <ErrorBox
             message={t("ob.loadErr")}
@@ -181,17 +267,9 @@ export default function Onboarding() {
   if (!requested) return <Redirect to={`/onboarding/${allowed}`} replace />;
   if (idx(step) > idx(allowed)) return <Redirect to={`/onboarding/${allowed}`} replace />;
 
-  const handleStartOver = () => {
-    setObProfile(scope, null);
-    clearDraft(scope, p.id);
-    setPid(null);
-    creatingRef.current = false;
-    nav("/onboarding/cv");
-  };
-
   return (
     <Frame step={step} maxIdx={idx(allowed)}>
-      {step === "cv" && <CvStep p={p} scope={scope} onStartOver={handleStartOver} />}
+      {step === "cv" && <CvStep p={p} scope={scope} ensureProfile={ensureProfile} onStartOver={handleStartOver} />}
       {step === "review" && <ReviewStep p={p} scope={scope} />}
       {step === "goals" && <GoalsStep p={p} scope={scope} />}
       {step === "holland" && <HollandStep p={p} scope={scope} />}
@@ -320,7 +398,17 @@ function useAdvance(p: Profile) {
 }
 
 /* ---------- 1. cv ---------- */
-function CvStep({ p, scope, onStartOver }: { p: Profile; scope: string; onStartOver?: () => void }) {
+function CvStep({
+  p,
+  scope,
+  ensureProfile,
+  onStartOver,
+}: {
+  p: Profile;
+  scope: string;
+  ensureProfile?: () => Promise<Profile>;
+  onStartOver?: () => void;
+}) {
   const { t, lang } = useT();
   const et = useErrText();
   const qc = useQueryClient();
@@ -343,9 +431,9 @@ function CvStep({ p, scope, onStartOver }: { p: Profile; scope: string; onStartO
       onSuccess: async (np) => {
         setSince(null);
         lastFile.current = null;
-        qc.setQueryData(getGetProfileQueryKey(p.id), np);
+        qc.setQueryData(getGetProfileQueryKey(np.id), np);
         // a new extraction invalidates any earlier review draft and verification
-        writeDraft(scope, p.id, { form: undefined });
+        writeDraft(scope, np.id, { form: undefined });
         nav("/onboarding/review");
       },
       onError: () => setSince(null),
@@ -358,11 +446,25 @@ function CvStep({ p, scope, onStartOver }: { p: Profile; scope: string; onStartO
     if (!consent) { setLocal(t("ob.cv.consentNeeded")); return; }
     lastFile.current = file;
     const r = new FileReader();
-    r.onload = () => {
+    r.onload = async () => {
       const s = String(r.result);
       setSince(Date.now());
-      // base64 lives only in this request body; never persisted
-      up.mutate({ id: p.id, data: { fileName: file.name, contentBase64: s.slice(s.indexOf(",") + 1), consent: true, lang } });
+      try {
+        let activeProfile = p;
+        if (!activeProfile.id || activeProfile.id <= 0) {
+          if (ensureProfile) {
+            activeProfile = await ensureProfile();
+          }
+        }
+        if (!activeProfile.id || activeProfile.id <= 0) {
+          throw new Error("profile_not_ready");
+        }
+        // base64 lives only in this request body; never persisted
+        up.mutate({ id: activeProfile.id, data: { fileName: file.name, contentBase64: s.slice(s.indexOf(",") + 1), consent: true, lang } });
+      } catch (err) {
+        setSince(null);
+        setLocal(et(err));
+      }
     };
     r.readAsDataURL(file);
   };

@@ -43,6 +43,18 @@ function RadarMotif() {
 export function Landing() {
   const { t } = useT();
   const { user } = useAuth();
+
+  useEffect(() => {
+    // Pre-warm backend API while visitor explores landing page to eliminate cold start
+    const base = import.meta.env.VITE_API_URL || "";
+    fetch(`${base}/api/auth/demo-accounts`, { cache: "no-store" }).catch(() => {});
+  }, []);
+
+  const prewarm = () => {
+    const base = import.meta.env.VITE_API_URL || "";
+    fetch(`${base}/api/auth/demo-accounts`, { cache: "no-store" }).catch(() => {});
+  };
+
   const steps: [DictKey, DictKey, typeof FileText][] = [
     ["nav.intake", "landing.step1", FileText], ["nav.radar", "landing.step2", Activity], ["nav.matcher", "landing.step3", Briefcase], ["nav.pathway", "landing.step4", Map],
   ];
@@ -71,6 +83,7 @@ export function Landing() {
           <h2 className="truncate whitespace-nowrap text-lg font-bold md:col-span-2">{t("landing.chooseTitle")}</h2>
           {([["worker", HardHat, "landing.worker", "landing.workerSub"], ["graduate", GraduationCap, "landing.grad", "landing.gradSub"]] as const).map(([seg, Icon, title, sub], i) => (
             <Link key={seg} href={`/onboarding/cv?seg=${seg}&new=1`} data-testid={`link-start-${seg}`} style={{ animationDelay: `${i * 80}ms` }}
+              onMouseEnter={prewarm}
               className="rise group flex min-h-24 items-center gap-4 rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground"><Icon className="h-6 w-6" /></span>
               <span className="min-w-0 flex-1"><span className="block truncate whitespace-nowrap font-bold">{t(title)}</span><span className="mt-0.5 block text-sm text-muted-foreground">{t(sub)}</span></span>

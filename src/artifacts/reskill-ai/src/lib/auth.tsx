@@ -20,7 +20,8 @@ export const portalHome = (role?: string | null) => (role === "hr" ? "/hr" : rol
 export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
   const [, nav] = useLocation();
-  const me = useGetMe({ query: { queryKey: getGetMeQueryKey(), retry: false, staleTime: 5 * 60_000 } });
+  const hasToken = typeof window !== "undefined" && !!localStorage.getItem(TOKEN);
+  const me = useGetMe({ query: { enabled: hasToken, queryKey: getGetMeQueryKey(), retry: false, staleTime: 5 * 60_000 } });
   const meKey = getGetMeQueryKey();
 
   const rescope = useCallback(async (user: AuthUser | null) => {
@@ -47,7 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qc, nav]);
 
-  const value = useMemo<AuthCtx>(() => ({ user: me.data ?? null, loading: me.isLoading, signIn, signOut }), [me.data, me.isLoading, signIn, signOut]);
+  const value = useMemo<AuthCtx>(
+    () => ({ user: hasToken ? (me.data ?? null) : null, loading: hasToken && me.isLoading, signIn, signOut }),
+    [hasToken, me.data, me.isLoading, signIn, signOut],
+  );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

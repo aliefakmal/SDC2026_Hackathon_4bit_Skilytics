@@ -117,7 +117,29 @@ export function ErrorBox({
 }
 
 export function Rows({ n = 4, h = "h-12" }: { n?: number; h?: string }) {
-  return <div className="space-y-2">{Array.from({ length: n }).map((_, i) => <Skeleton key={i} className={cn("w-full rounded-xl", h)} style={{ opacity: 1 - i * 0.14 }} />)}</div>;
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: n }).map((_, i) => (
+        <Skeleton
+          key={i}
+          className={cn("w-full rounded-2xl", h)}
+          style={{ opacity: Math.max(0.6, 1 - i * 0.08) }}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function StepLoadingSkeleton({ title, n = 4, h = "h-14" }: { title?: string; n?: number; h?: string }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground animate-pulse">
+        <RotateCw className="h-4 w-4 animate-spin text-primary" />
+        <span>{title ?? "Menyediakan profil anda..."}</span>
+      </div>
+      <Rows n={n} h={h} />
+    </div>
+  );
 }
 
 export function Meter({ value, max = 1, tone = "maroon", label, className }: { value: number | null | undefined; max?: number; tone?: "maroon" | "gold" | "slate"; label?: string; className?: string }) {
