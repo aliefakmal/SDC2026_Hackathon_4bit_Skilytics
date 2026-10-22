@@ -246,14 +246,15 @@ router.post("/profiles/:id/cv", async (req, res) => {
   cvRequests.set(id, work);
   try { res.json(await work); }
   catch (err) {
-    req.log.warn({ profileId: id, kind: err instanceof AiNotConnectedError ? "not_configured" : "extraction_failed" }, "CV extraction failed");
+    const detail = err instanceof Error ? err.message : String(err);
+    req.log.warn({ profileId: id, detail, kind: err instanceof AiNotConnectedError ? "not_configured" : "extraction_failed" }, "CV extraction failed");
     const error = err instanceof AiNotConnectedError ? "ai_not_connected"
       : err instanceof AiTimeoutError ? "ai_timeout"
         : err instanceof AiVisionUnsupportedError ? "ai_vision_unsupported"
           : err instanceof CvError ? err.message
           : err instanceof CvAiOutputError ? "cv_ai_invalid" : "ai_failed";
     const status = err instanceof CvError ? 400 : err instanceof AiNotConnectedError ? 503 : 502;
-    res.status(status).json({ error });
+    res.status(status).json({ error, detail });
   } finally { cvRequests.delete(id); }
 });
 
