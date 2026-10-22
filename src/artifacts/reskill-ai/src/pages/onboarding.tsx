@@ -60,11 +60,17 @@ export default function Onboarding() {
   const [, nav] = useLocation();
   const { t } = useT();
   const scope = obScope(user?.id);
-  const preSeg = new URLSearchParams(search).get("seg");
-  const preNew = new URLSearchParams(search).get("new");
+  const searchParams = new URLSearchParams(search);
+  const preSeg = searchParams.get("seg");
+  const preNew = searchParams.get("new");
   const isNew = preNew === "1";
 
+  // Check URL pid first (e.g. ?pid=123), then fallback to localStorage
+  const urlPid = Number(searchParams.get("pid"));
+  const validUrlPid = Number.isFinite(urlPid) && urlPid > 0 ? urlPid : null;
+
   const [pid, setPid] = useState<number | null>(() => {
+    if (validUrlPid) return validUrlPid;
     if (isNew) {
       setObProfile(scope, null);
       return null;
@@ -72,6 +78,17 @@ export default function Onboarding() {
     return getObProfile(scope);
   });
   const [ready, setReady] = useState(() => !loading);
+
+  // If new=1 was present, clean it from the URL once on mount and wipe old draft
+  useEffect(() => {
+    if (preNew === "1") {
+      setObProfile(scope, null);
+      const clean = new URLSearchParams(window.location.search);
+      clean.delete("new");
+      const qs = clean.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+    }
+  }, []);
 
   useEffect(() => {
     if (!loading && !ready) {
@@ -95,6 +112,12 @@ export default function Onboarding() {
   const creatingRef = useRef(false);
   const createPromiseRef = useRef<Promise<Profile> | null>(null);
 
+  const handleProfileReady = useCallback((np: Profile) => {
+    setObProfile(scope, np.id);
+    setPid(np.id);
+    qc.setQueryData(getGetProfileQueryKey(np.id), np);
+  }, [scope, qc]);
+
   const ensureProfile = useCallback(async (): Promise<Profile> => {
     if (p && p.id > 0) return p;
     if (createPromiseRef.current) return createPromiseRef.current;
@@ -106,10 +129,8 @@ export default function Onboarding() {
         budgetMyr: 0,
       },
     }).then((np) => {
-      setObProfile(scope, np.id);
-      qc.setQueryData(getGetProfileQueryKey(np.id), np);
+      handleProfileReady(np);
       qc.invalidateQueries({ queryKey: ["/api/profiles"] });
-      setPid(np.id);
       createPromiseRef.current = null;
       return np;
     }).catch((err) => {
@@ -118,14 +139,7 @@ export default function Onboarding() {
     });
     createPromiseRef.current = promise;
     return promise;
-  }, [p, create, t, targetSeg, scope, qc]);
-
-  useEffect(() => {
-    if (isNew && pid) {
-      setObProfile(scope, null);
-      setPid(null);
-    }
-  }, [isNew, pid, scope]);
+  }, [p, create, t, targetSeg, handleProfileReady, qc]);
 
   useEffect(() => {
     if (q.isError && pid && (errStatus(q.error) === 404 || errStatus(q.error) === 403)) {
@@ -135,23 +149,23 @@ export default function Onboarding() {
   }, [q.isError, q.error, pid, scope]);
 
   useEffect(() => {
-    if (!pid && !creatingRef.current) {
+    if (!pid && !creatingRef.current && (params.step === "cv" || !params.step)) {
       creatingRef.current = true;
       ensureProfile().catch((err) => {
         console.error("Auto create profile failed", err);
         creatingRef.current = false;
       });
     }
-  }, [pid, ensureProfile]);
+  }, [pid, ensureProfile, params.step]);
 
   useEffect(() => {
     if (p && p.id > 0 && preSeg && (preSeg === "worker" || preSeg === "graduate") && p.segment !== preSeg && !upd.isPending) {
       upd.mutateAsync({ id: p.id, data: { segment: preSeg } }).then((np) => {
-        qc.setQueryData(getGetProfileQueryKey(p.id), np);
+        handleProfileReady(np);
         qc.invalidateQueries({ queryKey: ["/api/profiles"] });
       }).catch(() => {});
     }
-  }, [p?.id, p?.segment, preSeg]);
+  }, [p?.id, p?.segment, preSeg, handleProfileReady, upd, qc]);
 
   const draftProfile: Profile = useMemo(() => ({
     id: pid ?? 0,
@@ -199,40 +213,44 @@ export default function Onboarding() {
   // If user is on the CV step, render immediately without waiting for network profile fetch!
   if (isCvStep) {
     return (
-      <Frame step="cv" maxIdx={0}>
-        <CvStep p={p ?? draftProfile} scope={scope} ensureProfile={ensureProfile} onStartOver={handleStartOver} />
+      <Frame step="cv" maxIdx={0} pid={p?.id ?? pid}>
+        <CvStep
+          p={p ?? draftProfile}
+          scope={scope}
+          ensureProfile={ensureProfile}
+          onProfileReady={handleProfileReady}
+          onStartOver={handleStartOver}
+        />
       </Frame>
     );
   }
 
-  if (loading || !ready || (!pid && !create.isError)) {
+  // If user is on a step after cv but pid is missing in state, attempt to restore from localStorage
+  if (!pid) {
+    const stored = getObProfile(scope);
+    if (stored) {
+      setPid(stored);
+      return (
+        <Frame step={requested ?? "cv"} maxIdx={0} pid={stored}>
+          <StepLoadingSkeleton title={t("ob.loadingStep")} n={4} h="h-16" />
+        </Frame>
+      );
+    }
+    // No stored profile at all, redirect user to start at CV
+    return <Redirect to="/onboarding/cv" replace />;
+  }
+
+  if (loading || !ready) {
     return (
-      <Frame step={requested ?? "cv"} maxIdx={0}>
+      <Frame step={requested ?? "cv"} maxIdx={0} pid={pid}>
         <StepLoadingSkeleton title={t("ob.loadingStep")} n={4} h="h-16" />
       </Frame>
     );
   }
 
-  if (!pid && create.isError) {
+  if (q.isLoading && !p) {
     return (
-      <Frame step="cv" maxIdx={0}>
-        <div className="space-y-4">
-          <ErrorBox
-            message={t("ob.loadErr")}
-            retry={() => {
-              creatingRef.current = false;
-              createPromiseRef.current = null;
-              ensureProfile().catch(() => {});
-            }}
-          />
-        </div>
-      </Frame>
-    );
-  }
-
-  if (q.isLoading) {
-    return (
-      <Frame step={requested ?? "cv"} maxIdx={0}>
+      <Frame step={requested ?? "cv"} maxIdx={0} pid={pid}>
         <StepLoadingSkeleton title={t("ob.loadingStep")} n={4} h="h-16" />
       </Frame>
     );
@@ -240,7 +258,7 @@ export default function Onboarding() {
 
   if (q.isError || !p) {
     return (
-      <Frame step={requested ?? "cv"} maxIdx={0}>
+      <Frame step={requested ?? "cv"} maxIdx={0} pid={pid}>
         <div className="space-y-4">
           <ErrorBox
             message={t("ob.loadErr")}
@@ -264,23 +282,31 @@ export default function Onboarding() {
 
   const allowed = serverStep(p);
   const step = requested ?? allowed;
-  if (!requested) return <Redirect to={`/onboarding/${allowed}`} replace />;
-  if (idx(step) > idx(allowed)) return <Redirect to={`/onboarding/${allowed}`} replace />;
+  if (!requested) return <Redirect to={`/onboarding/${allowed}${pid ? `?pid=${pid}` : ""}`} replace />;
+  if (idx(step) > idx(allowed)) return <Redirect to={`/onboarding/${allowed}${pid ? `?pid=${pid}` : ""}`} replace />;
 
   return (
-    <Frame step={step} maxIdx={idx(allowed)}>
-      {step === "cv" && <CvStep p={p} scope={scope} ensureProfile={ensureProfile} onStartOver={handleStartOver} />}
-      {step === "review" && <ReviewStep p={p} scope={scope} />}
-      {step === "goals" && <GoalsStep p={p} scope={scope} />}
-      {step === "holland" && <HollandStep p={p} scope={scope} />}
-      {step === "results" && <ResultsStep p={p} />}
-      {step === "save" && <SaveStep p={p} scope={scope} />}
+    <Frame step={step} maxIdx={idx(allowed)} pid={p.id}>
+      {step === "cv" && (
+        <CvStep
+          p={p}
+          scope={scope}
+          ensureProfile={ensureProfile}
+          onProfileReady={handleProfileReady}
+          onStartOver={handleStartOver}
+        />
+      )}
+      {step === "review" && <ReviewStep p={p} scope={scope} onProfileReady={handleProfileReady} />}
+      {step === "goals" && <GoalsStep p={p} scope={scope} onProfileReady={handleProfileReady} />}
+      {step === "holland" && <HollandStep p={p} scope={scope} onProfileReady={handleProfileReady} />}
+      {step === "results" && <ResultsStep p={p} scope={scope} onProfileReady={handleProfileReady} />}
+      {step === "save" && <SaveStep p={p} scope={scope} onProfileReady={handleProfileReady} />}
     </Frame>
   );
 }
 
 /* ---------- frame ---------- */
-function Frame({ step, maxIdx = 0, children }: { step?: ObStep; maxIdx?: number; children: ReactNode }) {
+function Frame({ step, maxIdx = 0, pid, children }: { step?: ObStep; maxIdx?: number; pid?: number | null; children: ReactNode }) {
   const { t } = useT();
   const { user } = useAuth();
   const [help, setHelp] = useState(false);
@@ -304,6 +330,7 @@ function Frame({ step, maxIdx = 0, children }: { step?: ObStep; maxIdx?: number;
             {OB_STEPS.map((s, i) => {
               const done = i < cur || i < maxIdx;
               const reachable = step && i <= maxIdx;
+              const stepHref = `/onboarding/${s}${pid ? `?pid=${pid}` : ""}`;
               const body = (
                 <span className={cn("flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm transition-colors", i === cur && step ? "bg-primary font-semibold text-primary-foreground" : reachable ? "hover:bg-card" : "text-muted-foreground/60")}>
                   <span className={cn("tnum flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-bold",
@@ -313,7 +340,7 @@ function Frame({ step, maxIdx = 0, children }: { step?: ObStep; maxIdx?: number;
                   {t(`ob.step.${s}` as DictKey)}
                 </span>
               );
-              return <li key={s}>{reachable && i !== cur ? <Link href={`/onboarding/${s}`} data-testid={`link-step-${s}`}>{body}</Link> : body}</li>;
+              return <li key={s}>{reachable && i !== cur ? <Link href={stepHref} data-testid={`link-step-${s}`}>{body}</Link> : body}</li>;
             })}
           </ol>
         </aside>
@@ -370,18 +397,19 @@ function StepHead({ title, sub }: { title: string; sub?: string }) {
   );
 }
 
-function NavBar({ back, children }: { back?: ObStep; children?: ReactNode }) {
+function NavBar({ back, pid, children }: { back?: ObStep; pid?: number; children?: ReactNode }) {
   const { t } = useT();
+  const backHref = back ? `/onboarding/${back}${pid ? `?pid=${pid}` : ""}` : undefined;
   return (
     <div className="mt-8 flex flex-col-reverse gap-2 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-      {back ? <Link href={`/onboarding/${back}`} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary" data-testid="link-back"><ArrowLeft className="h-4 w-4" />{t("ob.back")}</Link> : <span />}
+      {backHref ? <Link href={backHref} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-primary" data-testid="link-back"><ArrowLeft className="h-4 w-4" />{t("ob.back")}</Link> : <span />}
       <div className="flex flex-col gap-2 sm:flex-row">{children}</div>
     </div>
   );
 }
 
 /** Patch the profile; moves onboardingStep forward unless forced (e.g. CV re-upload). */
-function useAdvance(p: Profile) {
+function useAdvance(p: Profile, scope?: string, onProfileReady?: (np: Profile) => void) {
   const qc = useQueryClient();
   const [, nav] = useLocation();
   const upd = useUpdateProfile();
@@ -391,7 +419,10 @@ function useAdvance(p: Profile) {
     const np = Object.keys(body).length ? await upd.mutateAsync({ id: p.id, data: body }) : p;
     qc.setQueryData(getGetProfileQueryKey(p.id), np);
     qc.invalidateQueries({ queryKey: ["/api/profiles"] });
-    nav(to ?? `/onboarding/${next === "complete" ? "save" : next}`);
+    if (scope) setObProfile(scope, np.id);
+    onProfileReady?.(np);
+    const target = to ?? `/onboarding/${next === "complete" ? "save" : next}?pid=${np.id}`;
+    nav(target);
     return np;
   };
   return { go, upd };
@@ -402,18 +433,20 @@ function CvStep({
   p,
   scope,
   ensureProfile,
+  onProfileReady,
   onStartOver,
 }: {
   p: Profile;
   scope: string;
   ensureProfile?: () => Promise<Profile>;
+  onProfileReady?: (np: Profile) => void;
   onStartOver?: () => void;
 }) {
   const { t, lang } = useT();
   const et = useErrText();
   const qc = useQueryClient();
   const [, nav] = useLocation();
-  const { go, upd } = useAdvance(p);
+  const { go, upd } = useAdvance(p, scope, onProfileReady);
   const ref = useRef<HTMLInputElement>(null);
   const [consent, setConsent] = useState(false);
   const [local, setLocal] = useState<string | null>(null);
@@ -432,9 +465,11 @@ function CvStep({
         setSince(null);
         lastFile.current = null;
         qc.setQueryData(getGetProfileQueryKey(np.id), np);
+        setObProfile(scope, np.id);
+        onProfileReady?.(np);
         // a new extraction invalidates any earlier review draft and verification
         writeDraft(scope, np.id, { form: undefined });
-        nav("/onboarding/review");
+        nav(`/onboarding/review?pid=${np.id}`);
       },
       onError: () => setSince(null),
     },
@@ -497,7 +532,7 @@ function CvStep({
           {lastFile.current && <Button variant="outline" className="mt-3 min-h-11" onClick={() => lastFile.current && send(lastFile.current)} data-testid="button-cv-retry"><RotateCw className="mr-1.5 h-4 w-4" />{t("ob.cv.retry")}</Button>}
         </div>
       )}
-      <NavBar>
+      <NavBar pid={p.id}>
         {onStartOver && <Button variant="ghost" className="min-h-11" onClick={onStartOver} data-testid="button-start-over">{t("ob.startOver")}</Button>}
         {p.cvExtractionKey && <Button variant="outline" className="min-h-11" disabled={up.isPending || upd.isPending} onClick={() => go("review").catch(() => undefined)} data-testid="button-cv-next">{t("ob.next")}</Button>}
       </NavBar>
@@ -544,12 +579,19 @@ function initReviewForm(p: Profile, scope: string): ReviewForm {
   return { ...base, ...d };
 }
 
-function ReviewStep({ p, scope }: { p: Profile; scope: string }) {
+function ReviewStep({ p, scope, onProfileReady }: { p: Profile; scope: string; onProfileReady?: (np: Profile) => void }) {
   const { t } = useT();
   const et = useErrText();
   const qc = useQueryClient();
-  const { go, upd } = useAdvance(p);
-  const skillUpd = useUpdateProfile({ mutation: { onSuccess: (np) => qc.setQueryData(getGetProfileQueryKey(p.id), np) } });
+  const { go, upd } = useAdvance(p, scope, onProfileReady);
+  const skillUpd = useUpdateProfile({
+    mutation: {
+      onSuccess: (np) => {
+        qc.setQueryData(getGetProfileQueryKey(p.id), np);
+        onProfileReady?.(np);
+      },
+    },
+  });
   const [form, setForm] = useState<ReviewForm>(() => initReviewForm(p, scope));
   useEffect(() => {
     const existing = readDraft(scope, p.id).form ?? {};
@@ -638,7 +680,7 @@ function ReviewStep({ p, scope }: { p: Profile; scope: string }) {
       {!p.cvExtractionKey && <div className="mt-4"><ErrorBox message={t("ob.cv.required")} /></div>}
       {touched && !ok && <div className="mt-4"><ErrorBox message={t("ob.review.fixErrors")} /></div>}
       {upd.error && <div className="mt-4"><ErrorBox message={et(upd.error)} /></div>}
-      <NavBar back="cv">
+      <NavBar back="cv" pid={p.id}>
         <Button className="min-h-11" disabled={upd.isPending || !p.cvExtractionKey} onClick={submit} data-testid="button-review-confirm">
           {upd.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-1.5 h-4 w-4" />}{t("ob.review.confirm")}
         </Button>
@@ -665,10 +707,10 @@ function initGoalsForm(p: Profile, scope: string): GoalsForm {
   return { ...base, ...d };
 }
 
-function GoalsStep({ p, scope }: { p: Profile; scope: string }) {
+function GoalsStep({ p, scope, onProfileReady }: { p: Profile; scope: string; onProfileReady?: (np: Profile) => void }) {
   const { t } = useT();
   const et = useErrText();
-  const { go, upd } = useAdvance(p);
+  const { go, upd } = useAdvance(p, scope, onProfileReady);
   const [form, setForm] = useState<GoalsForm>(() => initGoalsForm(p, scope));
   useEffect(() => {
     const existing = readDraft(scope, p.id).form ?? {};
@@ -736,7 +778,7 @@ function GoalsStep({ p, scope }: { p: Profile; scope: string }) {
       {touched && !ok && <div className="mt-4"><ErrorBox message={t("ob.review.fixErrors")} /></div>}
       {upd.error && <div className="mt-4"><ErrorBox message={et(upd.error)} /></div>}
 
-      <NavBar back="review">
+      <NavBar back="review" pid={p.id}>
         <Button className="min-h-11" disabled={upd.isPending} onClick={submit} data-testid="button-goals-confirm">
           {upd.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {t("ob.goals.confirm")}
@@ -780,11 +822,11 @@ function EvidenceList({ ev, current }: { ev: CvEvidence[]; current?: (field: str
 }
 
 /* ---------- 5. holland ---------- */
-function HollandStep({ p, scope }: { p: Profile; scope: string }) {
+function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; onProfileReady?: (np: Profile) => void }) {
   const { t, lang } = useT();
   const et = useErrText();
   const qc = useQueryClient();
-  const { go } = useAdvance(p);
+  const { go } = useAdvance(p, scope, onProfileReady);
   const upd = useUpdateProfile();
   const qs = useListRiasecQuestions();
   const [ans, setAns] = useState<Record<number, number>>(() => {
@@ -809,6 +851,8 @@ function HollandStep({ p, scope }: { p: Profile; scope: string }) {
     mutation: {
       onSuccess: async (np) => {
         qc.setQueryData(getGetProfileQueryKey(p.id), np);
+        if (scope) setObProfile(scope, np.id);
+        onProfileReady?.(np);
         try { await go("results"); } catch { /* shown */ }
       },
     },
@@ -842,7 +886,7 @@ function HollandStep({ p, scope }: { p: Profile; scope: string }) {
         </>
       )}
       {sub.error && <div className="mt-4"><ErrorBox message={et(sub.error)} retry={submit} /></div>}
-      <NavBar back="goals">
+      <NavBar back="goals" pid={p.id}>
         {done < total && <span className="self-center text-xs text-muted-foreground">{t("ob.holland.all", { n: total })}</span>}
         <Button className="min-h-11" disabled={!total || done < total || sub.isPending} onClick={submit} data-testid="button-holland-submit">
           {sub.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t("ob.holland.submit")}<ArrowRight className="ml-1.5 h-4 w-4" />
@@ -853,9 +897,9 @@ function HollandStep({ p, scope }: { p: Profile; scope: string }) {
 }
 
 /* ---------- 5. results ---------- */
-function ResultsStep({ p }: { p: Profile }) {
+function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string; onProfileReady?: (np: Profile) => void }) {
   const { t, tk, lang } = useT();
-  const { go, upd } = useAdvance(p);
+  const { go, upd } = useAdvance(p, scope, onProfileReady);
   const scores = p.riasecScores;
   const code = p.riasecCode ?? "-";
   const max = scores ? Math.max(1, ...RIASEC.map((k) => scores[k])) : 1;
@@ -928,7 +972,7 @@ function ResultsStep({ p }: { p: Profile }) {
           </div>
         </div>
       </div>
-      <NavBar back="holland">
+      <NavBar back="holland" pid={p.id}>
         <Button className="min-h-11" disabled={upd.isPending} onClick={() => go("save").catch(() => undefined)} data-testid="button-results-next">{t("ob.next")}<ArrowRight className="ml-1.5 h-4 w-4" /></Button>
       </NavBar>
     </>
@@ -936,11 +980,11 @@ function ResultsStep({ p }: { p: Profile }) {
 }
 
 /* ---------- 6. save ---------- */
-function SaveStep({ p, scope }: { p: Profile; scope: string }) {
+function SaveStep({ p, scope, onProfileReady }: { p: Profile; scope: string; onProfileReady?: (np: Profile) => void }) {
   const { t } = useT();
   const et = useErrText();
   const { user } = useAuth();
-  const { go, upd } = useAdvance(p);
+  const { go, upd } = useAdvance(p, scope, onProfileReady);
   const seg = p.segment === "graduate" ? "student" : "worker";
   const finish = async () => {
     try {
@@ -966,7 +1010,7 @@ function SaveStep({ p, scope }: { p: Profile; scope: string }) {
         </div>
       )}
       {upd.error && <div className="mt-4"><ErrorBox message={et(upd.error)} /></div>}
-      <NavBar back="results" />
+      <NavBar back="results" pid={p.id} />
     </>
   );
 }
