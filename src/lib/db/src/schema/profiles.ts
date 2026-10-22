@@ -1,6 +1,7 @@
 import {
   pgTable,
   serial,
+  index,
   text,
   integer,
   boolean,
@@ -45,16 +46,22 @@ export const profilesTable = pgTable("profiles", {
   targetRoleId: integer("target_role_id"),
   ownerUserId: integer("owner_user_id"),
   guestToken: text("guest_token"),
+  createRequestKey: text("create_request_key").unique(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  index("profiles_guest_created_idx").on(table.guestToken, table.id),
+  index("profiles_owner_created_idx").on(table.ownerUserId, table.id),
+  index("profiles_guest_date_idx").on(table.guestToken, table.createdAt),
+  index("profiles_owner_date_idx").on(table.ownerUserId, table.createdAt),
+]);
 
 export type PlanItemStored = {
   courseId: number;
   title: string;
   provider: string;
   url: string;
-  startWeek: number;
-  durationWeeks: number;
+  startWeek: number | null;
+  durationWeeks: number | null;
   costMyr: number;
   hrdcStatus: string;
   skills: string[];

@@ -78,7 +78,7 @@ export function CohortDashboard({ kind }: { kind: "hr" | "tvet" }) {
             <Panel title={t("cohort.riasec")} meta={t("cohort.riasecMeta")}><Bars items={c.riasecDistribution} label={(s) => `${s} · ${tk("riasec", s)}`} /></Panel>
             {kind === "tvet"
               ? <Panel title={t("cohort.segments")}><Bars items={c.segmentCounts} label={(s) => tk("seg", s)} tone="gold" /></Panel>
-              : <GapCourses c={c} />}
+              : <GapCourses c={c} hr />}
           </div>
           {kind === "tvet" && <div className="mt-4"><Link href="/tvet/programmes" className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-primary">{t("nav.programmes")}<ArrowRight className="h-4 w-4" /></Link></div>}
         </>
@@ -87,7 +87,7 @@ export function CohortDashboard({ kind }: { kind: "hr" | "tvet" }) {
   );
 }
 
-function GapCourses({ c, wide }: { c: NonNullable<ReturnType<typeof useCohort>["data"]>; wide?: boolean }) {
+function GapCourses({ c, wide, hr = false }: { c: NonNullable<ReturnType<typeof useCohort>["data"]>; wide?: boolean; hr?: boolean }) {
   const { t } = useT();
   const f = useFmt();
   return (
@@ -100,12 +100,12 @@ function GapCourses({ c, wide }: { c: NonNullable<ReturnType<typeof useCohort>["
               {!g.courses.length ? <p className="mt-1 text-xs text-muted-foreground">{t("cohort.noCourse")}</p> : (
                 <ul className="mt-1.5 space-y-1.5">
                   {g.courses.map((cr) => (
-                    <li key={cr.id} className={cn("rounded-xl border p-2.5", cr.hrdcStatus !== "not_claimable" ? "border-accent/60 bg-[hsl(var(--gold-soft))]/30" : "border-border")}>
+                    <li key={cr.id} className={cn("rounded-xl border p-2.5", hr && cr.hrdcStatus !== "not_claimable" ? "border-accent/60 bg-[hsl(var(--gold-soft))]/30" : "border-border")}>
                       <div className="flex items-center justify-between gap-2">
                         <a href={cr.url} target="_blank" rel="noreferrer" title={cr.title} className="inline-flex min-w-0 items-center gap-1 text-sm font-medium hover:text-primary"><span className="truncate whitespace-nowrap">{cr.title}</span><ExternalLink className="h-3 w-3 shrink-0" /></a>
                         <span className="tnum shrink-0 text-xs font-semibold">{cr.costMyr === 0 ? t("cost.free") : f.myr(cr.costMyr)}</span>
                       </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground"><span className="truncate whitespace-nowrap">{cr.provider}</span><span>{t("common.hours", { n: cr.durationHours })}</span><CostBadge type={cr.costType} /><HrdcBadge status={cr.hrdcStatus} /></div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground"><span className="truncate whitespace-nowrap">{cr.provider}</span><span>{cr.durationHours === null ? t("courses.durationUnknown") : t("common.hours", { n: cr.durationHours })}</span><CostBadge type={cr.costType} />{hr && <HrdcBadge status={cr.hrdcStatus} />}</div>
                     </li>
                   ))}
                 </ul>

@@ -10,4 +10,6 @@ import type { Segment } from './segment';
 export type ListProfilesParams = {
 segment?: Segment;
 organization?: string;
+limit?: number;
+beforeId?: number;
 };

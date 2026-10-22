@@ -34,9 +34,9 @@ export function riasecCongruence(scores: StoredRiasec, code: string): number {
 }
 
 export function cheapestCourseHours(skillId: number, courses: CourseView[], budget: number): number {
-  const options = courses.filter((c) => c.skills.some((s) => s.id === skillId) && c.costMyr <= Math.max(budget, 0));
+  const options = courses.filter((c) => c.durationHours !== null && c.skills.some((s) => s.id === skillId) && c.costMyr <= Math.max(budget, 0));
   if (options.length === 0) return Number.POSITIVE_INFINITY;
-  return Math.min(...options.map((c) => c.durationHours));
+  return Math.min(...options.map((c) => c.durationHours!));
 }
 
 export function scoreRole(profile: ProfileForScoring, role: RoleView, skills: SkillRow[], courses: CourseView[]) {

@@ -13,8 +13,8 @@ export interface PlanItem {
   title: string;
   provider: string;
   url: string;
-  startWeek: number;
-  durationWeeks: number;
+  startWeek: number | null;
+  durationWeeks: number | null;
   costMyr: number;
   hrdcStatus: HrdcStatus;
   skills: string[];

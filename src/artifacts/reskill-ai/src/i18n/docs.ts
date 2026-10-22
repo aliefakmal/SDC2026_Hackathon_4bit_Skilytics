@@ -51,7 +51,10 @@ export const docsEn = {
   "docs.onet.cadence": "Publisher updates quarterly. This app checks every 6 hours, but the version stays pinned.",
 
   "docs.course.status": "Microsoft Learn learning paths are fetched from the live provider catalogue with a six-hour cache. Titles, direct destination URLs and durations come from the provider; only paths with mapped app skills are included. Self-paced learning is free; credentials and examinations are not included.",
-  "docs.course.limits": "Expired catalogues are withheld when refresh fails. A provider may change a page between refreshes. Course names remain in the teaching language. SDG themes are editorial associations, not measured impact.",
+  "docs.course.limits": "The public legacy endpoint remains reachable but is being deprecated. Its authenticated successor is excluded by the public-data rule. If refresh fails, the last good snapshot and its date remain visible. SDG themes are editorial associations, not measured impact.",
+  "docs.fcc.status": "Public curriculum structure and English introduction metadata supply official course titles, direct URLs and certification membership. Only courses mapped to app skills are listed. Refresh every six hours, independently of Microsoft Learn.",
+  "docs.fcc.limits": "The publisher does not provide course durations, so no hours or weeks are invented. An unknown-duration pathway item appears without a scheduled time. Last good data remains visible with its check date if refresh fails.",
+  "docs.fcc.license": "freeCodeCamp curriculum metadata is attributed to freeCodeCamp; consult its repository licence. SDG links are editorial learning-theme associations.",
   "docs.course.license": "Provider metadata is attributed to Microsoft Learn. SDG icons are UN communications assets; the UN has not approved this content and it does not reflect UN views. See /sdg/NOTICE.md.",
 
   "docs.ai.checks": "Status checks read model metadata and health only. They do not generate text, so a healthy status does not prove a reply will succeed.",
@@ -132,7 +135,10 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.onet.cadence": "Penerbit mengemas kini setiap suku tahun. Aplikasi ini menyemak setiap 6 jam, tetapi versi kekal dikunci.",
 
   "docs.course.status": "Laluan Microsoft Learn diambil daripada katalog langsung penyedia dengan cache enam jam. Tajuk, pautan khusus dan tempoh mengikut penyedia; hanya laluan dengan padanan kemahiran aplikasi dimasukkan. Pembelajaran kendiri percuma; kelayakan dan peperiksaan tidak termasuk.",
-  "docs.course.limits": "Katalog luput disembunyikan jika kemas kini gagal. Penyedia boleh mengubah halaman antara semakan. Nama kursus kekal dalam bahasa pengajaran. Tema SDG ialah kaitan editorial, bukan impak yang diukur.",
+  "docs.course.limits": "Endpoint awam lama masih boleh dicapai tetapi sedang dinyahgunakan. Penggantinya yang memerlukan pengesahan tidak digunakan kerana syarat data awam. Jika kemas kini gagal, salinan terakhir dan tarikh semakannya kekal dipaparkan. Tema SDG ialah kaitan editorial.",
+  "docs.fcc.status": "Struktur kurikulum awam dan metadata pengenalan Inggeris memberikan tajuk rasmi, pautan langsung dan status pensijilan. Hanya kursus yang sepadan dengan kemahiran aplikasi disenaraikan. Kemas kini enam jam secara berasingan daripada Microsoft Learn.",
+  "docs.fcc.limits": "Penerbit tidak menyediakan tempoh kursus, jadi jam atau minggu tidak direka. Item pathway tanpa tempoh dipaparkan tanpa jadual masa. Data terakhir serta tarikh semakan kekal dipaparkan jika kemas kini gagal.",
+  "docs.fcc.license": "Metadata kurikulum dikreditkan kepada freeCodeCamp; rujuk lesen repositorinya. Pautan SDG ialah kaitan editorial tema pembelajaran.",
   "docs.course.license": "Metadata penyedia dikreditkan kepada Microsoft Learn. Ikon SDG ialah aset komunikasi PBB; PBB tidak meluluskan kandungan ini dan ia tidak mewakili pandangan PBB. Lihat /sdg/NOTICE.md.",
 
   "docs.ai.checks": "Semakan status hanya membaca metadata dan kesihatan model. Ia tidak menjana teks, jadi status sihat tidak membuktikan jawapan akan berjaya.",
@@ -211,7 +217,10 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.onet.cadence": "发布方每季度更新。本应用每 6 小时检查一次，但版本保持固定。",
 
   "docs.course.status": "Microsoft Learn 学习路径从机构实时目录读取，缓存六小时。名称、直接链接及时长来自机构；只纳入与应用技能匹配的路径。自主学习免费；不包括认证及考试。",
-  "docs.course.limits": "刷新失败时隐藏过期目录。机构可能在两次刷新间更改页面。课程名称保留教学语言。SDG 主题为编辑关联，并非实测影响。",
+  "docs.course.limits": "旧公共接口目前仍可使用，但正在弃用。需要身份验证的新接口因公共数据要求而未采用。刷新失败时仍显示上次有效快照及检查日期。SDG 主题仅为编辑关联。",
+  "docs.fcc.status": "公共课程结构与英文介绍元数据提供官方课程名称、直接链接和认证名单。仅展示与应用技能匹配的课程。每六小时独立于 Microsoft Learn 更新。",
+  "docs.fcc.limits": "发布方未提供课程时长，因此不会编造小时或周数。时长未知的学习路径项目不安排时间。刷新失败时显示上次数据及检查日期。",
+  "docs.fcc.license": "课程元数据归功于 freeCodeCamp；请参阅其仓库许可证。SDG 链接是学习主题的编辑关联。",
   "docs.course.license": "机构元数据注明来自 Microsoft Learn。SDG 图标属于联合国传播素材；本内容未经联合国批准，亦不代表联合国观点。详见 /sdg/NOTICE.md。",
 
   "docs.ai.checks": "状态检查只读取模型元数据和健康状况，不生成文本，因此状态正常并不保证回复一定成功。",

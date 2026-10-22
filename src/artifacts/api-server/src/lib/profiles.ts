@@ -69,7 +69,7 @@ export async function planToApi(p: PlanRow) {
     profileId: p.profileId,
     roleId: p.roleId,
     roleTitle: p.roleTitle,
-    totalWeeks: verified ? p.totalWeeks : null,
+    totalWeeks: verified && valid.every((i) => i.durationWeeks !== null) ? p.totalWeeks : null,
     totalCostMyr: verified ? p.totalCostMyr : null,
     verificationStatus: verified ? "verified" as const : "unverified" as const,
     // Historical plans are retained, but unverified prices/durations are withheld.

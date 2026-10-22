@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Redirect, Route, Switch, useLocation, Router as WouterRouter } from "wouter";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -9,12 +9,21 @@ import { Rows } from "@/components/kit";
 import { LangProvider } from "@/i18n";
 import { AuthProvider, portalHome, useAuth } from "@/lib/auth";
 import { Landing, Login, NotFound, Register } from "@/pages/public";
-import { Outlook, Workspace } from "@/pages/me";
-import ProfileWorkspace from "@/pages/profile";
-import Onboarding from "@/pages/onboarding";
-import { Courses, RoleDetail, Roles } from "@/pages/catalog";
-import { Market, Sources, TvetMarket } from "@/pages/market";
-import { CohortDashboard, Members, Programmes } from "@/pages/cohort";
+const { Outlook, Workspace } = {
+  Outlook: lazy(() => import("@/pages/me").then((m) => ({ default: m.Outlook }))),
+  Workspace: lazy(() => import("@/pages/me").then((m) => ({ default: m.Workspace }))),
+};
+const ProfileWorkspace = lazy(() => import("@/pages/profile"));
+const Onboarding = lazy(() => import("@/pages/onboarding"));
+const Courses = lazy(() => import("@/pages/catalog").then((m) => ({ default: m.Courses })));
+const RoleDetail = lazy(() => import("@/pages/catalog").then((m) => ({ default: m.RoleDetail })));
+const Roles = lazy(() => import("@/pages/catalog").then((m) => ({ default: m.Roles })));
+const Market = lazy(() => import("@/pages/market").then((m) => ({ default: m.Market })));
+const Sources = lazy(() => import("@/pages/market").then((m) => ({ default: m.Sources })));
+const TvetMarket = lazy(() => import("@/pages/market").then((m) => ({ default: m.TvetMarket })));
+const CohortDashboard = lazy(() => import("@/pages/cohort").then((m) => ({ default: m.CohortDashboard })));
+const Members = lazy(() => import("@/pages/cohort").then((m) => ({ default: m.Members })));
+const Programmes = lazy(() => import("@/pages/cohort").then((m) => ({ default: m.Programmes })));
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 30000, refetchOnWindowFocus: false } } });
 
@@ -80,7 +89,7 @@ function App() {
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
             <AuthProvider>
-              <AppRoutes />
+              <Suspense fallback={<main className="mx-auto max-w-5xl p-6"><Rows n={4} h="h-20" /></main>}><AppRoutes /></Suspense>
             </AuthProvider>
           </WouterRouter>
           <Toaster />

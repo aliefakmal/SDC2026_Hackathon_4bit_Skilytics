@@ -60,7 +60,16 @@ export const SOURCES: SourceDef[] = [
     name: "Microsoft Learn live catalogue",
     kind: "catalogue",
     url: "https://learn.microsoft.com/api/catalog/?locale=en-us&type=learningPaths",
-    description: "Live provider learning paths, durations and direct URLs. Six-hour refresh; unavailable data is withheld.",
+    description: "Public learning paths with provider durations and direct URLs. Last good snapshot remains visible if refresh fails.",
+    refreshCadence: "links_6h",
+    consumers: ["pathway", "agent_planner", "agent_sdg", "cohort"],
+  },
+  {
+    id: "freecodecamp_catalogue",
+    name: "freeCodeCamp public curriculum",
+    kind: "catalogue",
+    url: "https://github.com/freeCodeCamp/freeCodeCamp/blob/main/curriculum/structure/curriculum.json",
+    description: "Public curriculum structure and official English course titles; durations are not published.",
     refreshCadence: "links_6h",
     consumers: ["pathway", "agent_planner", "agent_sdg", "cohort"],
   },
@@ -247,17 +256,19 @@ async function ingestUsage(force: boolean): Promise<void> {
 
 export async function checkCourseLinks(): Promise<void> {
   const courses = await loadCourses();
-  if (!courses.length) {
-    await setSource("course_catalogue", { status: "error", recordCount: 0, detail: null, error: "course_catalogue_unavailable" });
-    return;
+  for (const [id, provider] of [["course_catalogue", "Microsoft Learn"], ["freecodecamp_catalogue", "freeCodeCamp"]] as const) {
+    const available = courses.filter((c) => c.provider === provider);
+    const latest = available[0];
+    await setSource(id, {
+      status: latest && !latest.catalogStale ? "ok" : "error",
+      lastFetchedAt: latest ? new Date(latest.lastVerified) : undefined,
+      dataDate: latest?.lastVerified.slice(0, 10) ?? null,
+      version: provider === "Microsoft Learn" ? "microsoft-learn-public" : "freecodecamp-curriculum-main",
+      recordCount: available.length,
+      detail: latest ? "Public provider metadata. Direct course URLs; SDG associations are editorial." : null,
+      error: latest?.catalogStale ? "provider_refresh_failed_using_last_snapshot" : latest ? null : "course_catalogue_unavailable",
+    });
   }
-  await setSource("course_catalogue", {
-    status: "ok", lastFetchedAt: new Date(courses[0].lastVerified),
-    dataDate: courses[0].lastVerified.slice(0,10), version: "microsoft-learn-live",
-    recordCount: courses.length,
-    detail: "Provider catalogue metadata refreshed every six hours; direct learning path URLs. SDG associations are editorial.",
-    error: null,
-  });
 }
 
 async function checkEndpoint(tier: "main" | "light"): Promise<void> {

@@ -84,17 +84,16 @@ router.get("/cohort/summary", requireRole("hr", "tvet"), async (req, res) => {
 
 router.get("/dashboard/summary", async (req, res) => {
   const scope = profileScope(req);
-  const owned = await db.select({ id: profilesTable.id }).from(profilesTable).where(scope);
-  const ids = owned.map((o) => o.id);
+  const profileIds = db.select({ id: profilesTable.id }).from(profilesTable).where(scope);
   const predScope = req.user
     ? eq(predictionsTable.ownerUserId, req.user.id)
     : req.guestToken
       ? and(isNull(predictionsTable.ownerUserId), eq(predictionsTable.guestToken, req.guestToken))
       : sql`false`;
-  const none = sql`false`;
-  const planScope = ids.length ? inArray(plansTable.profileId, ids) : none;
-  const insightScope = ids.length ? inArray(insightsTable.profileId, ids) : none;
-  const [[pl], [ins], [pr], recentProfiles, recentPlans, recentPreds, recentInsights] = await Promise.all([
+  const planScope = inArray(plansTable.profileId, profileIds);
+  const insightScope = inArray(insightsTable.profileId, profileIds);
+  const [[profileCount], [pl], [ins], [pr], recentProfiles, recentPlans, recentPreds, recentInsights] = await Promise.all([
+    db.select({ c: sql<number>`count(*)::int` }).from(profilesTable).where(scope),
     db.select({ c: sql<number>`count(*)::int` }).from(plansTable).where(planScope),
     db.select({ c: sql<number>`count(*)::int` }).from(insightsTable).where(insightScope),
     db.select({ c: sql<number>`count(*)::int` }).from(predictionsTable).where(predScope),
@@ -114,7 +113,7 @@ router.get("/dashboard/summary", async (req, res) => {
     .slice(0, 10)
     .map((a) => ({ ...a, createdAt: a.createdAt.toISOString() }));
   res.json({
-    profileCount: ids.length,
+    profileCount: profileCount.c,
     planCount: pl.c,
     predictionCount: pr.c,
     insightCount: ins.c,

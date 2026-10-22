@@ -18,7 +18,8 @@ export interface Course {
   costMyr: number;
   costType: CostType;
   hrdcStatus: HrdcStatus;
-  durationHours: number;
+  durationHours: number | null;
+  catalogStale?: boolean;
   level: string;
   language: string;
   certificate?: boolean;

@@ -22,12 +22,14 @@ export function buildPlan(opts: {
 
   while (remaining.size > 0 && chosen.length < maxCourses) {
     let best: { c: CourseView; value: number } | null = null;
-    for (const c of courses) {
+    const eligible = courses.filter((c) => !chosen.includes(c) && personalCost(c) <= budget && c.skills.some((s) => remaining.has(s.id)));
+    const scheduled = eligible.filter((c) => c.durationHours !== null);
+    for (const c of scheduled.length ? scheduled : eligible) {
       if (chosen.includes(c)) continue;
       if (personalCost(c) > budget) continue;
       const gain = c.skills.reduce((a, s) => a + (remaining.get(s.id)?.importance ?? 0), 0);
       if (gain === 0) continue;
-      const value = gain / (1 + c.costMyr / 300 + c.durationHours / 40);
+      const value = gain / (1 + c.costMyr / 300 + (c.durationHours ?? 0) / 40);
       if (!best || value > best.value) best = { c, value };
     }
     if (!best) break;
@@ -51,6 +53,11 @@ export function buildPlan(opts: {
   const trackEnd = Array.from({ length: tracks }, () => 1);
   const gapNames = new Set(opts.gaps.map((g) => g.name));
   const items: PlanItemStored[] = chosen.map((c) => {
+    if (c.durationHours === null) return {
+      courseId: c.id, title: c.title, provider: c.provider, url: c.url, startWeek: null, durationWeeks: null,
+      costMyr: c.costMyr, hrdcStatus: c.hrdcStatus,
+      skills: c.skills.map((s) => s.name).filter((n) => gapNames.has(n)), sdgCodes: c.sdgCodes,
+    };
     const t = trackEnd.indexOf(Math.min(...trackEnd));
     const durationWeeks = Math.min(26, Math.max(1, Math.ceil(c.durationHours / Math.max(hoursPerTrack, 1))));
     const startWeek = trackEnd[t];
@@ -69,7 +76,7 @@ export function buildPlan(opts: {
     };
   });
 
-  const totalWeeks = items.reduce((a, i) => Math.max(a, i.startWeek + i.durationWeeks - 1), 0);
+  const totalWeeks = items.reduce((a, i) => i.startWeek !== null && i.durationWeeks !== null ? Math.max(a, i.startWeek + i.durationWeeks - 1) : a, 0);
   const totalCostMyr = items.reduce((a, i) => a + i.costMyr, 0);
   return { items, totalWeeks, totalCostMyr, uncoveredSkills: [...remaining.values()].map((g) => g.name) };
 }

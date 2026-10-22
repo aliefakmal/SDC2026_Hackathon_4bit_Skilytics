@@ -73,6 +73,8 @@ export function useErrText() {
   return (e: unknown) => {
     const code = errCode(e);
     if (!code) {
+      if (e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError")) return t("err.timeout");
+      if (e instanceof TypeError) return t("err.network");
       const st = errStatus(e);
       if (st === 404) return t("err.not_found");
       if (st && st >= 500) return t("err.server_error");

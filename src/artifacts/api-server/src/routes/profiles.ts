@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { performance } from "node:perf_hooks";
 import { db, profilesTable, plansTable, insightsTable, rolesTable, type StoredProfileSkill } from "@workspace/db";
-import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
 import {
   ListProfilesQueryParams,
   CreateProfileBody,
@@ -35,7 +35,7 @@ router.get("/profiles", async (req, res) => {
   if (q.segment) conds.push(eq(profilesTable.segment, q.segment));
   if (q.organization) conds.push(eq(profilesTable.organization, q.organization));
   const [rows, skills] = await Promise.all([
-    db.select().from(profilesTable).where(and(...conds)).orderBy(desc(profilesTable.createdAt)),
+    db.select().from(profilesTable).where(and(...conds, q.beforeId ? lt(profilesTable.id, q.beforeId) : undefined)).orderBy(desc(profilesTable.id)).limit(q.limit ?? 50),
     loadSkills(),
   ]);
   res.json(rows.map((r) => profileToApi(r, skills)));
@@ -49,22 +49,57 @@ router.post("/profiles", async (req, res) => {
     res.status(400).json({ error: "guest_token_required" });
     return;
   }
-  const [row] = await db
-    .insert(profilesTable)
-    .values({
+  const requestKey = req.headers["x-idempotency-key"];
+  if (requestKey !== undefined && (typeof requestKey !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestKey))) {
+    res.status(400).json({ error: "invalid_input" }); return;
+  }
+  if (requestKey) {
+    const [existing] = await db.select().from(profilesTable).where(eq(profilesTable.createRequestKey, requestKey));
+    if (existing) {
+      if (!await canAccessProfile(req, existing)) { res.status(409).json({ error: "profile_not_found" }); return; }
+      res.json(profileToApi(existing, await loadSkills())); return;
+    }
+  }
+  const values = {
       name: body.name,
       segment: body.segment,
       currentRole: body.currentRole ?? null,
       organization: isOrg ? u.organization : body.organization?.trim() || null,
       ownerUserId: u ? u.id : null,
       guestToken: u ? null : req.guestToken!,
+      createRequestKey: requestKey ?? null,
       goals: body.goals ?? null,
       weeklyHours: body.weeklyHours,
       budgetMyr: body.budgetMyr,
       hrdcEligible: u?.role === "hr" && (body.hrdcEligible ?? false),
       onboardingStep: "cv",
-    })
-    .returning();
+  };
+  if (!u && req.guestToken) {
+    const guestToken = req.guestToken;
+    const outcome = await db.transaction(async (tx) => {
+      // A database lock also serialises different application instances for this guest.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${guestToken}, 0))`);
+      if (requestKey) {
+        const [existing] = await tx.select().from(profilesTable).where(eq(profilesTable.createRequestKey, requestKey));
+        if (existing) return { kind: existing.guestToken === guestToken && !existing.ownerUserId ? "existing" : "conflict", row: existing } as const;
+      }
+      const [{ recent }] = await tx.select({ recent: sql<number>`count(*)::int` }).from(profilesTable)
+        .where(and(eq(profilesTable.guestToken, guestToken), gte(profilesTable.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000))));
+      if (recent >= 10) return { kind: "limit", row: null } as const;
+      const [row] = await tx.insert(profilesTable).values(values).onConflictDoNothing().returning();
+      return { kind: row ? "created" : "conflict", row: row ?? null } as const;
+    });
+    if (outcome.kind === "limit") { res.status(429).json({ error: "profile_creation_limit" }); return; }
+    if (outcome.kind === "conflict" || !outcome.row) { res.status(409).json({ error: "profile_creation_conflict" }); return; }
+    res.status(outcome.kind === "created" ? 201 : 200).json(profileToApi(outcome.row, await loadSkills()));
+    return;
+  }
+  const [row] = await db.insert(profilesTable).values(values).onConflictDoNothing().returning();
+  if (!row && requestKey) {
+    const [existing] = await db.select().from(profilesTable).where(eq(profilesTable.createRequestKey, requestKey));
+    if (existing && await canAccessProfile(req, existing)) { res.json(profileToApi(existing, await loadSkills())); return; }
+  }
+  if (!row) { res.status(409).json({ error: "profile_creation_conflict" }); return; }
   res.status(201).json(profileToApi(row, await loadSkills()));
 });
 

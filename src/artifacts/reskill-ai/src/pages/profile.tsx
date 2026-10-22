@@ -21,7 +21,7 @@ import {
 import { CV_MAX_BYTES, CV_OK } from "@/lib/onboarding";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import {
-  CostBadge, DataStamp, Empty, ErrorBox, ExplainNote, GuestBanner, HrdcBadge, Meter, Panel, Rows, SdgBadge, SegTag, SkillBadge, StatusTag, catIcon,
+  CostBadge, DataStamp, Empty, ErrorBox, ExplainNote, GuestBanner, Meter, Panel, Rows, SdgBadge, SegTag, SkillBadge, StatusTag, catIcon,
 } from "@/components/kit";
 import { AGENTS, AgentCard } from "@/components/agent-card";
 import { ProfileFormDialog } from "@/components/profile-form";
@@ -702,7 +702,7 @@ function Pathway({ p, base }: { p: Profile; base: string }) {
 function PlanView({ pl, onRebuild, rebuilding }: { pl: Plan; onRebuild: () => void; rebuilding: boolean }) {
   const { t, tk } = useT();
   const f = useFmt();
-  const weeks = Math.max(pl.totalWeeks ?? 1, 1, ...pl.items.map((i) => i.startWeek - 1 + i.durationWeeks));
+  const weeks = Math.max(pl.totalWeeks ?? 1, 1, ...pl.items.map((i) => i.startWeek !== null && i.durationWeeks !== null ? i.startWeek - 1 + i.durationWeeks : 1));
   const ticks = Array.from(new Set([1, Math.ceil(weeks / 4), Math.ceil(weeks / 2), Math.ceil((3 * weeks) / 4), weeks])).filter((w) => w >= 1);
   return (
     <>
@@ -718,7 +718,7 @@ function PlanView({ pl, onRebuild, rebuilding }: { pl: Plan; onRebuild: () => vo
           <div title={pl.roleTitle} className="mt-1 truncate whitespace-nowrap text-lg font-bold">{pl.roleTitle}</div>
           <div className="mt-1 text-[11px] text-primary-foreground/70">{t("pathway.created", { d: f.date(pl.createdAt) })}</div>
         </div>
-        <div className="rounded-2xl border border-card-border bg-card p-4"><div className="text-xs text-muted-foreground">{t("pathway.duration")}</div><div className="tnum mt-1 text-2xl font-bold">{pl.totalWeeks == null ? <span className="text-base">{t("ob.plan.notVerified")}</span> : t("common.weeks", { n: pl.totalWeeks })}</div></div>
+        <div className="rounded-2xl border border-card-border bg-card p-4"><div className="text-xs text-muted-foreground">{t("pathway.duration")}</div><div className="tnum mt-1 text-2xl font-bold">{pl.totalWeeks == null ? <span className="text-base">{t(pl.verificationStatus === "verified" ? "courses.durationUnknown" : "ob.plan.notVerified")}</span> : t("common.weeks", { n: pl.totalWeeks })}</div></div>
         <div className="rounded-2xl border border-card-border bg-card p-4"><div className="text-xs text-muted-foreground">{t("pathway.cost")}</div><div className="tnum mt-1 text-2xl font-bold text-accent">{pl.totalCostMyr == null ? <span className="text-base text-muted-foreground">{t("ob.plan.notVerified")}</span> : f.myr(pl.totalCostMyr)}</div></div>
       </div>
       <Panel title={t("pathway.timeline", { n: pl.items.length })} meta={t("courses.live")}
@@ -740,17 +740,16 @@ function PlanView({ pl, onRebuild, rebuilding }: { pl: Plan; onRebuild: () => vo
                     <span className="truncate whitespace-nowrap">{it.provider}</span>
                     <span className="tnum font-semibold text-foreground">{it.costMyr === 0 ? t("cost.free") : f.myr(it.costMyr)}</span>
                     {it.costMyr > 0 && <CostBadge type={it.costMyr <= 200 ? "low_cost" : "paid"} />}
-                    <HrdcBadge status={it.hrdcStatus} />
                   </div>
                   {it.sdgTargets.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{it.sdgTargets.map((s) => <SdgBadge key={s.code} code={s.code} title={`${s.code} ${s.title}`} />)}</div>}
                 </div>
                 <div className="min-w-0">
-                  <div className="relative h-9 rounded-lg bg-muted/70">
+                  {it.startWeek !== null && it.durationWeeks !== null ? <div className="relative h-9 rounded-lg bg-muted/70">
                     <div className="absolute inset-y-1 flex items-center overflow-hidden rounded-md bg-primary px-2 text-[11px] font-medium text-primary-foreground"
                       style={{ left: `${((it.startWeek - 1) / weeks) * 100}%`, width: `${Math.max((it.durationWeeks / weeks) * 100, 6)}%` }} title={it.skills.join(", ")}>
                       <span className="truncate whitespace-nowrap">{t("pathway.wkRange", { a: it.startWeek, b: it.startWeek + it.durationWeeks - 1 })}</span>
                     </div>
-                  </div>
+                  </div> : <div className="flex h-9 items-center rounded-lg bg-muted/70 px-3 text-xs text-muted-foreground">{t("courses.durationUnknown")}</div>}
                   <div title={it.skills.join(", ")} className="mt-1 truncate whitespace-nowrap text-[11px] text-muted-foreground">{it.skills.join(" · ")}</div>
                 </div>
               </li>

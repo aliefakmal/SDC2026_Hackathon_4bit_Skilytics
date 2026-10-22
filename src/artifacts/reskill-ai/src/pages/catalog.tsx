@@ -143,13 +143,13 @@ export function Courses({ hr }: { hr?: boolean }) {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0"><div title={c.title} className="truncate whitespace-nowrap font-semibold">{c.title}</div>
                   <div className="truncate whitespace-nowrap text-xs text-muted-foreground">{c.provider} · {tk("level", c.level.toLowerCase())} · {tk("courseLanguage", c.language)}</div></div>
-                <div className="shrink-0 text-right"><div className="tnum font-bold">{c.costMyr === 0 ? t("cost.free") : f.myr(c.costMyr)}</div><div className="text-[11px] text-muted-foreground">{t("common.hours", { n: c.durationHours })}</div></div>
+                <div className="shrink-0 text-right"><div className="tnum font-bold">{c.costMyr === 0 ? t("cost.free") : f.myr(c.costMyr)}</div><div className="text-[11px] text-muted-foreground">{c.durationHours === null ? t("courses.durationUnknown") : t("common.hours", { n: c.durationHours })}</div></div>
               </div>
               <div className="mt-2 flex flex-wrap gap-2">{c.sdgCodes?.filter((code, i, all) => all.findIndex((x) => x.split(".")[0] === code.split(".")[0]) === i).map((code, index) => <span key={code} className="inline-flex items-center gap-1 text-xs"><SdgBadge code={code} title={tk("sdg", code.split(".")[0])} />{t(index === 0 ? "sdg.main" : "sdg.related")}</span>)}</div>
               <div className="mt-2 flex flex-wrap gap-1.5">{c.skills.map((s) => <SkillBadge key={s.id} name={s.name} category={s.category} />)}</div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap gap-1.5"><HrdcBadge status={c.hrdcStatus} /><CostBadge type={c.costType} />{c.certificate && <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold"><Award className="h-3 w-3" />{t("courses.cert")}</span>}</div>
-                <div className="flex items-center gap-3 text-[11px] text-muted-foreground"><span>{t("courses.verified", { d: f.date(c.lastVerified) })}</span>
+                <div className="flex flex-wrap gap-1.5">{hr && <HrdcBadge status={c.hrdcStatus} />}<CostBadge type={c.costType} />{c.certificate && <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold"><Award className="h-3 w-3" />{t("courses.cert")}</span>}</div>
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground"><span>{t(c.catalogStale ? "courses.stale" : "courses.verified", { d: f.date(c.lastVerified) })}</span>
                   <a href={c.url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-1 font-semibold text-primary" data-testid={`link-course-${c.id}`}>{t("common.open")}<ExternalLink className="h-3.5 w-3.5" /></a></div>
               </div>
             </article>

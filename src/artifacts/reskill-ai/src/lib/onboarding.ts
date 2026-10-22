@@ -13,10 +13,17 @@ export function setObProfile(scope: string, id: number | null) {
   if (id) localStorage.setItem(PREFIX + scope, String(id));
   else localStorage.removeItem(PREFIX + scope);
 }
+const createKey = (scope: string) => `${PREFIX}create.${scope}`;
+export function getObCreateKey(scope: string): string {
+  let key = localStorage.getItem(createKey(scope));
+  if (!key) { key = crypto.randomUUID(); localStorage.setItem(createKey(scope), key); }
+  return key;
+}
+export function clearObCreateKey(scope: string) { localStorage.removeItem(createKey(scope)); }
 /** Called after login/register: guest work is claimed server-side, so move the pointer. */
 export function moveGuestObToUser(userId: number) {
   const g = getObProfile("guest");
-  if (g) { setObProfile(obScope(userId), g); setObProfile("guest", null); }
+  if (g) { setObProfile(obScope(userId), g); setObProfile("guest", null); clearObCreateKey("guest"); }
 }
 export function clearAllOb() {
   Object.keys(localStorage).filter((k) => k.startsWith(PREFIX)).forEach((k) => localStorage.removeItem(k));

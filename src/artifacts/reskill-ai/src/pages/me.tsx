@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { Link, Redirect, useLocation, useSearch } from "wouter";
-import { useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Bot, ClipboardList, FileText, Loader2, Plus, Send, Sparkles, UserRound } from "lucide-react";
 import {
-  useCreatePrediction, useGetDashboardSummary, useListPredictions, useListProfiles, useListRoles,
+  useCreatePrediction, useGetDashboardSummary, useListPredictions, useListRoles,
   getDashboardSummary, listProfiles, getListPredictionsQueryKey, getGetDashboardSummaryQueryKey, getListProfilesQueryKey, type Segment,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -24,17 +24,20 @@ export function Workspace() {
   const search = useSearch();
   const [, nav] = useLocation();
   const preset = new URLSearchParams(search).get("new");
-  const start = (seg: Segment) => nav(`/onboarding/cv?seg=${seg}`);
-  const profiles = useListProfiles(undefined, { query: {
-    queryKey: getListProfilesQueryKey(), retry: false,
-    queryFn: ({ signal }) => listProfiles(undefined, { signal: AbortSignal.any([signal, AbortSignal.timeout(45_000)]) }),
-  } });
+  const start = (seg: Segment) => nav(`/onboarding/cv?seg=${seg}&new=1`);
+  const profiles = useInfiniteQuery({
+    queryKey: getListProfilesQueryKey(), initialPageParam: undefined as number | undefined,
+    retry: false,
+    queryFn: ({ pageParam, signal }) => listProfiles({ limit: 21, ...(pageParam ? { beforeId: pageParam } : {}) }, { signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]) }),
+    getNextPageParam: (lastPage) => lastPage.length > 20 ? lastPage[19].id : undefined,
+  });
+  const visibleProfiles = profiles.data?.pages.flatMap((page) => page.slice(0, 20)) ?? [];
   const sum = useGetDashboardSummary({ query: {
     queryKey: getGetDashboardSummaryQueryKey(), retry: false,
-    queryFn: ({ signal }) => getDashboardSummary({ signal: AbortSignal.any([signal, AbortSignal.timeout(45_000)]) }),
+    queryFn: ({ signal }) => getDashboardSummary({ signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]) }),
   } });
   const s = sum.data;
-  if (preset === "worker" || preset === "graduate") return <Redirect to={`/onboarding/cv?seg=${preset}`} replace />;
+  if (preset === "worker" || preset === "graduate") return <Redirect to={`/onboarding/cv?seg=${preset}&new=1`} replace />;
   return (
     <>
       <PageHeader eyebrow={t(user ? "portal.individual" : "portal.guest")} title={user ? t("me.hello", { name: user.name }) : t("me.title")} sub={t("me.sub")}
@@ -48,15 +51,15 @@ export function Workspace() {
       </div>
       <div className="mt-5 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <Panel title={t("me.profiles")}>
-          {profiles.isLoading ? <Rows n={3} h="h-20" /> : profiles.isError ? <ErrorBox error={profiles.error} retry={() => profiles.refetch()} /> : !profiles.data?.length ? (
+          {profiles.isLoading ? <Rows n={3} h="h-20" /> : profiles.isError ? <ErrorBox error={profiles.error} retry={() => profiles.refetch()} /> : !visibleProfiles.length ? (
             <Empty title={t("me.emptyTitle")} icon={<UserRound className="h-5 w-5" />} action={
               <div className="flex flex-wrap justify-center gap-2">
                 <Button className="min-h-11" onClick={() => start("worker")} data-testid="button-start-worker">{t("landing.worker")}</Button>
                 <Button variant="outline" className="min-h-11" onClick={() => start("graduate")} data-testid="button-start-graduate">{t("landing.grad")}</Button>
               </div>}>{t("me.emptyBody")}</Empty>
           ) : (
-            <ul className="space-y-2">
-              {profiles.data.map((p, i) => (
+            <div className="space-y-3"><ul className="space-y-2">
+              {visibleProfiles.map((p, i) => (
                 <li key={p.id} className="rise" style={{ animationDelay: `${i * 40}ms` }}>
                   <Link href={`/me/profiles/${p.id}/intake`} className="group flex min-h-16 items-center gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-primary" data-testid={`link-profile-${p.id}`}>
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--maroon-soft))] text-sm font-bold text-primary">{p.name.slice(0, 2).toUpperCase()}</span>
@@ -72,7 +75,7 @@ export function Workspace() {
                   </Link>
                 </li>
               ))}
-            </ul>
+            </ul>{profiles.hasNextPage && <Button variant="outline" className="w-full" onClick={() => profiles.fetchNextPage()} disabled={profiles.isFetchingNextPage}>{profiles.isFetchingNextPage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{t("me.loadMore")}</Button>}</div>
           )}
         </Panel>
         <Panel title={t("me.activity")}>

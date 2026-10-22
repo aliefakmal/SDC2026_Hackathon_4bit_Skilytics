@@ -39,12 +39,13 @@ export type CourseView = {
   costMyr: number;
   costType: "free" | "low_cost" | "paid";
   hrdcStatus: "claimable_verified" | "check_with_employer" | "not_claimable";
-  durationHours: number;
+  durationHours: number | null;
   level: string;
   language: string;
   certificate: boolean;
   skills: { id: number; name: string; category: string }[];
   lastVerified: string;
+  catalogStale?: boolean;
   sdgCodes: string[];
 };
 

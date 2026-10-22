@@ -355,7 +355,8 @@ export interface Course {
   costMyr: number;
   costType: CostType;
   hrdcStatus: HrdcStatus;
-  durationHours: number;
+  durationHours: number | null;
+  catalogStale?: boolean;
   level: string;
   language: string;
   certificate?: boolean;
@@ -374,8 +375,8 @@ export interface PlanItem {
   title: string;
   provider: string;
   url: string;
-  startWeek: number;
-  durationWeeks: number;
+  startWeek: number | null;
+  durationWeeks: number | null;
   costMyr: number;
   hrdcStatus: HrdcStatus;
   skills: string[];
@@ -757,6 +758,8 @@ export interface DemoAccount {
 export type ListProfilesParams = {
 segment?: Segment;
 organization?: string;
+limit?: number;
+beforeId?: number;
 };
 
 export type ListRolesParams = {

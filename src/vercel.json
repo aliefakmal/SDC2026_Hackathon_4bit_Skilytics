@@ -25,10 +25,15 @@
       "source": "/api/(.*)",
       "destination": "https://sdc2026-hackathon-4bit-skilytics.onrender.com/api/$1"
     },
+    { "source": "/assets/(.*)", "destination": { "service": "reskill-ai" } },
+    { "source": "/sdg/(.*)", "destination": { "service": "reskill-ai" } },
+    { "source": "/favicon.svg", "destination": { "service": "reskill-ai" } },
+    { "source": "/robots.txt", "destination": { "service": "reskill-ai" } },
     {
       "source": "/(.*)",
       "destination": {
-        "service": "reskill-ai"
+        "service": "reskill-ai",
+        "path": "/index.html"
       }
     }
   ]

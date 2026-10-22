@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mapLearnPaths, courseSdg, liveCourses } from "./live-courses";
+import { mapLearnPaths, mapFccCourses, courseSdg, liveCourses } from "./live-courses";
 import { buildPlan } from "./planner";
 import { hasCurrentRiasec, scoreRiasec } from "./riasec-scoring";
 import { RIASEC_QUESTIONS } from "../data/riasec";
@@ -41,21 +41,36 @@ test("unconfirmed HRD status cannot subsidise a plan", () => {
   assert.equal(buildPlan({ ...options, courses: [verified], hrdcEligible: false }).items.length, 0);
 });
 
-test("live refresh coalesces requests and withholds expired data on provider failure", async () => {
+test("freeCodeCamp metadata keeps official titles, links and unknown duration", () => {
+  const result = mapFccCourses({ superblocks: ["learn-python-for-beginners"], certifications: [] },
+    { "learn-python-for-beginners": { title: "Learn Python for Beginners", intro: ["Learn Python programming"] } }, skills, "2026-10-23T00:00:00Z");
+  assert.equal(result.length, 1);
+  assert.equal(result[0].url, "https://www.freecodecamp.org/learn/learn-python-for-beginners/");
+  assert.equal(result[0].durationHours, null);
+  assert.equal(result[0].certificate, false);
+  const plan = buildPlan({ gaps: [{ skillId: 1, name: "Python", category: "Digital", importance: 3 }], courses: result, budgetMyr: 0, weeklyHours: 5, hrdcEligible: false });
+  assert.equal(plan.items[0].durationWeeks, null);
+});
+test("provider refreshes independently and retains stale snapshots on failure", async () => {
   const originalFetch = globalThis.fetch, originalNow = Date.now;
   let calls = 0, clock = originalNow();
   Date.now = () => clock;
-  globalThis.fetch = async () => {
+  globalThis.fetch = async (input) => {
     calls++;
-    return new Response(JSON.stringify({ learningPaths: [path] }), { status: 200 });
+    const url = String(input);
+    if (url.includes("/api/catalog/")) return new Response(JSON.stringify({ learningPaths: [path] }), { status: 200 });
+    if (url.includes("curriculum.json")) return new Response(JSON.stringify({ superblocks: ["learn-python-for-beginners"], certifications: [] }), { status: 200 });
+    return new Response(JSON.stringify({ "learn-python-for-beginners": { title: "Learn Python for Beginners", intro: ["Learn Python programming"] } }), { status: 200 });
   };
   try {
     const [a,b] = await Promise.all([liveCourses(skills), liveCourses(skills)]);
-    assert.equal(calls, 1); assert.equal(a.length, 1); assert.deepEqual(a,b);
+    assert.equal(calls, 3); assert.equal(a.length, 2); assert.deepEqual(a,b);
     clock += 6 * 3600000 + 1;
     globalThis.fetch = async () => { calls++; throw new Error("offline"); };
-    assert.deepEqual(await liveCourses(skills), []);
-    assert.deepEqual(await liveCourses(skills), []);
-    assert.equal(calls, 2);
+    const stale = await liveCourses(skills);
+    assert.equal(stale.length, 2);
+    assert.ok(stale.every((course) => course.catalogStale));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(calls, 6);
   } finally { globalThis.fetch = originalFetch; Date.now = originalNow; }
 });

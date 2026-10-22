@@ -61,6 +61,14 @@ const DOCS: Doc[] = [
     { label: "docs.f.limits", k: ["docs.course.limits"] },
     { label: "docs.f.license", k: ["docs.course.license"] },
   ] },
+  { id: "freecodecamp", types: ["external"], name: "src.freecodecamp_catalogue.name", sourceIds: ["freecodecamp_catalogue"], rows: [
+    { label: "docs.f.publisher", ref: "freeCodeCamp" },
+    { label: "docs.f.dataset", url: "https://github.com/freeCodeCamp/freeCodeCamp/blob/main/curriculum/structure/curriculum.json" },
+    { label: "docs.f.api", url: "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/client/i18n/locales/english/intro.json" },
+    { label: "docs.f.method", k: ["docs.fcc.status"] },
+    { label: "docs.f.limits", k: ["docs.fcc.limits"] },
+    { label: "docs.f.license", k: ["docs.fcc.license"], url: "https://github.com/freeCodeCamp/freeCodeCamp/blob/main/LICENSE.md" },
+  ] },
   { id: "runpod", types: ["external", "user"], name: "sources.aiTitle", sourceIds: ["runpod_main", "runpod_light"], ai: true, rows: [
     { label: "docs.f.publisher", ref: "Google Gemini API + RunPod Serverless (vLLM, OpenAI-compatible)" },
     { label: "docs.f.dataset", url: "https://docs.runpod.io/serverless/vllm/openai-compatibility" },
@@ -97,7 +105,7 @@ const TYPES: DocType[] = ["external", "static", "derived", "demo", "user"];
 const CATEGORIES = [
   { key: "market", ids: ["dosm", "aei_usage", "aei_exposure"] },
   { key: "career", ids: ["onet", "riasec", "match"] },
-  { key: "learning", ids: ["courses", "sdg"] },
+  { key: "learning", ids: ["courses", "freecodecamp", "sdg"] },
   { key: "infrastructure", ids: ["runpod"] },
   { key: "privacy", ids: ["demo"] },
 ] as const;

@@ -104,7 +104,9 @@ export const GetDashboardSummaryResponse = zod.object({
 
 export const ListProfilesQueryParams = zod.object({
   "segment": zod.enum(['worker', 'graduate', 'employer', 'career_centre']).optional(),
-  "organization": zod.coerce.string().optional()
+  "organization": zod.coerce.string().optional(),
+  "limit": zod.coerce.number().int().min(1).max(100).optional(),
+  "beforeId": zod.coerce.number().int().min(1).optional()
 })
 
 
@@ -625,8 +627,8 @@ export const GetProfilePlanResponse = zod.union([zod.object({
   "title": zod.string(),
   "provider": zod.string(),
   "url": zod.string(),
-  "startWeek": zod.number().int(),
-  "durationWeeks": zod.number().int(),
+  "startWeek": zod.number().int().nullable(),
+  "durationWeeks": zod.number().int().nullable(),
   "costMyr": zod.number(),
   "hrdcStatus": zod.enum(['claimable_verified', 'check_with_employer', 'not_claimable']),
   "skills": zod.array(zod.string()),
@@ -662,8 +664,8 @@ export const CreateProfilePlanResponse = zod.object({
   "title": zod.string(),
   "provider": zod.string(),
   "url": zod.string(),
-  "startWeek": zod.number().int(),
-  "durationWeeks": zod.number().int(),
+  "startWeek": zod.number().int().nullable(),
+  "durationWeeks": zod.number().int().nullable(),
   "costMyr": zod.number(),
   "hrdcStatus": zod.enum(['claimable_verified', 'check_with_employer', 'not_claimable']),
   "skills": zod.array(zod.string()),
@@ -825,7 +827,8 @@ export const ListCoursesResponseItem = zod.object({
   "costMyr": zod.number(),
   "costType": zod.enum(['free', 'low_cost', 'paid']),
   "hrdcStatus": zod.enum(['claimable_verified', 'check_with_employer', 'not_claimable']),
-  "durationHours": zod.number(),
+  "durationHours": zod.number().nullable(),
+  "catalogStale": zod.boolean().optional(),
   "level": zod.string(),
   "language": zod.string(),
   "certificate": zod.boolean().optional(),

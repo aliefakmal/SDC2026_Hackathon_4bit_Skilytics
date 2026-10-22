@@ -136,6 +136,19 @@ paths:
           required: false
           schema:
             type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: beforeId
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
       responses:
         "200":
           description: Profiles
@@ -918,7 +931,8 @@ components:
           $ref: "#/components/schemas/CostType"
         hrdcStatus:
           $ref: "#/components/schemas/HrdcStatus"
-        durationHours: { type: number }
+        durationHours: { type: [number, "null"] }
+        catalogStale: { type: boolean }
         level: { type: string }
         language: { type: string }
         certificate: { type: boolean }
@@ -944,8 +958,8 @@ components:
         title: { type: string }
         provider: { type: string }
         url: { type: string }
-        startWeek: { type: integer }
-        durationWeeks: { type: integer }
+        startWeek: { type: [integer, "null"] }
+        durationWeeks: { type: [integer, "null"] }
         costMyr: { type: number }
         hrdcStatus:
           $ref: "#/components/schemas/HrdcStatus"
@@ -961,7 +975,7 @@ components:
       type: object
       required: [id, profileId, roleId, roleTitle, totalWeeks, totalCostMyr, uncoveredSkills, items, createdAt]
       properties:
-        verificationStatus: { type: string, enum: [unverified] }
+        verificationStatus: { type: string, enum: [unverified, verified] }
         id: { type: integer }
         profileId: { type: integer }
         roleId: { type: integer }

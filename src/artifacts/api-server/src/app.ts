@@ -31,7 +31,7 @@ app.use(
   cors({
     origin: true,
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "X-Guest-Token", "x-guest-token"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Guest-Token", "x-guest-token", "X-Idempotency-Key"],
     exposedHeaders: ["X-RateLimit-Limit", "X-RateLimit-Remaining", "Retry-After"],
   }),
 );

@@ -6,7 +6,7 @@ import {
   AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, CheckCircle2, FileCheck, FileUp, HelpCircle, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
 } from "lucide-react";
 import {
-  useCreateProfile, useGetProfile, useListRiasecQuestions, useRunProfileAgent, useSubmitRiasec, useUpdateProfile, useUploadCv,
+  createProfile, useGetProfile, useListRiasecQuestions, useRunProfileAgent, useSubmitRiasec, useUpdateProfile, useUploadCv,
   getGetProfileQueryKey,
   type AgentInsight, type CvEvidence, type Profile, type ProfileUpdate, type Segment,
 } from "@workspace/api-client-react";
@@ -22,7 +22,7 @@ import { AiWait, Brand, ErrorBox, LangToggle, Markdown, Meter, Rows, StepLoading
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, portalHome } from "@/lib/auth";
 import {
-  CV_MAX_BYTES, CV_OK, OB_STEPS, clearDraft, getObProfile, obScope, readDraft, setObProfile, writeDraft, type ObStep,
+  CV_MAX_BYTES, CV_OK, OB_STEPS, clearDraft, clearObCreateKey, getObCreateKey, getObProfile, obScope, readDraft, setObProfile, writeDraft, type ObStep,
 } from "@/lib/onboarding";
 import { LANG_NAME, errCode, errStatus, useErrText, useT, type DictKey, type Lang } from "@/i18n";
 import { en } from "@/i18n/en";
@@ -77,6 +77,7 @@ export default function Onboarding() {
     if (validUrlPid) return validUrlPid;
     if (isNew) {
       setObProfile(scope, null);
+      clearObCreateKey(scope);
       return null;
     }
     return getObProfile(scope);
@@ -110,10 +111,8 @@ export default function Onboarding() {
   // to the old step. Use the authoritative cache snapshot for this render.
   const p = pid ? qc.getQueryData<Profile>(getGetProfileQueryKey(pid)) ?? q.data : q.data;
   const requested = (OB_STEPS as readonly string[]).includes(params.step ?? "") ? (params.step as ObStep) : null;
-  const create = useCreateProfile();
   const upd = useUpdateProfile();
   const targetSeg: Segment = preSeg === "graduate" ? "graduate" : "worker";
-  const creatingRef = useRef(false);
   const createPromiseRef = useRef<Promise<Profile> | null>(null);
 
   const handleProfileReady = useCallback((np: Profile) => {
@@ -122,17 +121,15 @@ export default function Onboarding() {
     qc.setQueryData(getGetProfileQueryKey(np.id), np);
   }, [scope, qc]);
 
-  const ensureProfile = useCallback(async (): Promise<Profile> => {
-    if (p && p.id > 0) return p;
+  const ensureProfile = useCallback(async (force = false): Promise<Profile> => {
+    if (!force && p && p.id > 0) return p;
     if (createPromiseRef.current) return createPromiseRef.current;
-    const promise = create.mutateAsync({
-      data: {
+    const promise = createProfile({
         name: t("ob.draftName"),
         segment: targetSeg,
         weeklyHours: 1,
         budgetMyr: 0,
-      },
-    }).then((np) => {
+    }, { headers: { "X-Idempotency-Key": getObCreateKey(scope) }, signal: AbortSignal.timeout(15_000) }).then((np) => {
       handleProfileReady(np);
       qc.invalidateQueries({ queryKey: ["/api/profiles"] });
       createPromiseRef.current = null;
@@ -143,24 +140,15 @@ export default function Onboarding() {
     });
     createPromiseRef.current = promise;
     return promise;
-  }, [p, create, t, targetSeg, handleProfileReady, qc]);
+  }, [p, scope, t, targetSeg, handleProfileReady, qc]);
 
   useEffect(() => {
     if (q.isError && pid && (errStatus(q.error) === 404 || errStatus(q.error) === 403)) {
       setObProfile(scope, null);
+      clearObCreateKey(scope);
       setPid(null);
     }
   }, [q.isError, q.error, pid, scope]);
-
-  useEffect(() => {
-    if (!pid && !creatingRef.current && (params.step === "cv" || !params.step)) {
-      creatingRef.current = true;
-      ensureProfile().catch((err) => {
-        console.error("Auto create profile failed", err);
-        creatingRef.current = false;
-      });
-    }
-  }, [pid, ensureProfile, params.step]);
 
   useEffect(() => {
     if (p && p.id > 0 && preSeg && (preSeg === "worker" || preSeg === "graduate") && p.segment !== preSeg && !upd.isPending) {
@@ -205,9 +193,9 @@ export default function Onboarding() {
 
   const handleStartOver = () => {
     setObProfile(scope, null);
+    clearObCreateKey(scope);
     if (p?.id) clearDraft(scope, p.id);
     setPid(null);
-    creatingRef.current = false;
     createPromiseRef.current = null;
     nav("/onboarding/cv?new=1");
   };
@@ -457,7 +445,7 @@ function CvStep({
 }: {
   p: Profile;
   scope: string;
-  ensureProfile?: () => Promise<Profile>;
+  ensureProfile?: (force?: boolean) => Promise<Profile>;
   onProfileReady?: (np: Profile) => void;
   onStartOver?: () => void;
 }) {
@@ -532,15 +520,16 @@ function CvStep({
         if (errStatus(err) === 404 && ensureProfile && lastFile.current) {
           try {
             setObProfile(scope, null);
-            await ensureProfile();
-            send(lastFile.current);
+            clearObCreateKey(scope);
+            const replacement = await ensureProfile(true);
+            send(lastFile.current, replacement);
           } catch {}
         }
       },
     },
   });
 
-  const send = async (file: File) => {
+  const send = async (file: File, replacement?: Profile) => {
     setLocal(null);
     if (!consent) {
       promptConsent();
@@ -602,7 +591,7 @@ function CvStep({
         b64 = s.slice(s.indexOf(",") + 1).replace(/\s+/g, "");
       }
 
-      let activeProfile = p;
+      let activeProfile = replacement ?? p;
       if (!activeProfile?.id || activeProfile.id <= 0) {
         if (ensureProfile) {
           activeProfile = await ensureProfile();
