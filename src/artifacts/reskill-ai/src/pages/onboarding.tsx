@@ -534,7 +534,6 @@ type GoalsForm = {
   goals: string;
   hours: string;
   budget: string;
-  hrdc: Hrdc;
 };
 
 function initGoalsForm(p: Profile, scope: string): GoalsForm {
@@ -544,7 +543,6 @@ function initGoalsForm(p: Profile, scope: string): GoalsForm {
     goals: p.goals ?? "",
     hours: prev && p.weeklyHours ? String(p.weeklyHours) : (p.weeklyHours && p.weeklyHours > 1 ? String(p.weeklyHours) : "10"),
     budget: prev && p.budgetMyr != null ? String(p.budgetMyr) : "0",
-    hrdc: prev ? (p.hrdcEligibilityStatus ?? (p.hrdcEligible ? "yes" : (p.hrdcEligible === false ? "no" : ""))) : "",
   };
   return { ...base, ...d };
 }
@@ -566,7 +564,6 @@ function GoalsStep({ p, scope }: { p: Profile; scope: string }) {
   const errs: Partial<Record<string, string>> = {};
   if (form.hours.trim() === "" || !Number.isInteger(hoursN) || hoursN < 1 || hoursN > 60) errs.hours = t("ob.review.hoursErr");
   if (form.budget.trim() === "" || !Number.isFinite(budgetN) || budgetN < 0) errs.budget = t("ob.review.budgetErr");
-  if (!form.hrdc) errs.hrdc = t("ob.review.required");
   const ok = Object.keys(errs).length === 0;
 
   const submit = () => {
@@ -576,8 +573,8 @@ function GoalsStep({ p, scope }: { p: Profile; scope: string }) {
       goals: form.goals.trim(),
       weeklyHours: hoursN,
       budgetMyr: budgetN,
-      hrdcEligible: form.hrdc === "yes",
-      hrdcEligibilityStatus: form.hrdc as "yes" | "no" | "unknown",
+      hrdcEligible: p.hrdcEligible ?? false,
+      hrdcEligibilityStatus: p.hrdcEligibilityStatus ?? "no",
     }).catch(() => undefined);
   };
   const E = ({ k }: { k: string }) => (touched && errs[k] ? <p className="text-xs text-destructive" data-testid={`error-goals-${k}`}>{errs[k]}</p> : null);
@@ -613,19 +610,6 @@ function GoalsStep({ p, scope }: { p: Profile; scope: string }) {
                 <Input id="f-budget" type="number" inputMode="decimal" min={0} value={form.budget} onChange={(e) => set("budget", e.target.value)} className="min-h-11 pl-11" data-testid="input-goals-budget" /></div>
               <E k="budget" />
             </div>
-          </div>
-          <div className="mt-5 space-y-1.5">
-            <div className="text-sm font-medium">{t("ob.review.hrdc")} <span className="text-destructive">*</span></div>
-            <div className="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label={t("ob.review.hrdc")}>
-              {(["yes", "no", "unknown"] as const).map((v) => (
-                <button key={v} type="button" role="radio" aria-checked={form.hrdc === v} onClick={() => set("hrdc", v)} data-testid={`button-hrdc-${v}`}
-                  className={cn("min-h-11 rounded-lg border px-2 text-sm font-medium", form.hrdc === v ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-primary")}>
-                  {t(v === "yes" ? "ob.review.hrdcYes" : v === "no" ? "ob.review.hrdcNo" : "ob.review.hrdcUnknown")}
-                </button>
-              ))}
-            </div>
-            {form.hrdc === "unknown" && <p className="mt-2 rounded-lg bg-[hsl(var(--gold-soft))]/60 p-2 text-xs" data-testid="text-hrdc-unknown">{t("ob.review.hrdcUnknownNote")}</p>}
-            <E k="hrdc" />
           </div>
         </fieldset>
         <p className="text-[11px] text-muted-foreground">{t("ob.review.draft")}</p>

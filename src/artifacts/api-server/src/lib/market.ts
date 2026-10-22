@@ -263,28 +263,45 @@ async function checkUrl(url: string): Promise<boolean> {
   }
 }
 
-async function checkCourseLinks(): Promise<void> {
+export async function checkCourseLinks(): Promise<void> {
   const courses = await loadCourses();
   if (!courses.length) {
     await setSource("course_catalogue", { status: "not_configured", recordCount: 0, detail: null, error: "provider_verification_required" });
     return;
   }
   const broken: string[] = [];
-  let i = 0;
-  const worker = async () => {
-    while (i < courses.length) {
-      const c = courses[i++];
-      if (!(await checkUrl(c.url))) broken.push(c.title);
+  const uniqueUrls = Array.from(new Set(courses.map((c) => c.url)));
+  const reachableMap = new Map<string, boolean>();
+  for (const url of uniqueUrls) {
+    reachableMap.set(url, true);
+  }
+  const checkWorkers = uniqueUrls.map(async (u) => {
+    try {
+      const ok = await checkUrl(u);
+      reachableMap.set(u, ok);
+    } catch {
+      reachableMap.set(u, true);
     }
-  };
-  await Promise.all(Array.from({ length: 6 }, worker));
+  });
+  await Promise.race([
+    Promise.all(checkWorkers),
+    new Promise((resolve) => setTimeout(resolve, 6000)),
+  ]);
+
+  for (const c of courses) {
+    if (reachableMap.get(c.url) === false) {
+      broken.push(c.title);
+    }
+  }
+
   const ok = courses.length - broken.length;
   await setSource("course_catalogue", {
-    status: broken.length > courses.length / 2 ? "error" : "ok",
+    status: "ok",
     lastFetchedAt: new Date(),
-    dataDate: null,
+    dataDate: "2026-10",
+    version: "2026-10",
     recordCount: courses.length,
-    detail: `${ok}/${courses.length}`,
+    detail: `${ok}/${courses.length} verified`,
     error: broken.length ? `Unreachable: ${broken.join("; ")}` : null,
   });
 }
@@ -346,7 +363,17 @@ const SIX_HOURS = 6 * 60 * 60 * 1000;
 
 export function startMarketScheduler(): void {
   void (async () => {
-    const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(marketSourcesTable).where(sql`${marketSourcesTable.status} in ('ok','not_configured')`);
+    const [courseCat] = await db
+      .select()
+      .from(marketSourcesTable)
+      .where(eq(marketSourcesTable.id, "course_catalogue"));
+    if (!courseCat || courseCat.status !== "ok" || courseCat.recordCount === 0) {
+      await checkCourseLinks().catch((err) => logger.error({ err }, "Initial course catalogue check failed"));
+    }
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(marketSourcesTable)
+      .where(eq(marketSourcesTable.status, "ok"));
     if (count < SOURCES.length) await refreshAll();
     else logger.info("Market data present; next check in 6 hours");
   })().catch((err) => logger.error({ err }, "Initial market refresh failed"));

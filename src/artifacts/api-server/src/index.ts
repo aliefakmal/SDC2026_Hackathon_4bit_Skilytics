@@ -1,7 +1,7 @@
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedCatalog } from "./lib/seed";
-import { startMarketScheduler } from "./lib/market";
+import { startMarketScheduler, checkCourseLinks } from "./lib/market";
 import { seedDemoAccounts, purgeStaleGuestData } from "./lib/auth";
 import { seedDemoMembers } from "./lib/demo";
 import { existsSync } from "node:fs";
@@ -31,6 +31,7 @@ app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
   seedCatalog()
+    .then(() => checkCourseLinks())
     .then(() => seedDemoAccounts())
     .then(() => seedDemoMembers())
     .then(() => purgeStaleGuestData())

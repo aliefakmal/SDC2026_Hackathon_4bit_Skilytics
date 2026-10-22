@@ -96,10 +96,12 @@ export function ProfileFormDialog({ open, onOpenChange, profile, segment = "work
             <div className="space-y-1.5"><Label htmlFor="pf-b">{t("profile.budget")}</Label>
               <Input id="pf-b" type="number" inputMode="decimal" min={0} value={f.budgetMyr} onChange={(e) => setF({ ...f, budgetMyr: e.target.value })} className="min-h-11" data-testid="input-profile-budget" /></div>
           </div>
-          <label className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border px-3 py-2">
-            <span className="min-w-0"><span className="block text-sm font-medium">{t("profile.hrdc")}</span><span className="block text-[11px] text-muted-foreground">{t("profile.hrdcHint")}</span></span>
-            <Switch checked={f.hrdcEligible} onCheckedChange={(v) => setF({ ...f, hrdcEligible: v })} data-testid="switch-hrdc" />
-          </label>
+          {f.segment === "worker" && (
+            <label className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-border px-3 py-2">
+              <span className="min-w-0"><span className="block text-sm font-medium">{t("profile.hrdc")}</span><span className="block text-[11px] text-muted-foreground">{t("profile.hrdcHint")}</span></span>
+              <Switch checked={f.hrdcEligible} onCheckedChange={(v) => setF({ ...f, hrdcEligible: v })} data-testid="switch-hrdc" />
+            </label>
+          )}
           {error && <ErrorBox error={error} />}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" className="min-h-11" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>

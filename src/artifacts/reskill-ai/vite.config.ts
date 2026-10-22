@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -20,6 +21,19 @@ export default defineConfig({
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
+    {
+      name: 'copy-404-fallback',
+      closeBundle() {
+        const outDir = path.resolve(import.meta.dirname, 'dist/public');
+        const indexPath = path.resolve(outDir, 'index.html');
+        const fallbackPath = path.resolve(outDir, '404.html');
+        try {
+          if (fs.existsSync(indexPath)) {
+            fs.copyFileSync(indexPath, fallbackPath);
+          }
+        } catch {}
+      },
+    },
     ...(process.env.NODE_ENV !== 'production' &&
     process.env.REPL_ID !== undefined
       ? [
