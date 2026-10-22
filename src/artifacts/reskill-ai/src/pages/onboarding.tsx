@@ -74,8 +74,16 @@ export default function Onboarding() {
   const create = useCreateProfile();
   const upd = useUpdateProfile();
   const preSeg = new URLSearchParams(search).get("seg");
+  const preNew = new URLSearchParams(search).get("new");
   const targetSeg: Segment = preSeg === "graduate" ? "graduate" : "worker";
   const creatingRef = useRef(false);
+
+  useEffect(() => {
+    if (preNew === "1" && pid) {
+      setObProfile(scope, null);
+      setPid(null);
+    }
+  }, [preNew, pid, scope]);
 
   useEffect(() => {
     if (q.isError && pid && (errStatus(q.error) === 404 || errStatus(q.error) === 403)) { setObProfile(scope, null); setPid(null); }
