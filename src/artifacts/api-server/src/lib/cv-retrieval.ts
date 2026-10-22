@@ -44,8 +44,19 @@ const multimodalOutputSchema = z.object({
 });
 
 function parseJsonOutput(raw: string): unknown {
-  const json = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  return JSON.parse(json);
+  const cleaned = raw.trim();
+  const match = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  const jsonStr = match ? match[1].trim() : cleaned;
+  try {
+    return JSON.parse(jsonStr);
+  } catch {
+    const firstBrace = jsonStr.indexOf("{");
+    const lastBrace = jsonStr.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      return JSON.parse(jsonStr.slice(firstBrace, lastBrace + 1));
+    }
+    throw new Error("invalid_json");
+  }
 }
 
 function mergePageText(existing: string, recognized: string): string {
@@ -313,7 +324,7 @@ export function retrieveReferences(text: string) {
 
 export function validateExtraction(raw: string, text: string) {
   let parsed: z.infer<typeof extractionSchema>;
-  try { parsed = extractionSchema.parse(JSON.parse(raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, ""))); }
+  try { parsed = extractionSchema.parse(parseJsonOutput(raw)); }
   catch { throw new CvAiOutputError("invalid_structured_output"); }
   const fields: Record<string, string | null> = {};
   const evidence: CvEvidence[] = [];
