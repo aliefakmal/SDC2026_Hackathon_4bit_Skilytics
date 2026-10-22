@@ -61,7 +61,7 @@ router.post("/healthz/ai-test-model", async (req, res) => {
     res.json({ error: "no_gemini_key" });
     return;
   }
-  const model = req.body?.model || "gemini-2.5-flash-lite";
+  const model = req.body?.model || "gemini-3.1-flash-lite";
   try {
     const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(geminiKey)}`, {
       method: "POST",

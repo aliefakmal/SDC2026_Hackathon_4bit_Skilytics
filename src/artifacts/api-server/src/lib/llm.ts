@@ -43,9 +43,9 @@ function cfg() {
   }
 
   const geminiKey = process.env["GEMINI_API_KEY"]?.trim();
-  let geminiModel = process.env["GEMINI_MODEL"]?.trim() || "gemini-3.5-flash";
-  if (geminiModel === "gemini-2.0-flash" || geminiModel === "gemini-2.5-flash" || geminiModel === "gemini-2.5-flash-lite" || geminiModel === "gemini-3.8-flash" || geminiModel === "gemini-flash-latest") {
-    geminiModel = "gemini-3.5-flash";
+  let geminiModel = process.env["GEMINI_MODEL"]?.trim() || "gemini-3.1-flash-lite";
+  if (geminiModel === "gemini-2.0-flash" || geminiModel === "gemini-2.5-flash" || geminiModel === "gemini-2.5-flash-lite" || geminiModel === "gemini-3.8-flash" || geminiModel === "gemini-flash-latest" || geminiModel === "gemini-3.5-flash") {
+    geminiModel = "gemini-3.1-flash-lite";
   }
 
   const groqKey = process.env["GROQ_API_KEY"]?.trim();
@@ -401,9 +401,10 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
     const isJsonTask = system.includes("JSON") || system.includes("json");
     const candidateModels = Array.from(new Set([
       c.geminiModel,
-      "gemini-3.5-flash",
-      "gemini-3.5-flash-lite",
       "gemini-3.1-flash-lite",
+      "gemini-3.1-flash-lite-preview",
+      "gemini-3.5-flash-lite",
+      "gemini-3.5-flash",
       "gemini-3-flash-preview",
     ]));
     let lastError: Error | null = null;
