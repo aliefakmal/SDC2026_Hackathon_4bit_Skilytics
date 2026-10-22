@@ -16,6 +16,7 @@ import { loadCourses, loadRoles, loadSkills, roleToApi } from "../lib/catalog";
 import { extractCvDocument, extractSkills, CvError, isCvImageFile, validateCvImage, recognizeCvImage, type CvDocumentPage } from "../lib/cv";
 import { RIASEC_QUESTIONS } from "../data/riasec";
 import { scoreRiasec } from "../lib/riasec-scoring";
+import { agentRoutes } from "../lib/agent-routing";
 import { scoreRole } from "../lib/scoring";
 import { buildPlan } from "../lib/planner";
 import { canAccessProfile, getLatestPlan, getProfileRow, planToApi, profileScope, profileToApi, type ProfileRow } from "../lib/profiles";
@@ -152,9 +153,8 @@ router.post("/profiles/:id/cv", async (req, res) => {
   try {
     if (isCvImageFile(body.fileName)) {
       const validated = validateCvImage(body.fileName, body.contentBase64);
-      const ocrText = await recognizeCvImage(validated);
-      pages = [{ pageNumber: 1, text: ocrText, image: validated }];
-      text = ocrText;
+      pages = [{ pageNumber: 1, text: "", image: validated }];
+      text = "";
     } else {
       const document = await extractCvDocument(body.fileName, body.contentBase64);
       if (document.pages) {
@@ -217,7 +217,12 @@ router.post("/profiles/:id/cv", async (req, res) => {
       if (modelErr instanceof CvError) {
         throw modelErr;
       }
-      const fallbackText = text ?? pages?.map((page) => page.text).filter(Boolean).join("\n\n") ?? "";
+      // Vision gets the original image before OCR can introduce spelling errors.
+      // OCR is a recovery path only, never a prerequisite for a healthy vision model.
+      if (images.length && pages) {
+        for (const page of pages) if (page.image && !page.text.trim()) page.text = await recognizeCvImage(page.image);
+      }
+      const fallbackText = text?.trim() || pages?.map((page) => page.text).filter(Boolean).join("\n\n") || "";
       if (fallbackText.trim().length >= 20) {
         req.log.warn({ profileId: id, err: String(modelErr) }, "AI model extraction failed; using deterministic fallback parser");
         result = extractCvProfileFallback(fallbackText, lang);
@@ -429,7 +434,7 @@ router.post("/profiles/:id/insights", async (req, res) => {
   }
   if (targetRole) ctx["peranSasaran"] = targetRole.title;
 
-  const inputHash = hashInput(agent, lang, ctx);
+  const inputHash = hashInput(agent, lang, ctx, agentRoutes().find((route) => route.agent === agent));
   if (!body.refresh) {
     const [cached] = await db
       .select()
@@ -456,7 +461,7 @@ router.post("/profiles/:id/insights", async (req, res) => {
   }
   try {
     const { system, user } = agentPrompt(agent, ctx, lang);
-    const out = await chat(agentTier(agent), system, user);
+    const out = await chat(agentTier(agent), system, user, { agent });
     const [row] = await db
       .insert(insightsTable)
       .values({ profileId: id, agent, lang, inputHash, content: out.content, sources, model: out.model })

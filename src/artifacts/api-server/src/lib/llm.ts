@@ -1,6 +1,7 @@
 // RunPod Serverless vLLM client (OpenAI-compatible). Only called on demand.
 import { createHash } from "node:crypto";
 import { performance } from "node:perf_hooks";
+import { agentRoute, type RoutedAgent } from "./agent-routing";
 
 export class AiNotConnectedError extends Error {}
 export class AiTimeoutError extends Error {}
@@ -16,7 +17,7 @@ export type ChatTiming = {
   endpointStartupMs: number | null;
   readyToResponseMs: number | null;
 };
-type ChatOptions = { measureEndpointStartup?: boolean };
+type ChatOptions = { measureEndpointStartup?: boolean; agent?: RoutedAgent };
 type ChatResult = { content: string; model: string; timing: ChatTiming };
 
 /** Accepts a bare endpoint ID or a pasted URL such as https://api.runpod.ai/v2/<id>/run. */
@@ -29,8 +30,8 @@ function endpointId(raw: string | undefined): string | undefined {
 
 export type AiProvider = "runpod" | "gemini" | "groq" | "mock";
 
-function cfg() {
-  const providerEnv = process.env["AI_PROVIDER"]?.toLowerCase().trim();
+function cfg(agent?: RoutedAgent) {
+  const providerEnv = (agent ? agentRoute(agent).provider : undefined) ?? process.env["AI_PROVIDER"]?.toLowerCase().trim();
   let provider: AiProvider = "runpod";
   if (providerEnv === "mock" || process.env["AI_TEST_MODE"] === "true") {
     provider = "mock";
@@ -43,10 +44,7 @@ function cfg() {
   }
 
   const geminiKey = process.env["GEMINI_API_KEY"]?.trim();
-  let geminiModel = process.env["GEMINI_MODEL"]?.trim() || "gemini-3.1-flash-lite";
-  if (geminiModel === "gemini-2.0-flash" || geminiModel === "gemini-2.5-flash" || geminiModel === "gemini-2.5-flash-lite" || geminiModel === "gemini-3.8-flash" || geminiModel === "gemini-flash-latest" || geminiModel === "gemini-3.5-flash") {
-    geminiModel = "gemini-3.1-flash-lite";
-  }
+  let geminiModel = (agent === "cv" ? process.env.GEMINI_CV_MODEL?.trim() : undefined) || process.env["GEMINI_MODEL"]?.trim() || "gemini-3.1-flash-lite";
 
   const groqKey = process.env["GROQ_API_KEY"]?.trim();
   const groqModel = process.env["GROQ_MODEL"]?.trim() || "llama-3.3-70b-versatile";
@@ -221,6 +219,7 @@ async function chatRequest(tier: Tier, system: string, user: string, images?: Ch
     .update(tier).update("\0").update(system).update("\0").update(user).update("\0")
     .update(images?.map((image) => `${image.mediaType}\0${createHash("sha256").update(image.base64).digest("hex")}`).join("\0") ?? "")
     .update(options?.measureEndpointStartup ? "\0measure-startup" : "")
+    .update(options?.agent ?? "")
     .digest("hex");
   const inFlight = pendingChats.get(requestKey);
   if (inFlight) return inFlight;
@@ -392,7 +391,10 @@ function mockGenerateChat(system: string, user: string, images?: ChatImage[]): s
 }
 
 async function generateChat(tier: Tier, system: string, user: string, images?: ChatImage[], options?: ChatOptions): Promise<ChatResult> {
-  const c = cfg();
+  const c = cfg(options?.agent);
+  if (c.provider === "runpod" && process.env.RUNPOD_ENABLE_GENERATION !== "true") {
+    throw new AiNotConnectedError("RunPod is a disabled placeholder during testing. Configure GEMINI_API_KEY.");
+  }
 
   // 1. Mock Testing Engine
   if (c.provider === "mock") {
@@ -430,12 +432,8 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
     const isJsonTask = system.includes("JSON") || system.includes("json");
     const candidateModels = Array.from(new Set([
       c.geminiModel,
-      "gemini-3.1-flash-lite",
-      "gemini-3.1-flash-lite-preview",
-      "gemini-3.5-flash-lite",
-      "gemini-3.5-flash",
-      "gemini-3-flash-preview",
-    ]));
+      ...(process.env.GEMINI_FALLBACK_MODEL ? [process.env.GEMINI_FALLBACK_MODEL] : []),
+    ])).slice(0, 2);
     let lastError: Error | null = null;
     let successfulModel = c.geminiModel;
     let content = "";
@@ -444,7 +442,7 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
     for (const model of candidateModels) {
       successfulModel = model;
       let res: Response | null = null;
-      for (let attempt = 0; attempt <= 1; attempt++) {
+      {
         try {
           res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(c.geminiKey)}`, {
             method: "POST",
@@ -456,25 +454,18 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
               contents: [{ parts }],
               generationConfig: {
                 temperature: images ? 0.1 : 0.2,
-                maxOutputTokens: 2048,
+                maxOutputTokens: isJsonTask ? 8192 : 2048,
                 ...(isJsonTask ? { responseMimeType: "application/json" } : {}),
               },
             }),
             signal: AbortSignal.timeout(images ? 25_000 : 20_000),
           });
-          if (res.status === 429 && attempt < 1) {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            continue;
-          }
-          break;
         } catch (err) {
-          if (attempt < 1) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            continue;
-          }
           const detail = err instanceof Error ? err.message : String(err);
           modelErrors.push(`${model} (Timeout/Error): ${detail}`);
-          lastError = err instanceof Error ? err : new Error(detail);
+          lastError = err instanceof Error && ["TimeoutError","AbortError"].includes(err.name)
+            ? new AiTimeoutError("The CV model request timed out.")
+            : err instanceof Error ? err : new Error(detail);
         }
       }
 
@@ -491,10 +482,11 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
       }
 
       const json = (await res.json()) as {
-        candidates?: { finishReason?: string; content?: { parts?: { text?: string }[] } }[];
+        candidates?: { finishReason?: string; content?: { parts?: { text?: string; thought?: boolean }[] } }[];
       };
       const partsArray = json.candidates?.[0]?.content?.parts ?? [];
-      content = partsArray.map((p) => p.text || "").join("").trim();
+      if (json.candidates?.[0]?.finishReason === "MAX_TOKENS") throw new Error("Gemini output was truncated; reduce CV pages per request.");
+      content = partsArray.filter((p) => !p.thought).map((p) => p.text || "").join("").trim();
       if (content) {
         lastError = null;
         break;
@@ -660,8 +652,12 @@ export type EndpointHealth = {
 };
 
 /** Provider readiness and model verification probes (no GPU generation cost). */
-export async function endpointHealth(tier: Tier): Promise<EndpointHealth> {
+export async function endpointHealth(tier: Tier, provider?: AiProvider): Promise<EndpointHealth> {
   const c = cfg();
+  if (provider) c.provider = provider;
+  if (c.provider === "runpod" && process.env.RUNPOD_ENABLE_GENERATION !== "true") {
+    return { status: "not_configured", detail: "RunPod placeholder: worker probes and generation disabled during Gemini-only testing.", error: null };
+  }
   if (c.provider === "mock") {
     return { status: "ok", detail: "Mock Testing Engine (local deterministic mode)", error: null };
   }

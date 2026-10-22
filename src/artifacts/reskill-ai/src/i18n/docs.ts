@@ -58,7 +58,7 @@ export const docsEn = {
   "docs.ai.cold": "A health check may wake a sleeping server. We make no claim that idle time is free of GPU cost.",
   "docs.ai.ids": "Endpoint IDs are not public secrets. API keys are never shown.",
   "docs.ai.configured": "Provider, model and health come from the live AI status. If the API key is missing, the service shows as not configured.",
-  "docs.ai.privacy": "With your consent, CV text and image content are sent to RunPod for analysis. The original file is discarded and not retained. Extracted text and evidence are retained with your profile; guest profiles are kept for 7 days.",
+  "docs.ai.privacy": "With your consent, CV text and images go to the configured CV provider (Gemini in hybrid mode). Retrieved CV excerpts may go to RunPod for other agents. Original files are discarded; extracted text and evidence stay with your profile. Guest profiles are kept for 7 days.",
 
   "docs.riasec.items": "30 workplace activities adapted from O*NET Interest Profiler domains, with English, Malay and Mandarin wording. Five items per RIASEC area; response scale 1–5. This adaptation is not the validated Mini-IP.",
   "docs.riasec.scoring": "All 30 unique answers are required by the API and both assessment screens. Each area uses the average of its five answers, rounded to two decimals. Ties follow R, I, A, S, E, C.",
@@ -139,7 +139,7 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.ai.cold": "Semakan kesihatan mungkin membangunkan pelayan yang tidur. Kami tidak mendakwa masa terbiar bebas kos GPU.",
   "docs.ai.ids": "ID titik akhir bukan rahsia awam. Kunci API tidak pernah ditunjukkan.",
   "docs.ai.configured": "Penyedia, model dan kesihatan datang daripada status AI langsung. Jika kunci API tiada, perkhidmatan ditunjukkan sebagai belum dikonfigurasi.",
-  "docs.ai.privacy": "Dengan persetujuan anda, teks dan kandungan imej CV dihantar ke RunPod untuk dianalisis. Fail asal dibuang dan tidak disimpan. Teks serta bukti yang diekstrak disimpan bersama profil anda; profil tetamu disimpan selama 7 hari.",
+  "docs.ai.privacy": "Dengan persetujuan anda, teks dan imej CV dihantar kepada penyedia CV yang dikonfigurasi (Gemini dalam mod hibrid). Petikan CV yang diperoleh boleh dihantar ke RunPod untuk agent lain. Fail asal dibuang; teks dan bukti disimpan bersama profil. Profil tetamu disimpan selama 7 hari.",
 
   "docs.riasec.items": "30 aktiviti kerja diadaptasi daripada domain O*NET Interest Profiler dalam English, Bahasa Melayu dan Mandarin. Lima item bagi setiap kategori RIASEC; skala jawapan 1–5. Adaptasi ini bukan Mini-IP yang telah divalidasi.",
   "docs.riasec.scoring": "Semua 30 jawapan unik diwajibkan oleh API dan kedua-dua skrin ujian. Setiap kategori menggunakan purata lima jawapan, dibundarkan kepada dua perpuluhan. Seri mengikut susunan R, I, A, S, E, C.",
@@ -218,7 +218,7 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.ai.cold": "健康检查可能唤醒休眠的服务器。我们不声称空闲时不产生 GPU 费用。",
   "docs.ai.ids": "接口 ID 不是公开机密。API 密钥从不显示。",
   "docs.ai.configured": "服务商、模型与健康状况来自实时 AI 状态。若缺少 API 密钥，服务会显示为未配置。",
-  "docs.ai.privacy": "经你同意，简历文字和图像内容会发送至 RunPod 进行分析。原始文件会被丢弃且不会保留。提取的文字与依据随档案保存；访客档案保留 7 天。",
+  "docs.ai.privacy": "经你同意，简历文字和图像发送至已配置的简历模型提供商（混合模式使用 Gemini）。检索出的简历片段可能发送至 RunPod 供其他智能体分析。原文件不保留，提取的文字和依据随档案保存；访客档案保留 7 天。",
 
   "docs.riasec.items": "根据 O*NET Interest Profiler 领域改编的 30 项工作活动，提供英语、马来语和中文。每个 RIASEC 领域五题，评分为 1–5。本改编版本并非已验证的 Mini-IP。",
   "docs.riasec.scoring": "API 及两个评估页面均要求回答全部 30 道不同题目。各领域取五题平均值，保留两位小数。平分时依次按 R、I、A、S、E、C 排序。",

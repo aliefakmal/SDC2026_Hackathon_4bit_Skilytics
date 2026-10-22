@@ -433,7 +433,7 @@ export async function extractCvMultimodalProfile(pages: CvDocumentPage[], lang: 
       system,
       user,
       imagePages.map((page) => page.image!),
-      { measureEndpointStartup: true },
+      { measureEndpointStartup: true, agent: "cv" },
     );
   } catch (visionErr) {
     const assembledText = normalizeCvText(pages
@@ -474,8 +474,9 @@ export async function extractCvMultimodalProfile(pages: CvDocumentPage[], lang: 
   }
   for (const pageNum of expectedPages) {
     if (!recognizedByPage.has(pageNum)) {
-      const fallbackText = parsed.imagePages[0]?.text || "";
-      if (fallbackText) recognizedByPage.set(pageNum, fallbackText);
+      if (expectedPages.size === 1 && parsed.imagePages.length === 1 && parsed.imagePages[0].text) {
+        recognizedByPage.set(pageNum, parsed.imagePages[0].text);
+      } else throw new CvAiOutputError("missing_image_page");
     }
   }
   if (recognizedByPage.size === 0) throw new CvAiOutputError("invalid_structured_output");
@@ -586,7 +587,7 @@ export function cvExtractionKey(text: string, lang: Lang, images?: CvImageInput 
       .update(createHash("sha256").update(image.base64).digest("hex"));
   }
   const inputHash = hash.digest("hex");
-  return hashInput("cv-rag-v4", inputHash, lang, process.env.RUNPOD_LIGHT_MODEL, process.env.RUNPOD_LLM_MODEL, process.env.RUNPOD_LIGHT_ENDPOINT_ID, process.env.RUNPOD_LLM_ENDPOINT_ID, SKILL_REFERENCES);
+  return hashInput("cv-rag-v5-vision-first", inputHash, lang, process.env.AI_AGENT_ROUTING, process.env.AI_PROVIDER, process.env.GEMINI_CV_MODEL, process.env.GEMINI_MODEL, process.env.RUNPOD_LIGHT_MODEL, process.env.RUNPOD_LLM_MODEL, process.env.RUNPOD_LIGHT_ENDPOINT_ID, process.env.RUNPOD_LLM_ENDPOINT_ID, SKILL_REFERENCES);
 }
 
 export async function extractCvProfile(text: string, lang: Lang): Promise<CvProfileExtractionResult> {
@@ -597,7 +598,7 @@ export async function extractCvProfile(text: string, lang: Lang): Promise<CvProf
   const user = JSON.stringify({ userCvChunks: chunks, sourcedSkillReferences: references });
   let result: any;
   try {
-    const out = await chat("light", system, user, { measureEndpointStartup: true });
+    const out = await chat("light", system, user, { measureEndpointStartup: true, agent: "cv" });
     result = { ...applySectionEvidence(validateExtraction(out.content, text), text), model: out.model, timing: out.timing, references, text };
   } catch {
     result = extractCvProfileFallback(text, lang);

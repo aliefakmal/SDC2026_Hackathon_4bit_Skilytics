@@ -4,11 +4,13 @@ import { and, desc, eq, isNull, sql, type SQL } from "drizzle-orm";
 import type { Request } from "express";
 import { CreatePredictionBody } from "@workspace/api-zod";
 import { aiStatus, chat, AiNotConnectedError, AiTimeoutError } from "../lib/llm";
+import { agentRoutes } from "../lib/agent-routing";
 import { consumeAiRequest } from "../lib/ai-rate-limit";
 import { loadRoles } from "../lib/catalog";
 import { hashInput, predictionPrompt, SOURCE_AEI, SOURCE_DOSM, type Lang } from "../lib/agents";
 
 const router: IRouter = Router();
+router.get("/ai/routing", (_req, res) => res.json(agentRoutes()));
 
 let cachedStatus: { data: Awaited<ReturnType<typeof aiStatus>>; expiresAt: number } | null = null;
 
@@ -119,7 +121,7 @@ router.post("/predictions", async (req, res) => {
   }
   try {
     const { system, user } = predictionPrompt(ctx, question, body.horizonYears, lang);
-    const out = await chat("main", system, user);
+    const out = await chat("main", system, user, { agent: "analyst" });
     const refs = [
       { ...SOURCE_DOSM, dataDate: src.get("dosm_lfs_month")?.dataDate ?? null },
       { ...SOURCE_AEI, dataDate: src.get("aei_usage")?.dataDate ?? null },

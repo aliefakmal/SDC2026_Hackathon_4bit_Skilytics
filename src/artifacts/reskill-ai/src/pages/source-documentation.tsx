@@ -5,6 +5,7 @@ import { Panel } from "@/components/kit";
 import { useFmt } from "@/lib/fmt";
 import { useT, type DictKey } from "@/i18n";
 import { cn } from "@/lib/utils";
+import { AiRoutingPanel } from "@/components/ai-routing-panel";
 
 export type DocType = "external" | "static" | "derived" | "demo" | "user";
 
@@ -61,7 +62,7 @@ const DOCS: Doc[] = [
     { label: "docs.f.license", k: ["docs.course.license"] },
   ] },
   { id: "runpod", types: ["external", "user"], name: "sources.aiTitle", sourceIds: ["runpod_main", "runpod_light"], ai: true, rows: [
-    { label: "docs.f.publisher", ref: "RunPod Serverless (vLLM, OpenAI-compatible)" },
+    { label: "docs.f.publisher", ref: "Google Gemini API + RunPod Serverless (vLLM, OpenAI-compatible)" },
     { label: "docs.f.dataset", url: "https://docs.runpod.io/serverless/vllm/openai-compatibility" },
     { label: "docs.f.method", k: ["docs.ai.checks", "docs.ai.cold", "docs.ai.configured"] },
     { label: "docs.f.limits", k: ["docs.ai.ids", "docs.ai.retrieval"] },
@@ -216,6 +217,7 @@ export function SourceDocumentation({ sources, ai }: { sources: MarketSource[]; 
       <div className="space-y-6">{CATEGORIES.map((category) => (
         <section key={category.key} aria-labelledby={`sources-category-${category.key}`}>
           <h3 id={`sources-category-${category.key}`} className="mb-2 text-sm font-semibold text-primary">{t(`docs.category.${category.key}` as DictKey)}</h3>
+          {category.key === "infrastructure" && <AiRoutingPanel />}
           <div className="space-y-2">{category.ids.map((id) => {
             const d = DOCS.find((entry) => entry.id === id)!;
             return <DocItem key={d.id} d={d} live={sources} ai={ai} />;

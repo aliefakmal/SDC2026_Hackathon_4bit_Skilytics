@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
 
 const envKeys = [
+  "RUNPOD_ENABLE_GENERATION",
   "RUNPOD_API_KEY",
   "RUNPOD_LLM_ENDPOINT_ID",
   "RUNPOD_LIGHT_ENDPOINT_ID",
@@ -34,6 +35,7 @@ function configureRunPod(options: {
   mainModel?: string;
   lightModel?: string;
 } = {}) {
+  process.env["RUNPOD_ENABLE_GENERATION"] = "true";
   process.env["RUNPOD_API_KEY"] = "test-key";
   if (options.mainId) process.env["RUNPOD_LLM_ENDPOINT_ID"] = options.mainId;
   if (options.lightId) process.env["RUNPOD_LIGHT_ENDPOINT_ID"] = options.lightId;
@@ -66,6 +68,7 @@ function healthyResponse(url: string): Response {
 }
 
 test("reports missing endpoint configuration without making network requests", async () => {
+  process.env.RUNPOD_ENABLE_GENERATION = "true";
   const llm = await loadLlm();
   let fetchCalls = 0;
   globalThis.fetch = async () => {
@@ -89,6 +92,17 @@ test("reports missing endpoint configuration without making network requests", a
   assert.equal(status.mainStatus, "not_configured");
   assert.equal(status.lightStatus, "not_configured");
   assert.equal(fetchCalls, 0);
+});
+
+test("disabled RunPod placeholders never probe workers or generate even when credentials exist", async () => {
+  configureRunPod({ mainId: "test-main" });
+  process.env.RUNPOD_ENABLE_GENERATION = "false";
+  const llm = await loadLlm();
+  let calls = 0;
+  globalThis.fetch = async () => { calls++; throw new Error("RunPod must remain unused"); };
+  assert.equal((await llm.endpointHealth("main", "runpod")).status, "not_configured");
+  await assert.rejects(() => llm.chat("main", "test", "test"), /disabled placeholder/);
+  assert.equal(calls, 0);
 });
 
 test("verifies healthy main and light endpoint models", async () => {

@@ -10,7 +10,7 @@ const ROLE_DESC: Record<AgentName, { tier: "main" | "light"; task: string }> = {
   holland: { tier: "light", task: "the Holland (RIASEC) Agent. Explain the user's interest code, what it means for work environments, and link it to roles in the match list. Stress that this is a screening tool, not a diagnosis." },
   profiler: { tier: "main", task: "the Profiler Agent. Build a concise career profile (strengths, AI exposure of the current role, time and budget constraints) in 4-6 short paragraphs." },
   fitter: { tier: "main", task: "the Fitter Agent. Explain why the top 3 roles fit or do not fit, based on the score breakdown, skill gaps and market signals. Give one most realistic transition recommendation." },
-  planner: { tier: "main", task: "the Planner Agent. Explain the learning plan (Gantt) week by week: why this order, personal cost, HRD Corp steps to confirm with the employer, and skills not yet covered." },
+  planner: { tier: "main", task: "the Planner Agent. Explain the learning plan (Gantt) week by week: why this order, personal cost, and skills not yet covered. Discuss HRD Corp only when employer eligibility is explicitly included in the context." },
   sdg: { tier: "light", task: "the SDG Agent. Explain concretely, without exaggeration, how the plan and target role contribute to the listed UN SDG targets." },
 };
 

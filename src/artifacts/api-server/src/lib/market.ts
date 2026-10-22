@@ -261,7 +261,7 @@ export async function checkCourseLinks(): Promise<void> {
 }
 
 async function checkEndpoint(tier: "main" | "light"): Promise<void> {
-  const h = await endpointHealth(tier);
+  const h = await endpointHealth(tier, "runpod");
   await setSource(`runpod_${tier}`, { status: h.status, lastFetchedAt: new Date(), detail: h.detail, error: h.error, recordCount: 0 });
 }
 

@@ -330,12 +330,7 @@ export async function extractCvDocument(
         }
         rendered.push({ pageNumber, image: imageInput });
 
-        try {
-          const ocrText = await recognizeCvImage(imageInput);
-          if (ocrText && ocrText.length >= MIN_SEARCHABLE_PAGE_CHARS) {
-            pageTexts[pageNumber - 1] = ocrText;
-          }
-        } catch {}
+        // Send scanned pages directly to vision; OCR is available as recovery.
       }
       const renderedByPage = new Map(rendered.map((page) => [page.pageNumber, page.image]));
       const pages = pageTexts.map((text, index) => ({
