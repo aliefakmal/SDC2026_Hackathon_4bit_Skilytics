@@ -2,7 +2,7 @@
   "name": "skilytics-root",
   "private": true,
   "scripts": {
-    "build": "pnpm --dir src run build",
+    "build": "npx -y pnpm --dir src install && npx -y pnpm --dir src run build",
     "dev": "pnpm --dir src run dev",
     "dev:api": "pnpm --dir src run dev:api",
     "db:push": "pnpm --dir src run db:push",
@@ -10,6 +10,7 @@
     "start:render": "node src/artifacts/api-server/dist/index.mjs",
     "start": "node src/artifacts/api-server/dist/index.mjs"
   },
+  "packageManager": "pnpm@9.15.4",
   "dependencies": {
     "@neon/config": "^1.9.3",
     "@neon/env": "^1.6.4"
