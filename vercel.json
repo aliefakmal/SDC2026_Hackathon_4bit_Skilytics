@@ -7,18 +7,6 @@
       "destination": "https://sdc2026-hackathon-4bit-skilytics.onrender.com/api/$1"
     },
     {
-      "source": "/assets/(.*)",
-      "destination": "/assets/$1"
-    },
-    {
-      "source": "/favicon.svg",
-      "destination": "/favicon.svg"
-    },
-    {
-      "source": "/robots.txt",
-      "destination": "/robots.txt"
-    },
-    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
