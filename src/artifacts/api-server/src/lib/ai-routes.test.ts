@@ -216,7 +216,13 @@ test("holland ELI5 insight never fails: returns 200 OK with grounded fallback ev
       riasecCode: "CIR",
       riasecScores: { R: 3.6, I: 3.8, A: 2.4, S: 3.4, E: 2.0, C: 4.0 },
       cvEvidence: [
-        { skill: "Property Valuation", quote: "Bachelor of Real Estate at Universiti Teknologi Malaysia", source: "education" },
+        { field: "education", value: "Bachelor of Real Estate at Universiti Teknologi Malaysia", quote: "Bachelor of Real Estate", source: "education" },
+      ],
+      education: "Bachelor of Real Estate at Universiti Teknologi Malaysia",
+      currentRole: "Property Analyst",
+      verified: true,
+      skills: [
+        { skillId: 1, status: "evidenced", evidence: "Real estate degree" },
       ],
     })
     .returning();

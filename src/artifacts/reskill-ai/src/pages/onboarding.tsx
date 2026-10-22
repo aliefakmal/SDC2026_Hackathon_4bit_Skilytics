@@ -6,8 +6,8 @@ import {
   AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, BarChart2, Check, CheckCircle2, Compass, Copy, FileCheck, FileImage, FileText, FileUp, GraduationCap, HelpCircle, Lightbulb, Loader2, PlusCircle, Quote, RotateCw, Sparkles, Volume2, VolumeX, X,
 } from "lucide-react";
 import {
-  createProfile, useGetProfile, useListRiasecQuestions, useRunProfileAgent, useSubmitRiasec, useUpdateProfile, useUploadCv,
-  getGetProfileQueryKey,
+  createProfile, useGetProfile, useListProfileInsights, useListRiasecQuestions, useRunProfileAgent, useSubmitRiasec, useUpdateProfile, useUploadCv,
+  getGetProfileQueryKey, getListProfileInsightsQueryKey,
   type AgentInsight, type CvEvidence, type Profile, type ProfileUpdate, type Segment,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -1449,27 +1449,76 @@ function parseHollandSections(content: string, lang: string): ParsedHollandSecti
 function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string; onProfileReady?: (np: Profile) => void }) {
   const { t, tk, lang } = useT();
   const { go, upd } = useAdvance(p, scope, onProfileReady);
+  const qc = useQueryClient();
   const scores = p.riasecScores;
   const code = p.riasecCode ?? "-";
   const max = scores ? Math.max(1, ...RIASEC.map((k) => scores[k])) : 1;
-  // Only show an explanation produced for the CURRENT scores in this session, by explicit request.
-  // The server caches by inputs, so pressing again after a refresh reuses the cached reply.
-  const [fresh, setFresh] = useState<{ key: string; ins: AgentInsight } | null>(null);
+
+  // Query existing insights from server
+  const insList = useListProfileInsights(p.id, {
+    query: { queryKey: getListProfileInsightsQueryKey(p.id) },
+  });
+
+  // Cache insights by language so switching is seamless
+  const [byLang, setByLang] = useState<Record<string, AgentInsight>>({});
   const [since, setSince] = useState<number | null>(null);
   const [selectedLetter, setSelectedLetter] = useState(0);
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  const scoreKey = scores ? `${code}:${RIASEC.map((k) => scores[k].toFixed(2)).join(",")}:${p.cvExtractionKey ?? ""}` : "";
+  // Sync existing insights from database on load
+  useEffect(() => {
+    if (insList.data && insList.data.length > 0) {
+      const hollandList = insList.data.filter((it) => it.agent === "holland" && Boolean(it.content));
+      if (hollandList.length > 0) {
+        setByLang((prev) => {
+          const next = { ...prev };
+          let changed = false;
+          for (const it of hollandList) {
+            if (it.lang && (!next[it.lang] || new Date(it.createdAt) > new Date(next[it.lang].createdAt))) {
+              next[it.lang] = it;
+              changed = true;
+            }
+          }
+          return changed ? next : prev;
+        });
+      }
+    }
+  }, [insList.data]);
+
   const run = useRunProfileAgent({
     mutation: {
       retry: 1,
-      onSuccess: (r) => { setSince(null); setFresh({ key: scoreKey, ins: r }); },
+      onSuccess: (r) => {
+        setSince(null);
+        setByLang((prev) => ({ ...prev, [r.lang]: r }));
+        qc.invalidateQueries({ queryKey: getListProfileInsightsQueryKey(p.id) });
+      },
       onError: () => setSince(null),
     },
   });
-  const insight = fresh && fresh.key === scoreKey && fresh.ins.lang === lang ? fresh.ins : null;
-  const explain = () => { setSince(Date.now()); run.mutate({ id: p.id, data: { agent: "holland", lang } }); };
+
+  const hasGeneratedInsight = Object.values(byLang).some((it) => it.agent === "holland" && Boolean(it.content));
+  const insight = byLang[lang] ?? null;
+
+  const explain = () => {
+    setSince(Date.now());
+    run.mutate({ id: p.id, data: { agent: "holland", lang } });
+  };
+
+  // When language is switched and an insight was already generated, translate it automatically
+  const prevLangRef = useRef<string>(lang);
+  useEffect(() => {
+    const prevLang = prevLangRef.current;
+    prevLangRef.current = lang;
+    if (prevLang !== lang) {
+      if (hasGeneratedInsight && !byLang[lang] && !run.isPending) {
+        setSince(Date.now());
+        run.mutate({ id: p.id, data: { agent: "holland", lang } });
+      }
+    }
+  }, [lang, hasGeneratedInsight, byLang, run.isPending, p.id]);
+
   const selectedType = code[selectedLetter] ?? code[0];
 
   useEffect(() => {
@@ -1634,7 +1683,10 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
               ))}
             </div>
           ) : run.isPending && since ? (
-            <AiWait since={since} />
+            <AiWait
+              since={since}
+              note={hasGeneratedInsight && !byLang[lang] ? t("ob.results.translating", { lang: LANG_NAME[lang] ?? lang }) : undefined}
+            />
           ) : run.isError ? (
             /* ONLY ONE BUTTON APPEARS HERE: Retry */
             <div className="rounded-xl border border-destructive/40 bg-card p-4 text-sm" role="alert" data-testid="status-explain-error">

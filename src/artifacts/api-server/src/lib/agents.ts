@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { SourceRefStored } from "@workspace/db";
+import { chat } from "./llm";
 
 export type AgentName = "cv" | "holland" | "profiler" | "fitter" | "planner" | "sdg";
 
@@ -7,7 +8,7 @@ export type Lang = "en" | "ms" | "zh";
 
 const ROLE_DESC: Record<AgentName, { tier: "main" | "light"; task: string }> = {
   cv: { tier: "light", task: "the CV Agent. Summarise the experience and skills evidenced in the CV, identify skills the automatic extraction may have missed, and suggest 3 specific CV improvements." },
-  holland: { tier: "light", task: "the Holland (RIASEC) Agent. Explain the questionnaire result in ELI5 language and connect it to at most one evidenced CV example. Write exactly three very short Markdown sections about (1) the interest mix, (2) one clue from the CV, and (3) one easy thing to try; translate each heading into the requested language. Keep the whole reply under 100 words (or equivalent in Malay/Chinese). Use a simple everyday analogy, one practical low-stakes action, and no repeated profile lists, score table, role ranking or personal identifiers. If the CV has no usable evidence, say that plainly in the CV section. This interest screener is not a diagnosis or proof of ability." },
+  holland: { tier: "light", task: "the Holland (RIASEC) Agent. Explain the user's Holland (RIASEC) questionnaire result in friendly, respectful ELI5 language for an adult learner. Ground your explanation in ALL verified profile data from their review step: verified education (pendidikanDisahkan), verified experience (pengalamanDisahkan), verified skills (kemahiranDisahkan), and CV evidence (semuaBuktiCv). Format strictly into exactly 3 short Markdown sections: (1) '### The Interest Mix': a relatable everyday analogy (e.g. master organizer, builder, investigator) explaining how their 3 letters work together; (2) '### Evidence from CV': explicitly cite their verified degree/institution (e.g. 'Your CV shows you studied Bachelor of Real Estate at Universiti Teknologi Malaysia...'), job experience, or verified skills, explaining why this real background genuinely reflects their interest combination; (3) '### One Easy Thing to Try': one fun, practical micro-action they can do this week. Translate the three section headings into the requested language (e.g. '### Gabungan Minat', '### Bukti dalam CV', '### Satu Langkah Mudah untuk Dicuba' in Malay; '### 兴趣组合', '### 简历中的证据', '### 一个简单的尝试' in Chinese). Never state that there is no evidence when verified education, experience, or skills are available in the context." },
   profiler: { tier: "main", task: "the Profiler Agent. Build a concise career profile (strengths, AI exposure of the current role, time and budget constraints) in 4-6 short paragraphs." },
   fitter: { tier: "main", task: "the Fitter Agent. Explain why the top 3 roles fit or do not fit, based on the score breakdown, skill gaps and market signals. Give one most realistic transition recommendation." },
   planner: { tier: "main", task: "the Planner Agent. Explain the learning plan (Gantt) week by week: why this order, personal cost, and skills not yet covered. Discuss HRD Corp only when employer eligibility is explicitly included in the context." },
@@ -59,6 +60,12 @@ export function generateHollandFallback(
   scores: Record<string, number> | null | undefined,
   evidence: Array<{ field?: string; value?: string; quote?: string | null; source?: string }> = [],
   lang: Lang = "en",
+  verified?: {
+    education?: string | null;
+    experience?: string | null;
+    currentRole?: string | null;
+    skills?: Array<{ name: string; status?: string; evidence?: string | null }>;
+  },
 ): string {
   const cleanCode = (code || "CIR").toUpperCase().replace(/[^RIASEC]/g, "").slice(0, 3) || "CIR";
   const primary = cleanCode[0] || "C";
@@ -129,22 +136,44 @@ export function generateHollandFallback(
   const expEv = validQuotes.find((e) => e.field === "experience" || e.field === "currentRole");
   const bestEv = eduEv || expEv || validQuotes[0];
 
+  const eduText = verified?.education || (eduEv?.quote ? eduEv.quote : null);
+  const expText = verified?.experience || (expEv?.quote ? expEv.quote : null);
+  const skillNames = (verified?.skills || []).map((s) => s.name).slice(0, 3).join(", ");
+
   let evidenceParagraph = "";
   if (lang === "ms") {
-    if (bestEv?.quote) {
+    if (eduText && expText) {
+      evidenceParagraph = `CV dan profil yang anda sahkan memaparkan kelayakan akademik "${eduText}" serta pengalaman kerja "${expText}". Latar belakang ini secara nyata menyokong minat anda dalam persekitaran kerja yang tersusun, berdisiplin dan berorientasikan hasil fizikal mahupun operasi yang jelas.`;
+    } else if (eduText) {
+      evidenceParagraph = `CV dan semakan profil anda mengesahkan kelayakan akademik "${eduText}". Bidang pengajian ini sangat bertepatan dengan minat anda dalam persekitaran yang tersusun, bersistematik dan berorientasikan peraturan serta pengurusan yang nyata.`;
+    } else if (bestEv?.quote) {
       evidenceParagraph = `CV anda memaparkan petikan evidens: "${bestEv.quote}". Pengalaman ini berkait rapat dengan kebolehan anda menyelesaikan tugasan dalam persekitaran yang memerlukan ketelitian dan fokus berstruktur.`;
+    } else if (skillNames) {
+      evidenceParagraph = `CV dan semakan profil anda mengesahkan kemahiran seperti ${skillNames}. Kemahiran ini membuktikan keupayaan anda mengaplikasikan gabungan minat ini secara praktikal.`;
     } else {
       evidenceParagraph = `CV anda menunjukkan asas pembelajaran dan pengalaman yang menyokong gaya kerja terarah ini, menekankan aplikasi praktikal dan disiplin yang konsisten.`;
     }
   } else if (lang === "zh") {
-    if (bestEv?.quote) {
+    if (eduText && expText) {
+      evidenceParagraph = `你的简历及核实信息显示了“${eduText}”的学术背景与“${expText}”的实践经验。这与你在条理清晰、讲求实效的环境中施展才华的倾向高度契合。`;
+    } else if (eduText) {
+      evidenceParagraph = `你的简历核实信息显示了“${eduText}”的学习背景。这一专业领域与你在有条理、规范化以及具备明确实际操作的工作环境中发挥优势的倾向非常一致。`;
+    } else if (bestEv?.quote) {
       evidenceParagraph = `你的简历展示了相关证据：“${bestEv.quote}”。这一经历与你在需要高度专注与条理分明的工作环境中发挥优势的倾向非常契合。`;
+    } else if (skillNames) {
+      evidenceParagraph = `你的简历及核实技能包含了 ${skillNames}。这些技能充分印证了你将此类兴趣组合付诸实际应用的能力。`;
     } else {
       evidenceParagraph = `你的简历展现了支持这种工作风格的扎实基础，突出了一贯的务实与专注特质。`;
     }
   } else {
-    if (bestEv?.quote) {
+    if (eduText && expText) {
+      evidenceParagraph = `Your verified CV highlights your academic credential in "${eduText}" alongside experience in "${expText}". This concrete background directly complements your strength in structured, results-oriented environments.`;
+    } else if (eduText) {
+      evidenceParagraph = `Your verified CV displays your educational background in "${eduText}". This field closely matches your affinity for organized, systematic environments with clear operational standards.`;
+    } else if (bestEv?.quote) {
       evidenceParagraph = `Your CV shows evidenced background: "${bestEv.quote}". This directly reinforces your ability to perform well in environments valuing methodical focus and structured problem-solving.`;
+    } else if (skillNames) {
+      evidenceParagraph = `Your profile confirms verified skills including ${skillNames}. These strengths directly reflect your practical ability to put this interest mix into action.`;
     } else {
       evidenceParagraph = `Your CV highlights a practical foundation that naturally complements this working style, emphasizing reliable focus and systematic task delivery.`;
     }
@@ -156,11 +185,11 @@ export function generateHollandFallback(
       ``,
       `Kod Holland anda ialah **${cleanCode}**, yang menggabungkan ${trait1}, ${trait2}, dan ${trait3}. Anda berasa paling bersemangat apabila dapat mengurus perincian secara teratur sambil merungkai cabaran dengan langkah yang nyata. Ibarat pengatur sistem yang berdisiplin, anda memastikan setiap bahagian berfungsi dengan harmoni.`,
       ``,
-      `### Bukti dari CV`,
+      `### Bukti dalam CV`,
       ``,
       evidenceParagraph,
       ``,
-      `### Satu Langkah Mudah`,
+      `### Satu Langkah Mudah untuk Dicuba`,
       ``,
       actionTip,
     ].join("\n");
@@ -172,7 +201,7 @@ export function generateHollandFallback(
       ``,
       `你的霍兰德代码是 **${cleanCode}**，结合了${trait1}、${trait2}以及${trait3}。当你在条理清晰的环境中把深入思考转化为具体成果时，往往能体会到最大的成就感。就像一位严谨的规划师，确保每个环节协调有序。`,
       ``,
-      `### 简历中的线索`,
+      `### 简历中的证据`,
       ``,
       evidenceParagraph,
       ``,
@@ -196,3 +225,109 @@ export function generateHollandFallback(
     actionTip,
   ].join("\n");
 }
+
+export function programmaticTranslateHolland(content: string, fromLang: Lang, toLang: Lang): string {
+  if (fromLang === toLang) return content;
+
+  const targetHeadings = {
+    ms: ["### Gabungan Minat", "### Bukti dalam CV", "### Satu Langkah Mudah untuk Dicuba"],
+    zh: ["### 兴趣组合", "### 简历中的证据", "### 一个简单的尝试"],
+    en: ["### The Interest Mix", "### Evidence from CV", "### One Easy Thing to Try"],
+  }[toLang];
+
+  const lines = content.split("\n");
+  const bodies: string[][] = [[], [], []];
+  let sectionIdx = -1;
+
+  for (const line of lines) {
+    if (line.match(/^#{1,4}\s+/)) {
+      sectionIdx = Math.min(2, sectionIdx + 1);
+    } else if (sectionIdx >= 0) {
+      bodies[sectionIdx].push(line);
+    }
+  }
+
+  const resultSections: string[] = [];
+  for (let i = 0; i < 3; i++) {
+    resultSections.push(targetHeadings[i]);
+    resultSections.push("");
+    const bodyText = bodies[i].join("\n").trim();
+    if (bodyText) {
+      if (fromLang === "en" && toLang === "ms") {
+        let msText = bodyText
+          .replace(/You are like a master organizer\./gi, "Anda seperti seorang ketua penyusun yang mahir.")
+          .replace(/You enjoy keeping things orderly/gi, "Anda gemar memastikan segalanya teratur")
+          .replace(/solving puzzles/gi, "menyelesaikan teka-teki")
+          .replace(/and working with your hands or tools/gi, "dan bekerja dengan tangan atau alatan fizikal")
+          .replace(/Think of yourself as a librarian who loves fixing the shelves and categorizing the books\./gi, "Fikirkan diri anda seperti seorang pustakawan yang suka membetulkan susunan rak dan mengkategorikan buku.")
+          .replace(/Your CV shows you studied/gi, "CV anda menunjukkan anda pernah belajar")
+          .replace(/This aligns with your interest in/gi, "Ini bertepatan dengan minat anda terhadap")
+          .replace(/structured, tangible environments where rules and property management are key\./gi, "persekitaran berstruktur dan nyata di mana peraturan serta pengurusan hartanah adalah teras.")
+          .replace(/Organize a small space, like a junk drawer or digital folder, using a clear, logical system\./gi, "Susun ruang kecil, seperti laci barangan terpakai atau folder digital, menggunakan sistem yang jelas dan logik.");
+        resultSections.push(msText);
+      } else if (fromLang === "ms" && toLang === "en") {
+        let enText = bodyText
+          .replace(/Anda seperti seorang ketua penyusun yang mahir\./gi, "You are like a master organizer.")
+          .replace(/Anda gemar memastikan segalanya teratur/gi, "You enjoy keeping things orderly")
+          .replace(/menyelesaikan teka-teki/gi, "solving puzzles")
+          .replace(/dan bekerja dengan tangan atau alatan fizikal/gi, "and working with your hands or tools")
+          .replace(/Fikirkan diri anda seperti seorang pustakawan yang suka membetulkan susunan rak dan mengkategorikan buku\./gi, "Think of yourself as a librarian who loves fixing the shelves and categorizing the books.")
+          .replace(/CV anda menunjukkan anda pernah belajar/gi, "Your CV shows you studied")
+          .replace(/Ini bertepatan dengan minat anda terhadap/gi, "This aligns with your interest in")
+          .replace(/Susun ruang kecil, seperti laci barangan terpakai atau folder digital, menggunakan sistem yang jelas dan logik\./gi, "Organize a small space, like a junk drawer or digital folder, using a clear, logical system.");
+        resultSections.push(enText);
+      } else {
+        resultSections.push(bodyText);
+      }
+    }
+    resultSections.push("");
+  }
+
+  return resultSections.join("\n").trim();
+}
+
+export async function translateHollandInsight(
+  content: string,
+  fromLang: Lang,
+  toLang: Lang,
+): Promise<{ content: string; model: string }> {
+  if (fromLang === toLang) {
+    return { content, model: "identity" };
+  }
+
+  const fromName = fromLang === "ms" ? "Bahasa Melayu" : fromLang === "zh" ? "Simplified Chinese" : "English";
+  const toName = toLang === "ms" ? "Bahasa Melayu (standard Malaysian Malay)" : toLang === "zh" ? "Simplified Chinese" : "clear, natural English";
+
+  const headingMix = toLang === "ms" ? "### Gabungan Minat" : toLang === "zh" ? "### 兴趣组合" : "### The Interest Mix";
+  const headingCv = toLang === "ms" ? "### Bukti dalam CV" : toLang === "zh" ? "### 简历中的证据" : "### Evidence from CV";
+  const headingAction = toLang === "ms" ? "### Satu Langkah Mudah untuk Dicuba" : toLang === "zh" ? "### 一个简单的尝试" : "### One Easy Thing to Try";
+
+  const system = [
+    `You are an expert bilingual Malaysian translator and career advisor.`,
+    `Translate the provided Holland (RIASEC) ELI5 explanation from ${fromName} into natural, grammatically correct, friendly ${toName}.`,
+    `CRITICAL REQUIREMENTS:`,
+    `1. Preserve the EXACT meaning, analogy/metaphor (e.g. master organizer, librarian, architect, researcher), reasoning, CV evidence facts, degree/institution names, quotes, and practical action advice.`,
+    `2. Do NOT invent new facts or alter any existing metaphors.`,
+    `3. Format strictly into the following 3 Markdown section headings:`,
+    `   ${headingMix}`,
+    `   ${headingCv}`,
+    `   ${headingAction}`,
+    `4. Maintain a warm, clear, accessible ELI5 tone suitable for an adult learner.`,
+    toLang === "ms" ? `5. Use proper, natural Bahasa Melayu standard (Malaysia) with correct grammar. Avoid Indonesian vocabulary.` : "",
+  ].filter(Boolean).join("\n");
+
+  try {
+    const out = await chat("light", system, `ORIGINAL TEXT (${fromName}):\n\n${content}`, { agent: "holland" });
+    if (out?.content && out.content.length > 30) {
+      return { content: out.content, model: `${out.model}-translation` };
+    }
+  } catch {
+    // Fallback to programmatic translation
+  }
+
+  return {
+    content: programmaticTranslateHolland(content, fromLang, toLang),
+    model: "local-translator",
+  };
+}
+

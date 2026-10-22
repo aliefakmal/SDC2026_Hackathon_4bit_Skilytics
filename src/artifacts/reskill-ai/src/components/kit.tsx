@@ -240,7 +240,7 @@ export function Markdown({ children }: { children: string }) {
   return <div className="prose-sk min-w-0 break-words"><ReactMarkdown>{children}</ReactMarkdown></div>;
 }
 
-export function AiWait({ since }: { since: number }) {
+export function AiWait({ since, note }: { since: number; note?: ReactNode }) {
   const { t } = useT();
   const [now, setNow] = useState(Date.now());
   useEffect(() => { const i = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(i); }, []);
@@ -248,7 +248,7 @@ export function AiWait({ since }: { since: number }) {
   return (
     <div className="rounded-xl border border-accent/40 bg-[hsl(var(--gold-soft))]/60 p-4 text-sm" role="status" aria-live="polite">
       <div className="flex items-center gap-2 font-semibold"><Loader2 className="h-4 w-4 animate-spin text-primary" />{t("ai.working", { s })}</div>
-      <p className="mt-1 text-muted-foreground">{s > 8 ? t("ai.coldStart") : t("ai.thinking")}</p>
+      <p className="mt-1 text-muted-foreground">{note ?? (s > 8 ? t("ai.coldStart") : t("ai.thinking"))}</p>
       <div className="mt-3 h-1 overflow-hidden rounded-full bg-card"><div className="sweep h-full w-1/3 rounded-full bg-primary/70" /></div>
     </div>
   );

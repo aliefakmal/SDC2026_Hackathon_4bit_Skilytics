@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { performance } from "node:perf_hooks";
 import { db, profilesTable, plansTable, insightsTable, rolesTable, type StoredProfileSkill } from "@workspace/db";
-import { and, desc, eq, gte, isNotNull, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
 import {
   ListProfilesQueryParams,
   CreateProfileBody,
@@ -20,7 +20,7 @@ import { agentRoutes } from "../lib/agent-routing";
 import { scoreRole } from "../lib/scoring";
 import { buildPlan } from "../lib/planner";
 import { canAccessProfile, getLatestPlan, getProfileRow, planToApi, profileScope, profileToApi, type ProfileRow } from "../lib/profiles";
-import { agentPrompt, agentTier, generateHollandFallback, hashInput, SOURCE_AEI, type AgentName, type Lang } from "../lib/agents";
+import { agentPrompt, agentTier, generateHollandFallback, hashInput, translateHollandInsight, SOURCE_AEI, type AgentName, type Lang } from "../lib/agents";
 import { chat, AiNotConnectedError, AiTimeoutError, AiVisionUnsupportedError } from "../lib/llm";
 import { consumeAiRequest } from "../lib/ai-rate-limit";
 import { SDG_TARGETS } from "../data/courses";
@@ -456,9 +456,23 @@ router.post("/profiles/:id/insights", async (req, res) => {
       return;
     }
     ctx["riasec"] = { skor: p.riasecScores, kod: p.riasecCode };
+    // Supply all verified data confirmed in the review step so AI grounds on real background:
+    ctx["profilDisahkan"] = {
+      nama: p.name,
+      perananSemasa: p.currentRole || null,
+      organisasi: p.organization || null,
+      pendidikan: p.education || null,
+      pengalaman: p.experience || null,
+      matlamat: p.goals || null,
+    };
+    ctx["kemahiranDisahkan"] = profile.skills.map((s) => ({
+      nama: s.name,
+      status: s.status,
+      bukti: s.evidence || null,
+    }));
+    ctx["semuaBuktiCv"] = (p.cvEvidence ?? []).filter((e) => e.quote && e.source !== "no_evidence");
     delete ctx.profil;
     delete ctx.kemahiran;
-    ctx["buktiCv"] = (p.cvEvidence ?? []).filter((e) => e.quote && e.source !== "no_evidence").slice(0, 3);
   }
   if (agent === "profiler" || agent === "fitter") {
     ctx["riasec"] = p.riasecScores ? { skor: p.riasecScores, kod: p.riasecCode } : null;
@@ -475,7 +489,7 @@ router.post("/profiles/:id/insights", async (req, res) => {
   }
   if (targetRole) ctx["peranSasaran"] = targetRole.title;
 
-  const inputHash = hashInput(agent, lang, ctx, agent === "holland" ? "eli5-v1" : null, agentRoutes().find((route) => route.agent === agent));
+  const inputHash = hashInput(agent, lang, ctx, agent === "holland" ? "eli5-v2" : null, agentRoutes().find((route) => route.agent === agent));
   if (!body.refresh) {
     const [cached] = await db
       .select()
@@ -487,13 +501,54 @@ router.post("/profiles/:id/insights", async (req, res) => {
       res.json({ ...insightToApi(cached), cached: true });
       return;
     }
+
+    // If an insight for Holland ELI5 was ALREADY generated in another language, translate it
+    // faithfully so metaphors, reasoning, and CV evidence remain consistent and identical across languages!
+    if (agent === "holland") {
+      const [existingOtherLang] = await db
+        .select()
+        .from(insightsTable)
+        .where(and(eq(insightsTable.profileId, id), eq(insightsTable.agent, "holland"), ne(insightsTable.lang, lang)))
+        .orderBy(desc(insightsTable.createdAt))
+        .limit(1);
+
+      if (existingOtherLang && existingOtherLang.content) {
+        req.log.info({ profileId: id, fromLang: existingOtherLang.lang, toLang: lang }, "Translating existing Holland insight to requested language");
+        const translated = await translateHollandInsight(existingOtherLang.content, existingOtherLang.lang as Lang, lang);
+        const [row] = await db
+          .insert(insightsTable)
+          .values({
+            profileId: id,
+            agent,
+            lang,
+            inputHash,
+            content: translated.content,
+            sources,
+            model: translated.model,
+          })
+          .returning();
+        res.json(insightToApi(row));
+        return;
+      }
+    }
   }
   const rateLimit = consumeAiRequest(req.user ? "user" : "guest", req.user ? String(req.user.id) : req.guestToken!);
   res.setHeader("X-RateLimit-Limit", String(rateLimit.limit));
   res.setHeader("X-RateLimit-Remaining", String(rateLimit.remaining));
   if (!rateLimit.allowed) {
     if (agent === "holland") {
-      const fallbackContent = generateHollandFallback(p.riasecCode || "CIR", p.riasecScores, (p.cvEvidence as any[]) || [], lang);
+      const fallbackContent = generateHollandFallback(
+        p.riasecCode || "CIR",
+        p.riasecScores,
+        (p.cvEvidence as any[]) || [],
+        lang,
+        {
+          education: p.education,
+          experience: p.experience,
+          currentRole: p.currentRole,
+          skills: profile.skills,
+        },
+      );
       const [row] = await db
         .insert(insightsTable)
         .values({ profileId: id, agent, lang, inputHash, content: fallbackContent, sources, model: "local-rag" })
@@ -520,7 +575,18 @@ router.post("/profiles/:id/insights", async (req, res) => {
   } catch (err) {
     if (agent === "holland") {
       req.log.warn({ profileId: id, err: String(err) }, "Holland AI chat failed; using grounded fallback generator");
-      const fallbackContent = generateHollandFallback(p.riasecCode || "CIR", p.riasecScores, (p.cvEvidence as any[]) || [], lang);
+      const fallbackContent = generateHollandFallback(
+        p.riasecCode || "CIR",
+        p.riasecScores,
+        (p.cvEvidence as any[]) || [],
+        lang,
+        {
+          education: p.education,
+          experience: p.experience,
+          currentRole: p.currentRole,
+          skills: profile.skills,
+        },
+      );
       const [row] = await db
         .insert(insightsTable)
         .values({ profileId: id, agent, lang, inputHash, content: fallbackContent, sources, model: "local-rag" })
