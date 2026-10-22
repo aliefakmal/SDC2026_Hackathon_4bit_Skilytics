@@ -6,7 +6,7 @@ import {
   AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, BarChart2, Check, CheckCircle2, Compass, Copy, FileCheck, FileImage, FileText, FileUp, GraduationCap, HelpCircle, Lightbulb, Loader2, PlusCircle, Quote, RotateCw, Sparkles, Volume2, VolumeX, X,
 } from "lucide-react";
 import {
-  createProfile, useGetProfile, useListProfileInsights, useListRiasecQuestions, useRunProfileAgent, useSubmitRiasec, useUpdateProfile, useUploadCv,
+  createProfile, runProfileAgent, useGetProfile, useListProfileInsights, useListRiasecQuestions, useSubmitRiasec, useUpdateProfile, useUploadCv,
   getGetProfileQueryKey, getListProfileInsightsQueryKey,
   type AgentInsight, type CvEvidence, type Profile, type ProfileUpdate, type Segment,
 } from "@workspace/api-client-react";
@@ -1465,6 +1465,8 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
   const [selectedLetter, setSelectedLetter] = useState(0);
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [activeTranslatingLang, setActiveTranslatingLang] = useState<string | null>(null);
+  const [explainError, setExplainError] = useState<string | null>(null);
 
   // Sync existing insights from database on load
   useEffect(() => {
@@ -1486,38 +1488,70 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
     }
   }, [insList.data]);
 
-  const run = useRunProfileAgent({
-    mutation: {
-      retry: 1,
-      onSuccess: (r) => {
-        setSince(null);
-        setByLang((prev) => ({ ...prev, [r.lang]: r }));
-        qc.invalidateQueries({ queryKey: getListProfileInsightsQueryKey(p.id) });
-      },
-      onError: () => setSince(null),
-    },
-  });
-
   const hasGeneratedInsight = Object.values(byLang).some((it) => it.agent === "holland" && Boolean(it.content));
   const insight = byLang[lang] ?? null;
 
-  const explain = () => {
+  const explain = async () => {
+    setExplainError(null);
     setSince(Date.now());
-    run.mutate({ id: p.id, data: { agent: "holland", lang } });
+    setActiveTranslatingLang(lang);
+    try {
+      const res = await runProfileAgent(p.id, { agent: "holland", lang });
+      setByLang((prev) => ({ ...prev, [res.lang]: res }));
+      qc.invalidateQueries({ queryKey: getListProfileInsightsQueryKey(p.id) });
+    } catch (err: any) {
+      console.error("Holland explain error:", err);
+      setExplainError(err?.message || "Failed to generate explanation");
+    } finally {
+      setActiveTranslatingLang(null);
+      setSince(null);
+    }
   };
 
-  // When language is switched and an insight was already generated, translate it automatically
-  const prevLangRef = useRef<string>(lang);
+  // Robust auto-translation watcher: whenever lang changes or byLang updates,
+  // if an insight was generated in another language, but not yet for the current language,
+  // automatically trigger translation. Even if the user switches languages rapidly,
+  // each language is requested and cached independently!
+  const currentLangRef = useRef<string>(lang);
+  currentLangRef.current = lang;
+
   useEffect(() => {
-    const prevLang = prevLangRef.current;
-    prevLangRef.current = lang;
-    if (prevLang !== lang) {
-      if (hasGeneratedInsight && !byLang[lang] && !run.isPending) {
-        setSince(Date.now());
-        run.mutate({ id: p.id, data: { agent: "holland", lang } });
-      }
+    if (!hasGeneratedInsight) return;
+
+    if (byLang[lang]) {
+      setActiveTranslatingLang(null);
+      setExplainError(null);
+      return;
     }
-  }, [lang, hasGeneratedInsight, byLang, run.isPending, p.id]);
+
+    setActiveTranslatingLang(lang);
+    setSince(Date.now());
+    setExplainError(null);
+
+    let isSubscribed = true;
+
+    runProfileAgent(p.id, { agent: "holland", lang })
+      .then((res) => {
+        setByLang((prev) => ({ ...prev, [res.lang]: res }));
+        qc.invalidateQueries({ queryKey: getListProfileInsightsQueryKey(p.id) });
+        if (isSubscribed && currentLangRef.current === res.lang) {
+          setActiveTranslatingLang(null);
+          setSince(null);
+        }
+      })
+      .catch((err: any) => {
+        if (isSubscribed && currentLangRef.current === lang) {
+          console.error("Auto-translation error for", lang, err);
+          setExplainError(err?.message || "Translation error");
+          setActiveTranslatingLang(null);
+          setSince(null);
+        }
+      });
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [lang, hasGeneratedInsight, byLang, p.id, qc]);
 
   const selectedType = code[selectedLetter] ?? code[0];
 
@@ -1682,12 +1716,12 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
                 </motion.div>
               ))}
             </div>
-          ) : run.isPending && since ? (
+          ) : activeTranslatingLang && since ? (
             <AiWait
               since={since}
-              note={hasGeneratedInsight && !byLang[lang] ? t("ob.results.translating", { lang: LANG_NAME[lang] ?? lang }) : undefined}
+              note={t("ob.results.translating", { lang: LANG_NAME[lang] ?? lang })}
             />
-          ) : run.isError ? (
+          ) : explainError ? (
             /* ONLY ONE BUTTON APPEARS HERE: Retry */
             <div className="rounded-xl border border-destructive/40 bg-card p-4 text-sm" role="alert" data-testid="status-explain-error">
               <div className="flex items-start gap-3">

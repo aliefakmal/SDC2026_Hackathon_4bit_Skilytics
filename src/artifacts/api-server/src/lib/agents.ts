@@ -8,7 +8,7 @@ export type Lang = "en" | "ms" | "zh";
 
 const ROLE_DESC: Record<AgentName, { tier: "main" | "light"; task: string }> = {
   cv: { tier: "light", task: "the CV Agent. Summarise the experience and skills evidenced in the CV, identify skills the automatic extraction may have missed, and suggest 3 specific CV improvements." },
-  holland: { tier: "light", task: "the Holland (RIASEC) Agent. Explain the user's Holland (RIASEC) questionnaire result in friendly, respectful ELI5 language for an adult learner. Ground your explanation in ALL verified profile data from their review step: verified education (pendidikanDisahkan), verified experience (pengalamanDisahkan), verified skills (kemahiranDisahkan), and CV evidence (semuaBuktiCv). Format strictly into exactly 3 short Markdown sections: (1) '### The Interest Mix': a relatable everyday analogy (e.g. master organizer, builder, investigator) explaining how their 3 letters work together; (2) '### Evidence from CV': explicitly cite their verified degree/institution (e.g. 'Your CV shows you studied Bachelor of Real Estate at Universiti Teknologi Malaysia...'), job experience, or verified skills, explaining why this real background genuinely reflects their interest combination; (3) '### One Easy Thing to Try': one fun, practical micro-action they can do this week. Translate the three section headings into the requested language (e.g. '### Gabungan Minat', '### Bukti dalam CV', '### Satu Langkah Mudah untuk Dicuba' in Malay; '### 兴趣组合', '### 简历中的证据', '### 一个简单的尝试' in Chinese). Never state that there is no evidence when verified education, experience, or skills are available in the context." },
+  holland: { tier: "light", task: "the Holland (RIASEC) Agent. Explain the user's Holland (RIASEC) questionnaire result in friendly, respectful ELI5 language for an adult learner. Ground your explanation in ALL verified profile data from their review step: verified education (pendidikanDisahkan), verified experience (pengalamanDisahkan), verified skills (kemahiranDisahkan), and CV evidence (semuaBuktiCv). Format strictly into exactly 3 short Markdown sections: (1) '### The Interest Mix': a relatable everyday analogy (e.g. master organizer, curious investigator, builder) explaining how their 3 letters work together in plain words; (2) '### Evidence from CV': synthesize their actual field of study, role, or core skills in 2 to 3 simple, friendly ELI5 sentences without quotation marks, explaining how their real background naturally reflects this interest mix. CRITICAL RULE: DO NOT quote long raw chunks of text or wrap paragraphs in quotation marks. Keep it simple and easily understandable; (3) '### One Easy Thing to Try': one fun, welcoming, low-pressure micro-experiment (exactly 2 sentences: first describe a simple 10-15 minute task they can try today or this week, then describe the positive feeling or insight to notice). Translate the three section headings into the requested language (e.g. '### Gabungan Minat', '### Bukti dalam CV', '### Satu Langkah Mudah untuk Dicuba' in Malay; '### 兴趣组合', '### 简历中的证据', '### 一个简单的尝试' in Chinese). Never state that there is no evidence when verified education, experience, or skills are available in the context." },
   profiler: { tier: "main", task: "the Profiler Agent. Build a concise career profile (strengths, AI exposure of the current role, time and budget constraints) in 4-6 short paragraphs." },
   fitter: { tier: "main", task: "the Fitter Agent. Explain why the top 3 roles fit or do not fit, based on the score breakdown, skill gaps and market signals. Give one most realistic transition recommendation." },
   planner: { tier: "main", task: "the Planner Agent. Explain the learning plan (Gantt) week by week: why this order, personal cost, and skills not yet covered. Discuss HRD Corp only when employer eligibility is explicitly included in the context." },
@@ -99,30 +99,77 @@ export function generateHollandFallback(
     },
   };
 
+  function cleanDegreeText(raw?: string | null): string | null {
+    if (!raw) return null;
+    const firstLine = raw.split("\n")[0] || raw;
+    let s = firstLine
+      .replace(/CGPA[:\s\d\.\/]+/gi, "")
+      .replace(/Thesis[:\s"[^"]*"?]+/gi, "")
+      .replace(/Award[:\s[^,\n]+]+/gi, "")
+      .replace(/\b\d{4}\s*[-–]\s*\d{4}\b/g, "")
+      .replace(/\b\d{4}\b/g, "")
+      .replace(/["“”]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (s.length > 70) {
+      const cut = s.slice(0, 70);
+      const splitPoint = Math.max(cut.lastIndexOf(","), cut.lastIndexOf(";"), cut.lastIndexOf(" - "), cut.lastIndexOf(" — "));
+      if (splitPoint > 20) s = cut.slice(0, splitPoint).trim();
+      else s = cut.trim();
+    }
+    return s || null;
+  }
+
+  function cleanRoleText(role?: string | null, exp?: string | null): string | null {
+    if (role && role.trim()) {
+      return role.replace(/["“”]/g, "").trim();
+    }
+    if (!exp) return null;
+    const firstLine = exp.split("\n")[0] || exp;
+    let s = firstLine
+      .replace(/Designed and deployed.+/gi, "")
+      .replace(/Developed anomaly.+/gi, "")
+      .replace(/Built an NLP.+/gi, "")
+      .replace(/\b\d{4}\s*[-–]\s*(?:Present|\d{4})\b/gi, "")
+      .replace(/["“”]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (s.includes(":")) {
+      s = s.split(":")[0].trim();
+    }
+    if (s.length > 60) {
+      const cut = s.slice(0, 60);
+      const splitPoint = Math.max(cut.lastIndexOf("—"), cut.lastIndexOf("-"), cut.lastIndexOf(" at "), cut.lastIndexOf(" di "));
+      if (splitPoint > 15) s = cut.slice(0, splitPoint).trim();
+      else s = cut.trim();
+    }
+    return s || null;
+  }
+
   const ACTION_TIPS: Record<Lang, Record<string, string>> = {
     en: {
-      R: "Assemble, configure, or troubleshoot a physical or digital tool setup that solves a real everyday problem.",
-      I: "Pick one intriguing technical article, dataset, or mystery and explore it for 15 minutes today.",
-      A: "Draft a creative concept map, color palette, or sketch an outline for an idea you care about.",
-      S: "Share a useful tip or guide a friend or colleague through a clear, helpful walkthrough.",
-      E: "Outline one small process improvement initiative and note down 3 concrete milestone steps.",
-      C: "Organize a small workspace, a digital folder, or a weekly task checklist using a clean, logical system.",
+      R: "Tackle a hands-on task, physical project, or configure a practical tool setup you enjoy. Notice the tangible satisfaction of seeing something real work smoothly through your own direct effort.",
+      I: "Pick one curious topic, puzzle, or simple dataset you find interesting and explore it for 10-15 minutes today. Notice how unraveling new insights naturally sparks your energy and curiosity.",
+      A: "Sketch a quick creative concept, visual mind map, or color palette for a personal idea you love. Let your imagination flow freely without worrying about perfection at the start.",
+      S: "Share a helpful tip or lend a hand to guide a colleague or friend who might be stuck. Notice how the positive, supportive interaction brightens the day and gives both of you an energy boost.",
+      E: "Outline one small improvement idea for your daily routine or team workflow and share it casually. Set one simple milestone you can celebrate as soon as it is achieved.",
+      C: "Organize a small space, like a junk drawer or digital folder, using a clear, logical system. Notice how having orderly categories makes your daily workflow feel calmer and easier.",
     },
     ms: {
-      R: "Bina, selaraskan, atau baiki satu alatan fizikal mahupun digital yang membantu tugasan harian anda.",
-      I: "Pilih satu artikel teknikal, set data, atau persoalan menarik dan telitinya selama 15 minit hari ini.",
-      A: "Lakar peta konsep kreatif, palet warna, atau reka bentuk ringkas untuk idea yang anda gemari.",
-      S: "Kongsi satu tip bermanfaat atau bimbing rakan sekerja melalui panduan langkah demi langkah.",
-      E: "Rangka satu inisiatif penambahbaikan proses kecil dan gariskan 3 langkah tindakan konkrit.",
-      C: "Susun satu ruang kerja kecil, folder digital, atau senarai semak mingguan menggunakan sistem yang kemas.",
+      R: "Cuba selesaikan satu tugasan fizikal, konfigurasi peranti, atau binaan praktikal kecil yang anda minati. Rasai kepuasan apabila melihat hasil kerja yang nyata dan berfungsi dengan lancar di depan mata anda.",
+      I: "Pilih satu topik menarik, teka-teki, atau set data ringkas dan telitinya selama 10 hingga 15 minit hari ini. Perhatikan bagaimana kepuasan merungkai maklumat baharu ini menyuntik semangat ingin tahu anda.",
+      A: "Lakar satu idea kreatif, peta minda visual, atau susun senarai konsep baharu untuk projek peribadi anda. Biarkan imaginasi anda mengalir bebas tanpa perlu bimbang tentang kesempurnaan pada peringkat awal.",
+      S: "Kongsi satu tip bermanfaat atau bimbing seorang rakan yang sedang mencari jalan penyelesaian ringkas. Perhatikan bagaimana interaksi saling membantu ini menceriakan suasana dan memberi kepuasan kepada anda.",
+      E: "Rangka satu cadangan inisiatif kecil untuk menambah baik aktiviti harian anda dan kongsikannya secara santai. Tetapkan satu sasaran mudah yang boleh diraikan sebaik sahaja ia selesai.",
+      C: "Cuba susun atur fail atau ruang kerja anda mengikut kategori yang paling logik. Perhatikan sama ada proses menyusun ini membuatkan anda berasa lebih tenang, teratur, dan produktif.",
     },
     zh: {
-      R: "动手配置或测试一项能够解决实际日常问题的工具或设备设置。",
-      I: "挑选一个你感兴趣的技术主题或数据集，今天专注探索学习 15 分钟。",
-      A: "为你感兴趣的项目绘制一张创意概念图或草拟一份视觉构思草案。",
-      S: "与同事或朋友分享一个实用的小技巧，提供简短清晰的分步指导。",
-      E: "梳理一项小型的流程改进构思，并列出 3 个切实可行的里程碑目标。",
-      C: "利用清晰合理的系统整理一个小工作区、数字文件夹或每周任务清单。",
+      R: "动手完成一项设备调试、实用工具配置或小型手工任务。体验亲手将实物调试顺畅、看到实际成果时的踏实与成就感。",
+      I: "挑选一个你感兴趣的主题、谜题或小数据集，今天专注探索 10 到 15 分钟。留意解开未知信息时带给你的那种求知满足感与活力。",
+      A: "为你喜欢的一个想法随手绘制一张创意草图、视觉思维导图或灵感配色。让想象力自由流淌，最初阶段无需苛求完美。",
+      S: "与同事或朋友分享一个实用的小技巧，或主动为遇到困难的人提供简明指引。观察这种互助协作的正面互动如何让你感到充实愉悦。",
+      E: "构思一个改进日常流程或工作流程的小方案，并轻松地与他人分享探讨。设定一个简单的小目标，完成后给自己一个小小的鼓励。",
+      C: "尝试用清晰合理的逻辑分类整理一个工作抽屉或电脑文件夹。观察这种井然有序的状态是否让你感到更加轻松、专注和高效。",
     },
   };
 
@@ -134,48 +181,50 @@ export function generateHollandFallback(
   const validQuotes = evidence.filter((e) => e.quote && e.source !== "no_evidence");
   const eduEv = validQuotes.find((e) => e.field === "education");
   const expEv = validQuotes.find((e) => e.field === "experience" || e.field === "currentRole");
-  const bestEv = eduEv || expEv || validQuotes[0];
 
   const eduText = verified?.education || (eduEv?.quote ? eduEv.quote : null);
   const expText = verified?.experience || (expEv?.quote ? expEv.quote : null);
   const skillNames = (verified?.skills || []).map((s) => s.name).slice(0, 3).join(", ");
 
+  const cleanEdu = cleanDegreeText(eduText);
+  const cleanRole = cleanRoleText(verified?.currentRole, expText);
+
   let evidenceParagraph = "";
   if (lang === "ms") {
-    if (eduText && expText) {
-      evidenceParagraph = `CV dan profil yang anda sahkan memaparkan kelayakan akademik "${eduText}" serta pengalaman kerja "${expText}". Latar belakang ini secara nyata menyokong minat anda dalam persekitaran kerja yang tersusun, berdisiplin dan berorientasikan hasil fizikal mahupun operasi yang jelas.`;
-    } else if (eduText) {
-      evidenceParagraph = `CV dan semakan profil anda mengesahkan kelayakan akademik "${eduText}". Bidang pengajian ini sangat bertepatan dengan minat anda dalam persekitaran yang tersusun, bersistematik dan berorientasikan peraturan serta pengurusan yang nyata.`;
-    } else if (bestEv?.quote) {
-      evidenceParagraph = `CV anda memaparkan petikan evidens: "${bestEv.quote}". Pengalaman ini berkait rapat dengan kebolehan anda menyelesaikan tugasan dalam persekitaran yang memerlukan ketelitian dan fokus berstruktur.`;
+    if (cleanEdu && cleanRole) {
+      evidenceParagraph = `Latar belakang anda dalam bidang ${cleanEdu} serta pengalaman sebagai ${cleanRole} jelas mencerminkan minat ini. Kemahiran praktikal dan asas berstruktur yang anda bina membolehkan anda mengurus proses dan menyelesaikan cabaran nyata dengan berkesan.`;
+    } else if (cleanEdu) {
+      evidenceParagraph = `Latar belakang pengajian anda dalam bidang ${cleanEdu} sangat bertepatan dengan gabungan minat ini. Bidang ini memberi anda asas kukuh untuk bekerja dalam persekitaran yang tersusun, tepat dan berorientasikan hasil yang jelas.`;
+    } else if (cleanRole) {
+      evidenceParagraph = `Pengalaman kerja anda sebagai ${cleanRole} jelas mencerminkan kecenderungan ini. Anda terbiasa mengendalikan tugasan yang memerlukan fokus, ketelitian sistematik dan aplikasi kemahiran yang nyata.`;
     } else if (skillNames) {
-      evidenceParagraph = `CV dan semakan profil anda mengesahkan kemahiran seperti ${skillNames}. Kemahiran ini membuktikan keupayaan anda mengaplikasikan gabungan minat ini secara praktikal.`;
+      evidenceParagraph = `Kemahiran anda dalam ${skillNames} membuktikan kecenderungan praktikal ini. Anda berupaya menterjemahkan minat yang tersusun ini kepada hasil kerja harian yang konsisten dan berkualiti.`;
     } else {
-      evidenceParagraph = `CV anda menunjukkan asas pembelajaran dan pengalaman yang menyokong gaya kerja terarah ini, menekankan aplikasi praktikal dan disiplin yang konsisten.`;
+      evidenceParagraph = `Pengalaman dan asas kemahiran dalam profil anda membuktikan keupayaan anda bekerja dengan teratur, berdisiplin dan fokus kepada penyelesaian masalah yang nyata.`;
     }
   } else if (lang === "zh") {
-    if (eduText && expText) {
-      evidenceParagraph = `你的简历及核实信息显示了“${eduText}”的学术背景与“${expText}”的实践经验。这与你在条理清晰、讲求实效的环境中施展才华的倾向高度契合。`;
-    } else if (eduText) {
-      evidenceParagraph = `你的简历核实信息显示了“${eduText}”的学习背景。这一专业领域与你在有条理、规范化以及具备明确实际操作的工作环境中发挥优势的倾向非常一致。`;
-    } else if (bestEv?.quote) {
-      evidenceParagraph = `你的简历展示了相关证据：“${bestEv.quote}”。这一经历与你在需要高度专注与条理分明的工作环境中发挥优势的倾向非常契合。`;
+    if (cleanEdu && cleanRole) {
+      evidenceParagraph = `你在 ${cleanEdu} 的专业背景以及担任 ${cleanRole} 的实务经验，清晰地展现了你对系统化思考与务实执行的追求。这证明你非常善于将复杂流程梳理顺畅并落实到实际工作中。`;
+    } else if (cleanEdu) {
+      evidenceParagraph = `你在 ${cleanEdu} 的学术背景与这一兴趣组合高度契合。它为你提供了严谨的思维基础，让你在追求规范化和明确成果的工作环境中更具优势。`;
+    } else if (cleanRole) {
+      evidenceParagraph = `你担任 ${cleanRole} 的工作经历直接反映了这一特质。你习惯于应对讲求条理、注重细节与切实执行的任务挑战。`;
     } else if (skillNames) {
-      evidenceParagraph = `你的简历及核实技能包含了 ${skillNames}。这些技能充分印证了你将此类兴趣组合付诸实际应用的能力。`;
+      evidenceParagraph = `你在 ${skillNames} 方面的专业技能充分体现了这一特质。你善于将条理清晰的兴趣倾向转化为稳定高效的工作产出。`;
     } else {
-      evidenceParagraph = `你的简历展现了支持这种工作风格的扎实基础，突出了一贯的务实与专注特质。`;
+      evidenceParagraph = `你的履历与核实信息展现了务实稳健的工作风格，表明你能够在清晰有序的流程中持续交付可靠成果。`;
     }
   } else {
-    if (eduText && expText) {
-      evidenceParagraph = `Your verified CV highlights your academic credential in "${eduText}" alongside experience in "${expText}". This concrete background directly complements your strength in structured, results-oriented environments.`;
-    } else if (eduText) {
-      evidenceParagraph = `Your verified CV displays your educational background in "${eduText}". This field closely matches your affinity for organized, systematic environments with clear operational standards.`;
-    } else if (bestEv?.quote) {
-      evidenceParagraph = `Your CV shows evidenced background: "${bestEv.quote}". This directly reinforces your ability to perform well in environments valuing methodical focus and structured problem-solving.`;
+    if (cleanEdu && cleanRole) {
+      evidenceParagraph = `Your background in ${cleanEdu} alongside experience as ${cleanRole} directly demonstrates this interest mix. Your proven skills show that you naturally thrive when organizing workflows and delivering reliable, real-world solutions.`;
+    } else if (cleanEdu) {
+      evidenceParagraph = `Your education in ${cleanEdu} closely matches this personality mix. It gives you a strong foundation for thriving in environments that value structured thinking, accuracy, and clear direction.`;
+    } else if (cleanRole) {
+      evidenceParagraph = `Your experience working as ${cleanRole} directly reflects this practical drive. You are accustomed to handling tasks that require methodical focus, attention to detail, and tangible execution.`;
     } else if (skillNames) {
-      evidenceParagraph = `Your profile confirms verified skills including ${skillNames}. These strengths directly reflect your practical ability to put this interest mix into action.`;
+      evidenceParagraph = `Your skills in ${skillNames} directly prove this capability in action. You know how to translate your natural interests into consistent, high-quality outcomes.`;
     } else {
-      evidenceParagraph = `Your CV highlights a practical foundation that naturally complements this working style, emphasizing reliable focus and systematic task delivery.`;
+      evidenceParagraph = `Your verified background highlights a steady, methodical approach to everyday challenges, showing that you value clear processes and dependable execution.`;
     }
   }
 
@@ -253,7 +302,7 @@ export function programmaticTranslateHolland(content: string, fromLang: Lang, to
     resultSections.push("");
     const bodyText = bodies[i].join("\n").trim();
     if (bodyText) {
-      if (fromLang === "en" && toLang === "ms") {
+      if (toLang === "ms") {
         let msText = bodyText
           .replace(/You are like a master organizer\./gi, "Anda seperti seorang ketua penyusun yang mahir.")
           .replace(/You enjoy keeping things orderly/gi, "Anda gemar memastikan segalanya teratur")
@@ -263,9 +312,22 @@ export function programmaticTranslateHolland(content: string, fromLang: Lang, to
           .replace(/Your CV shows you studied/gi, "CV anda menunjukkan anda pernah belajar")
           .replace(/This aligns with your interest in/gi, "Ini bertepatan dengan minat anda terhadap")
           .replace(/structured, tangible environments where rules and property management are key\./gi, "persekitaran berstruktur dan nyata di mana peraturan serta pengurusan hartanah adalah teras.")
-          .replace(/Organize a small space, like a junk drawer or digital folder, using a clear, logical system\./gi, "Susun ruang kecil, seperti laci barangan terpakai atau folder digital, menggunakan sistem yang jelas dan logik.");
+          .replace(/Organize a small space, like a junk drawer or digital folder, using a clear, logical system\..+/gi, "Cuba susun atur fail atau ruang kerja anda mengikut kategori yang paling logik. Perhatikan sama ada proses menyusun ini membuatkan anda berasa lebih tenang, teratur, dan produktif.");
         resultSections.push(msText);
-      } else if (fromLang === "ms" && toLang === "en") {
+      } else if (toLang === "zh") {
+        let zhText = bodyText
+          .replace(/You are like a master organizer\./gi, "你就像一位条理分明的秩序大师。")
+          .replace(/Anda seperti seorang ketua penyusun yang mahir\./gi, "你就像一位条理分明的秩序大师。")
+          .replace(/Think of yourself as a librarian who loves fixing the shelves and categorizing the books\./gi, "就像一位热爱整理书架、为藏书精确分类的图书馆理员。")
+          .replace(/Fikirkan diri anda seperti seorang pustakawan yang suka membetulkan susunan rak dan mengkategorikan buku\./gi, "就像一位热爱整理书架、为藏书精确分类的图书馆理员。")
+          .replace(/Your CV shows you studied/gi, "你的简历显示你曾就读于")
+          .replace(/CV anda menunjukkan anda pernah belajar/gi, "你的简历显示你曾就读于")
+          .replace(/This aligns with your interest in/gi, "这与你的兴趣组合非常契合，突出在")
+          .replace(/Ini bertepatan dengan minat anda terhadap/gi, "这与你的兴趣组合非常契合，突出在")
+          .replace(/Organize a small space, like a junk drawer or digital folder, using a clear, logical system\..+/gi, "尝试用清晰合理的逻辑分类整理一个工作抽屉或电脑文件夹。观察这种井然有序的状态是否让你感到更加轻松、专注和高效。")
+          .replace(/Cuba susun atur fail atau ruang kerja anda mengikut kategori yang paling logik\..+/gi, "尝试用清晰合理的逻辑分类整理一个工作抽屉或电脑文件夹。观察这种井然有序的状态是否让你感到更加轻松、专注和高效。");
+        resultSections.push(zhText);
+      } else {
         let enText = bodyText
           .replace(/Anda seperti seorang ketua penyusun yang mahir\./gi, "You are like a master organizer.")
           .replace(/Anda gemar memastikan segalanya teratur/gi, "You enjoy keeping things orderly")
@@ -274,10 +336,8 @@ export function programmaticTranslateHolland(content: string, fromLang: Lang, to
           .replace(/Fikirkan diri anda seperti seorang pustakawan yang suka membetulkan susunan rak dan mengkategorikan buku\./gi, "Think of yourself as a librarian who loves fixing the shelves and categorizing the books.")
           .replace(/CV anda menunjukkan anda pernah belajar/gi, "Your CV shows you studied")
           .replace(/Ini bertepatan dengan minat anda terhadap/gi, "This aligns with your interest in")
-          .replace(/Susun ruang kecil, seperti laci barangan terpakai atau folder digital, menggunakan sistem yang jelas dan logik\./gi, "Organize a small space, like a junk drawer or digital folder, using a clear, logical system.");
+          .replace(/Cuba susun atur fail atau ruang kerja anda mengikut kategori yang paling logik\..+/gi, "Organize a small space, like a junk drawer or digital folder, using a clear, logical system. Notice how having orderly categories makes your daily workflow feel calmer and easier.");
         resultSections.push(enText);
-      } else {
-        resultSections.push(bodyText);
       }
     }
     resultSections.push("");
@@ -290,6 +350,16 @@ export async function translateHollandInsight(
   content: string,
   fromLang: Lang,
   toLang: Lang,
+  profileContext?: {
+    code?: string;
+    scores?: Record<string, number> | null;
+    verified?: {
+      education?: string | null;
+      experience?: string | null;
+      currentRole?: string | null;
+      skills?: Array<{ name: string; status?: string; evidence?: string | null }>;
+    };
+  },
 ): Promise<{ content: string; model: string }> {
   if (fromLang === toLang) {
     return { content, model: "identity" };
@@ -306,14 +376,16 @@ export async function translateHollandInsight(
     `You are an expert bilingual Malaysian translator and career advisor.`,
     `Translate the provided Holland (RIASEC) ELI5 explanation from ${fromName} into natural, grammatically correct, friendly ${toName}.`,
     `CRITICAL REQUIREMENTS:`,
-    `1. Preserve the EXACT meaning, analogy/metaphor (e.g. master organizer, librarian, architect, researcher), reasoning, CV evidence facts, degree/institution names, quotes, and practical action advice.`,
-    `2. Do NOT invent new facts or alter any existing metaphors.`,
-    `3. Format strictly into the following 3 Markdown section headings:`,
+    `1. Preserve the EXACT meaning, analogy/metaphor (e.g. master organizer, librarian, architect, researcher), reasoning, CV evidence facts, degree/institution names, and practical action advice.`,
+    `2. Keep it simple and easily understandable (ELI5). Do NOT dump long quotes or wrap paragraphs in quotation marks.`,
+    `3. Maintain the warm 2-sentence micro-experiment for the action tip.`,
+    `4. Format strictly into the following 3 Markdown section headings:`,
     `   ${headingMix}`,
     `   ${headingCv}`,
     `   ${headingAction}`,
-    `4. Maintain a warm, clear, accessible ELI5 tone suitable for an adult learner.`,
-    toLang === "ms" ? `5. Use proper, natural Bahasa Melayu standard (Malaysia) with correct grammar. Avoid Indonesian vocabulary.` : "",
+    `5. Maintain a warm, clear, accessible ELI5 tone suitable for an adult learner.`,
+    toLang === "ms" ? `6. Use proper, natural Bahasa Melayu standard (Malaysia) with correct grammar. Avoid Indonesian vocabulary.` : "",
+    toLang === "zh" ? `6. Use fluent, standard Simplified Chinese. Keep recognized institution names natural.` : "",
   ].filter(Boolean).join("\n");
 
   try {
@@ -322,7 +394,20 @@ export async function translateHollandInsight(
       return { content: out.content, model: `${out.model}-translation` };
     }
   } catch {
-    // Fallback to programmatic translation
+    // Fallback to grounded translation or programmatic translation
+  }
+
+  if (profileContext?.code) {
+    return {
+      content: generateHollandFallback(
+        profileContext.code,
+        profileContext.scores,
+        [],
+        toLang,
+        profileContext.verified,
+      ),
+      model: "local-grounded-fallback",
+    };
   }
 
   return {

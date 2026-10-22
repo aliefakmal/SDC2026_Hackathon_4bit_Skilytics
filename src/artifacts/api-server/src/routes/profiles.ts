@@ -514,7 +514,21 @@ router.post("/profiles/:id/insights", async (req, res) => {
 
       if (existingOtherLang && existingOtherLang.content) {
         req.log.info({ profileId: id, fromLang: existingOtherLang.lang, toLang: lang }, "Translating existing Holland insight to requested language");
-        const translated = await translateHollandInsight(existingOtherLang.content, existingOtherLang.lang as Lang, lang);
+        const translated = await translateHollandInsight(
+          existingOtherLang.content,
+          existingOtherLang.lang as Lang,
+          lang,
+          {
+            code: p.riasecCode || "CIR",
+            scores: p.riasecScores,
+            verified: {
+              education: p.education,
+              experience: p.experience,
+              currentRole: p.currentRole,
+              skills: profile.skills,
+            },
+          },
+        );
         const [row] = await db
           .insert(insightsTable)
           .values({
