@@ -36,6 +36,15 @@ connectionString = connectionString
   .replace(/([?&])channel_binding=[^&]*(&|$)/g, "$1")
   .replace(/[?&]$/, "");
 
+if (
+  process.env.RENDER &&
+  (connectionString.includes("localhost") || connectionString.includes("127.0.0.1"))
+) {
+  console.error(
+    "[FATAL DATABASE ERROR] DATABASE_URL on Render is currently pointing to localhost! Please set DATABASE_URL to your Neon PostgreSQL connection string in the Render Dashboard Environment settings."
+  );
+}
+
 const isRemote =
   connectionString.includes("neon.tech") ||
   connectionString.includes("sslmode=require") ||
