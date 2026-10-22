@@ -257,8 +257,7 @@ export async function extractCvMultimodalProfile(pages: CvDocumentPage[], lang: 
   const visionExtraction = validateExtraction(JSON.stringify(parsed.profile), cvText);
   let textExtraction: Awaited<ReturnType<typeof extractCvProfile>> | null = null;
   const hasCoreFacts = Boolean(
-    visionExtraction.fields.name &&
-    (visionExtraction.fields.education || visionExtraction.fields.experience)
+    visionExtraction.evidence.some((e) => e.source === "user_cv" && e.value.trim() && e.quote)
   );
   if (!hasCoreFacts) {
     try {

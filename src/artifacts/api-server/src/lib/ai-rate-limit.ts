@@ -74,8 +74,8 @@ function readConfig(): RateLimitConfig {
   }
   return {
     windowMs,
-    userLimit: positiveIntegerEnv("AI_REQUEST_LIMIT_USER", 20),
-    guestLimit: positiveIntegerEnv("AI_REQUEST_LIMIT_GUEST", 5),
+    userLimit: positiveIntegerEnv("AI_REQUEST_LIMIT_USER", 100),
+    guestLimit: positiveIntegerEnv("AI_REQUEST_LIMIT_GUEST", 50),
   };
 }
 

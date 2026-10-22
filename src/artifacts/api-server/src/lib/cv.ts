@@ -199,7 +199,7 @@ export async function extractCvDocument(
           const canvas = createCanvas(source.width, source.height);
           const context = canvas.getContext("2d");
           context.drawImage(source, 0, 0);
-          const jpeg = canvas.toBuffer("image/jpeg", 86);
+          const jpeg = canvas.toBuffer("image/jpeg", 75);
           imageInput = {
             mediaType: "image/jpeg" as const,
             base64: jpeg.toString("base64"),

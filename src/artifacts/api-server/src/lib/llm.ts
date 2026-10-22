@@ -44,7 +44,7 @@ function cfg() {
 
   const geminiKey = process.env["GEMINI_API_KEY"]?.trim();
   let geminiModel = process.env["GEMINI_MODEL"]?.trim() || "gemini-2.5-flash";
-  if (geminiModel === "gemini-2.0-flash") {
+  if (geminiModel === "gemini-2.0-flash" || geminiModel === "gemini-3.8-flash") {
     geminiModel = "gemini-2.5-flash";
   }
 
@@ -398,7 +398,7 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
       }
     }
     const isJsonTask = system.includes("JSON") || system.includes("json");
-    const candidateModels = Array.from(new Set([c.geminiModel, "gemini-2.5-flash", "gemini-flash-latest", "gemini-3.8-flash"]));
+    const candidateModels = Array.from(new Set([c.geminiModel, "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-flash-latest"]));
     let lastError: Error | null = null;
     let successfulModel = c.geminiModel;
     let content = "";
@@ -422,7 +422,7 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
                 ...(isJsonTask ? { responseMimeType: "application/json" } : {}),
               },
             }),
-            signal: AbortSignal.timeout(images ? 45_000 : 25_000),
+            signal: AbortSignal.timeout(images ? 35_000 : 25_000),
           });
           if (res.status === 429 && attempt < 1) {
             await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -442,7 +442,7 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
 
       if (!res.ok) {
         const errTxt = await res.text().catch(() => "");
-        if (res.status === 503 || res.status === 404) {
+        if (res.status === 429 || res.status === 503 || res.status === 404 || res.status === 500) {
           lastError = new Error(`Model ${model} returned HTTP ${res.status}: ${errTxt}`);
           continue;
         }
