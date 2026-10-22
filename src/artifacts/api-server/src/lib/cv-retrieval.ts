@@ -42,6 +42,22 @@ export class CvProfileFactsMissingError extends CvError {
   }
 }
 
+export interface CvProfileExtractionResult {
+  fields: Record<string, string | null>;
+  evidence: CvEvidence[];
+  text: string;
+  model: string;
+  timing: {
+    endpointTier?: "light" | "llm" | string;
+    modelResolutionMs: number;
+    endpointRequestMs: number;
+    endpointWarmBeforeRequest: boolean | null;
+    endpointStartupMs: number | null;
+    readyToResponseMs?: number;
+  };
+  references: { name: string; text: string; source: string; url: string; version: string }[];
+}
+
 const multimodalOutputSchema = z.object({
   imagePages: z.array(z.object({
     pageNumber: z.number().int().min(1),
@@ -319,7 +335,7 @@ export function extractCurrentRoleAndOrg(text: string, expContent?: string | nul
   return { role, org };
 }
 
-export function extractCvProfileFallback(text: string, lang: Lang) {
+export function extractCvProfileFallback(text: string, lang: Lang): CvProfileExtractionResult {
   const name = extractNameFromText(text);
   const expBounds = findSectionBounds(text, EXPERIENCE_HEADINGS);
   const eduBounds = findSectionBounds(text, EDUCATION_HEADINGS);
@@ -478,7 +494,7 @@ export async function extractCvMultimodalProfile(pages: CvDocumentPage[], lang: 
   if (cvText.length < 40 || !/[\p{L}]{2}/u.test(cvText)) throw new CvError("cv_unreadable");
 
   const visionExtraction = validateExtraction(JSON.stringify(parsed.profile), cvText);
-  let textExtraction: Awaited<ReturnType<typeof extractCvProfile>> | null = null;
+  let textExtraction: CvProfileExtractionResult | null = null;
   const hasCoreFacts = Boolean(
     visionExtraction.evidence.some((e) => e.source === "user_cv" && e.value.trim() && e.quote)
   );
@@ -573,7 +589,7 @@ export function cvExtractionKey(text: string, lang: Lang, images?: CvImageInput 
   return hashInput("cv-rag-v4", inputHash, lang, process.env.RUNPOD_LIGHT_MODEL, process.env.RUNPOD_LLM_MODEL, process.env.RUNPOD_LIGHT_ENDPOINT_ID, process.env.RUNPOD_LLM_ENDPOINT_ID, SKILL_REFERENCES);
 }
 
-export async function extractCvProfile(text: string, lang: Lang) {
+export async function extractCvProfile(text: string, lang: Lang): Promise<CvProfileExtractionResult> {
   const chunks = retrieveCv(text);
   const references = retrieveReferences(text);
   const system =

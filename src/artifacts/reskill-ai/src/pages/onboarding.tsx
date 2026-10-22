@@ -532,7 +532,6 @@ function CvStep({
         if (errStatus(err) === 404 && ensureProfile && lastFile.current) {
           try {
             setObProfile(scope, null);
-            setPid(null);
             await ensureProfile();
             send(lastFile.current);
           } catch {}

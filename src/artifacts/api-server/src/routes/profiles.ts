@@ -156,11 +156,11 @@ router.post("/profiles/:id/cv", async (req, res) => {
       text = ocrText;
     } else {
       const document = await extractCvDocument(body.fileName, body.contentBase64);
-      if ("pages" in document) {
+      if (document.pages) {
         pages = document.pages;
         text = document.pages.map((page) => page.text).filter(Boolean).join("\n\n");
       } else {
-        text = document.text;
+        text = document.text ?? "";
       }
     }
   } catch (err) {
