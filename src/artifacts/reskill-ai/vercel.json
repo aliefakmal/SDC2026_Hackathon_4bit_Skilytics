@@ -3,7 +3,19 @@
   "cleanUrls": false,
   "rewrites": [
     {
-      "source": "/((?!assets/|.*\\.[a-zA-Z0-9]+$).*)",
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/favicon.svg",
+      "destination": "/favicon.svg"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
