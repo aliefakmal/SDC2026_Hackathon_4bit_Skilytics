@@ -178,7 +178,23 @@ router.post("/profiles/:id/cv", async (req, res) => {
   const keyText = text ?? pages?.map((page) => `Page ${page.pageNumber}\n${page.text}`).join("\n\n") ?? "";
   const key = cvExtractionKey(keyText, lang, images);
   if (p.cvExtractionKey === key) { res.json(profileToApi(p, await loadSkills())); return; }
-  if (cvRequests.has(id)) { res.status(409).json({ error: "cv_processing" }); return; }
+  const inFlight = cvRequests.get(id);
+  if (inFlight) {
+    try {
+      res.json(await inFlight);
+      return;
+    } catch (err) {
+      req.log.warn({ profileId: id, kind: err instanceof AiNotConnectedError ? "not_configured" : "extraction_failed" }, "CV in-flight extraction failed");
+      const error = err instanceof AiNotConnectedError ? "ai_not_connected"
+        : err instanceof AiTimeoutError ? "ai_timeout"
+          : err instanceof AiVisionUnsupportedError ? "ai_vision_unsupported"
+            : err instanceof CvError ? err.message
+            : err instanceof CvAiOutputError ? "cv_ai_invalid" : "ai_failed";
+      const status = err instanceof CvError ? 400 : err instanceof AiNotConnectedError ? 503 : 502;
+      res.status(status).json({ error });
+      return;
+    }
+  }
   const rate = consumeAiRequest(req.user ? "user" : "guest", req.user ? String(req.user.id) : req.guestToken!, images.length ? 2 : 1);
   if (!rate.allowed) { res.setHeader("Retry-After", String(rate.retryAfterSeconds)); res.status(429).json({ error: "ai_rate_limited", retryAfterSeconds: rate.retryAfterSeconds }); return; }
   const work = (async () => {

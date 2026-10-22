@@ -27,11 +27,37 @@ function endpointId(raw: string | undefined): string | undefined {
   return m ? m[1] : v;
 }
 
+export type AiProvider = "runpod" | "gemini" | "groq" | "mock";
+
 function cfg() {
+  const providerEnv = process.env["AI_PROVIDER"]?.toLowerCase().trim();
+  let provider: AiProvider = "runpod";
+  if (providerEnv === "mock" || process.env["AI_TEST_MODE"] === "true") {
+    provider = "mock";
+  } else if (providerEnv === "gemini" || (!providerEnv && process.env["GEMINI_API_KEY"]?.trim())) {
+    provider = "gemini";
+  } else if (providerEnv === "groq" || (!providerEnv && process.env["GROQ_API_KEY"]?.trim())) {
+    provider = "groq";
+  } else {
+    provider = "runpod";
+  }
+
+  const geminiKey = process.env["GEMINI_API_KEY"]?.trim();
+  const geminiModel = process.env["GEMINI_MODEL"]?.trim() || "gemini-2.0-flash";
+
+  const groqKey = process.env["GROQ_API_KEY"]?.trim();
+  const groqModel = process.env["GROQ_MODEL"]?.trim() || "llama-3.3-70b-versatile";
+
   const apiKey = process.env["RUNPOD_API_KEY"]?.trim();
   const mainId = endpointId(process.env["RUNPOD_LLM_ENDPOINT_ID"]);
   const lightId = endpointId(process.env["RUNPOD_LIGHT_ENDPOINT_ID"]);
+
   return {
+    provider,
+    geminiKey,
+    geminiModel,
+    groqKey,
+    groqModel,
     apiKey,
     mainId,
     lightId,
@@ -43,6 +69,73 @@ function cfg() {
 
 export async function aiStatus() {
   const c = cfg();
+  if (c.provider === "mock") {
+    return {
+      connected: true,
+      provider: "Mock Testing Engine (Zero Credit)",
+      mainModel: "mock-engine-v1",
+      lightModel: "mock-engine-v1",
+      mainConfigured: true,
+      lightConfigured: true,
+      mainStatus: "ok" as const,
+      mainDetail: "Local deterministic extraction active. Zero credits consumed, instant response.",
+      mainError: null,
+      lightStatus: "ok" as const,
+      lightDetail: "Local deterministic extraction active.",
+      lightError: null,
+      message: "Testing mode active. Fast, zero-credit CV reading enabled.",
+    };
+  }
+
+  if (c.provider === "gemini") {
+    const health = await endpointHealth("main");
+    const configured = !!c.geminiKey;
+    return {
+      connected: health.status === "ok",
+      provider: "Google Gemini (Free API)",
+      mainModel: c.geminiModel,
+      lightModel: c.geminiModel,
+      mainConfigured: configured,
+      lightConfigured: configured,
+      mainStatus: health.status,
+      mainDetail: health.detail,
+      mainError: health.error,
+      lightStatus: health.status,
+      lightDetail: health.detail,
+      lightError: health.error,
+      message: !configured
+        ? "Google Gemini API not configured. Set GEMINI_API_KEY in .env."
+        : health.status === "ok"
+          ? "Google Gemini Free API connected and ready."
+          : `Google Gemini API health check failed: ${health.error}`,
+    };
+  }
+
+  if (c.provider === "groq") {
+    const health = await endpointHealth("main");
+    const configured = !!c.groqKey;
+    return {
+      connected: health.status === "ok",
+      provider: "Groq (Free API)",
+      mainModel: c.groqModel,
+      lightModel: c.groqModel,
+      mainConfigured: configured,
+      lightConfigured: configured,
+      mainStatus: health.status,
+      mainDetail: health.detail,
+      mainError: health.error,
+      lightStatus: health.status,
+      lightDetail: health.detail,
+      lightError: health.error,
+      message: !configured
+        ? "Groq API not configured. Set GROQ_API_KEY in .env."
+        : health.status === "ok"
+          ? "Groq Free API connected and ready."
+          : `Groq API health check failed: ${health.error}`,
+    };
+  }
+
+  // RunPod (default)
   const mainConfigured = !!(c.apiKey && c.mainId);
   const lightConfigured = !!(c.apiKey && c.lightId);
   const [mainHealth, lightHealth] = await Promise.all([
@@ -63,7 +156,7 @@ export async function aiStatus() {
     lightDetail: lightHealth.detail,
     lightError: lightHealth.error,
     message: !mainConfigured
-      ? "AI engine not connected. Set RUNPOD_API_KEY and RUNPOD_LLM_ENDPOINT_ID."
+      ? "AI engine not connected. Set RUNPOD_API_KEY and RUNPOD_LLM_ENDPOINT_ID, or use GEMINI_API_KEY for free AI."
       : mainHealth.status !== "ok"
         ? `Main AI endpoint is unavailable or its served model does not match the configuration: ${mainHealth.error ?? "health check failed"}`
         : lightConfigured && lightHealth.status !== "ok"
@@ -163,7 +256,7 @@ async function waitForEndpointStartup(
   startedAt: number,
   requestSettled: () => boolean,
 ): Promise<number | null> {
-  const deadline = startedAt + 290_000;
+  const deadline = startedAt + 75_000;
   while (!requestSettled() && performance.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 1_000));
     if (requestSettled()) return null;
@@ -173,8 +266,228 @@ async function waitForEndpointStartup(
   return null;
 }
 
+function mockGenerateChat(system: string, user: string, images?: ChatImage[]): string {
+  // 1. Multimodal CV extraction
+  if (system.includes("imagePages") || system.includes("mixed text and image pages")) {
+    return JSON.stringify({
+      imagePages: [
+        {
+          pageNumber: 1,
+          text: "Ungku Babas bin Ungku Samad\nSINE DORBY\nBusiness Operation Intern\nOct 2023 - Mar 2024\nUniversiti Teknologi Malaysia\nBachelor of Real Estate\nJuly, 2019 - Oct, 2024\n\nSPM : 8A 1B\nGained experience in managing daily operations, coordinating tasks, analysing business processes, and improving workflow efficiency.",
+        },
+      ],
+      profile: {
+        name: { value: "Ungku Babas bin Ungku Samad", quote: "Ungku Babas bin Ungku Samad" },
+        currentRole: { value: "Business Operation Intern", quote: "Business Operation Intern" },
+        organization: { value: "SINE DORBY", quote: "SINE DORBY" },
+        education: { value: "Bachelor of Real Estate", quote: "Bachelor of Real Estate" },
+        experience: { value: "Business Operation Intern", quote: "Business Operation Intern" },
+      },
+    });
+  }
+
+  // 2. Text CV extraction
+  if (system.includes("userCvChunks") || system.includes("extract CV facts as strict JSON")) {
+    let sourceText = user;
+    try {
+      const parsed = JSON.parse(user) as { userCvChunks?: { content: string }[] };
+      if (parsed.userCvChunks?.length) {
+        sourceText = parsed.userCvChunks.map((c) => c.content).join("\n\n");
+      }
+    } catch {}
+
+    const findPattern = (patterns: RegExp[]): { value: string; quote: string } | null => {
+      for (const re of patterns) {
+        const m = re.exec(sourceText);
+        if (m) {
+          const val = (m[1] || m[0]).trim();
+          const quo = m[0].trim();
+          if (val && quo && sourceText.includes(quo) && quo.includes(val)) {
+            return { value: val, quote: quo };
+          }
+        }
+      }
+      return null;
+    };
+
+    const name = findPattern([
+      /(?:Name|Nama):\s*([^\n\r]+)/i,
+      /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/m,
+      /\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})\b/,
+    ]);
+    const currentRole = findPattern([
+      /(?:Current role|Position|Title|Jawatan):\s*([^\n\r]+)/i,
+      /\b((?:Senior\s+)?(?:Data\s+Analyst|Software\s+Engineer|Operations\s+Intern|Project\s+Manager|Machine\s+Operator|Executive|Consultant))\b/i,
+    ]);
+    const organization = findPattern([
+      /(?:Organization|Company|Organisasi|Majikan):\s*([^\n\r]+)/i,
+      /\b(SINE\s+DORBY|Sample\s+Research\s+Lab|Tech\s+Solutions|Petronas|Intel)\b/i,
+    ]);
+    const education = findPattern([
+      /(?:Education|Pendidikan):\s*([^\n\r]+)/i,
+      /\b((?:Bachelor|Diploma|Master|Doctorate|SPM|Degree)\s+(?:of|in)\s+[^\n\r,]+)/i,
+      /\b(Universiti\s+[^\n\r,]+)/i,
+    ]);
+    const experience = findPattern([
+      /(?:Experience|Pengalaman):\s*([^\n\r]+)/i,
+      /(Prepared monthly reports[^\n\r.]+)/i,
+      /(Gained experience in[^\n\r.]+)/i,
+    ]);
+
+    return JSON.stringify({
+      name,
+      currentRole,
+      organization,
+      education,
+      experience,
+    });
+  }
+
+  // 3. Holland RIASEC explanation
+  if (system.includes("Holland") || system.includes("RIASEC") || user.includes("riasec") || user.includes("scores")) {
+    return [
+      "### Analisis Minat Holland (RIASEC)",
+      "",
+      "Analisis menunjukkan corak minat yang kuat dalam penyelesaian masalah teknikal dan aplikasi praktikal.",
+      "",
+      "- **Kekuatan Utama**: Teliti, berorientasikan matlamat, dan berupaya mengintegrasikan maklumat baharu dengan cekap.",
+      "- **Cadangan Bidang**: Operasi strategik, analisis proses perniagaan, dan perancangan teknikal.",
+      "- **Langkah Seterusnya**: Teruskan dengan modul kemahiran yang dicadangkan bagi mengukuhkan profil anda.",
+    ].join("\n");
+  }
+
+  return JSON.stringify({ status: "ok" });
+}
+
 async function generateChat(tier: Tier, system: string, user: string, images?: ChatImage[], options?: ChatOptions): Promise<ChatResult> {
   const c = cfg();
+
+  // 1. Mock Testing Engine
+  if (c.provider === "mock") {
+    return {
+      content: mockGenerateChat(system, user, images),
+      model: "mock-engine-v1",
+      timing: {
+        endpointTier: tier,
+        modelResolutionMs: 0,
+        endpointRequestMs: 2,
+        endpointWarmBeforeRequest: true,
+        endpointStartupMs: 0,
+        readyToResponseMs: 2,
+      },
+    };
+  }
+
+  // 2. Google Gemini (Free API)
+  if (c.provider === "gemini") {
+    if (!c.geminiKey) throw new AiNotConnectedError("Google Gemini API key not configured. Set GEMINI_API_KEY.");
+    const requestStartedAt = performance.now();
+    let res: Response;
+    try {
+      res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${c.geminiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: c.geminiModel,
+          temperature: images ? 0.1 : 0.2,
+          max_tokens: 4096,
+          messages: [
+            { role: "system", content: system },
+            {
+              role: "user",
+              content: images
+                ? [
+                    { type: "text", text: user },
+                    ...images.map((img) => ({
+                      type: "image_url" as const,
+                      image_url: { url: `data:${img.mediaType};base64,${img.base64}` },
+                    })),
+                  ]
+                : user,
+            },
+          ],
+        }),
+        signal: AbortSignal.timeout(45_000),
+      });
+    } catch (err) {
+      if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) {
+        throw new AiTimeoutError("Google Gemini request timed out.");
+      }
+      throw err;
+    }
+    if (!res.ok) {
+      const errTxt = await res.text().catch(() => "");
+      throw new Error(`Google Gemini request failed with HTTP ${res.status}: ${errTxt}`);
+    }
+    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const content = (json.choices?.[0]?.message?.content ?? "").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+    if (!content) throw new Error("Google Gemini returned an empty response.");
+    const endpointRequestMs = Math.round(performance.now() - requestStartedAt);
+    return {
+      content,
+      model: c.geminiModel,
+      timing: {
+        endpointTier: tier,
+        modelResolutionMs: 1,
+        endpointRequestMs,
+        endpointWarmBeforeRequest: true,
+        endpointStartupMs: 0,
+        readyToResponseMs: endpointRequestMs,
+      },
+    };
+  }
+
+  // 3. Groq (Free API)
+  if (c.provider === "groq") {
+    if (!c.groqKey) throw new AiNotConnectedError("Groq API key not configured. Set GROQ_API_KEY.");
+    const requestStartedAt = performance.now();
+    let res: Response;
+    try {
+      res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${c.groqKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: c.groqModel,
+          temperature: 0.2,
+          max_tokens: 4096,
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: user },
+          ],
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch (err) {
+      if (err instanceof Error && (err.name === "TimeoutError" || err.name === "AbortError")) {
+        throw new AiTimeoutError("Groq request timed out.");
+      }
+      throw err;
+    }
+    if (!res.ok) throw new Error(`Groq request failed with HTTP ${res.status}`);
+    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    const content = (json.choices?.[0]?.message?.content ?? "").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+    const endpointRequestMs = Math.round(performance.now() - requestStartedAt);
+    return {
+      content,
+      model: c.groqModel,
+      timing: {
+        endpointTier: tier,
+        modelResolutionMs: 1,
+        endpointRequestMs,
+        endpointWarmBeforeRequest: true,
+        endpointStartupMs: 0,
+        readyToResponseMs: endpointRequestMs,
+      },
+    };
+  }
+
+  // 4. RunPod Serverless (vLLM)
   if (!c.apiKey || !c.mainId) throw new AiNotConnectedError("AI engine not connected");
   const useLight = tier === "light" && !!c.lightId;
   const endpoint = useLight ? c.lightId! : c.mainId;
@@ -197,34 +510,34 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
   })();
   let res: Response;
   try {
-  res = await fetch(`https://api.runpod.ai/v2/${endpoint}/openai/v1/chat/completions`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${c.apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model,
-      temperature: images ? 0.1 : 0.3,
-      max_tokens: images ? 6000 : 1800,
-      messages: [
-        { role: "system", content: system },
-        {
-          role: "user",
-          content: images
-            ? [
-                { type: "text", text: user },
-                ...images.map((image) => ({
-                  type: "image_url" as const,
-                  image_url: { url: `data:${image.mediaType};base64,${image.base64}` },
-                })),
-              ]
-            : user,
-        },
-      ],
-      chat_template_kwargs: { enable_thinking: false },
-    }),
-    signal: AbortSignal.timeout(290_000),
-  });
-  requestSettled = true;
-  markRequestSettled();
+    res = await fetch(`https://api.runpod.ai/v2/${endpoint}/openai/v1/chat/completions`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${c.apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        temperature: images ? 0.1 : 0.3,
+        max_tokens: images ? 6000 : 3500,
+        messages: [
+          { role: "system", content: system },
+          {
+            role: "user",
+            content: images
+              ? [
+                  { type: "text", text: user },
+                  ...images.map((image) => ({
+                    type: "image_url" as const,
+                    image_url: { url: `data:${image.mediaType};base64,${image.base64}` },
+                  })),
+                ]
+              : user,
+          },
+        ],
+        chat_template_kwargs: { enable_thinking: false },
+      }),
+      signal: AbortSignal.timeout(75_000),
+    });
+    requestSettled = true;
+    markRequestSettled();
   } catch (err) {
     requestSettled = true;
     markRequestSettled();
@@ -261,16 +574,48 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
   };
 }
 
-
 export type EndpointHealth = {
   status: "ok" | "error" | "not_configured";
   detail: string | null;
   error: string | null;
 };
 
-/** RunPod readiness and model verification probes (no generation, no GPU generation cost). */
+/** Provider readiness and model verification probes (no GPU generation cost). */
 export async function endpointHealth(tier: Tier): Promise<EndpointHealth> {
   const c = cfg();
+  if (c.provider === "mock") {
+    return { status: "ok", detail: "Mock Testing Engine (local deterministic mode)", error: null };
+  }
+
+  if (c.provider === "gemini") {
+    if (!c.geminiKey) return { status: "not_configured", detail: null, error: null };
+    try {
+      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/models", {
+        headers: { Authorization: `Bearer ${c.geminiKey}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) return { status: "error", detail: null, error: `Gemini API returned HTTP ${res.status}.` };
+      return { status: "ok", detail: `Google Gemini Free API (model=${c.geminiModel})`, error: null };
+    } catch {
+      return { status: "error", detail: null, error: "Google Gemini API connection timed out or failed." };
+    }
+  }
+
+  if (c.provider === "groq") {
+    if (!c.groqKey) return { status: "not_configured", detail: null, error: null };
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/models", {
+        headers: { Authorization: `Bearer ${c.groqKey}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) return { status: "error", detail: null, error: `Groq API returned HTTP ${res.status}.` };
+      return { status: "ok", detail: `Groq Free API (model=${c.groqModel})`, error: null };
+    } catch {
+      return { status: "error", detail: null, error: "Groq API connection timed out or failed." };
+    }
+  }
+
+  // RunPod
   const id = tier === "main" ? c.mainId : c.lightId;
   if (!c.apiKey || !id) return { status: "not_configured", detail: null, error: null };
   const expectedModel = tier === "main" ? c.mainModel : c.lightModel;
@@ -280,8 +625,6 @@ export async function endpointHealth(tier: Tier): Promise<EndpointHealth> {
       fetch(`https://api.runpod.ai/v2/${id}/health`, { headers, signal: AbortSignal.timeout(15_000) }),
       fetch(`https://api.runpod.ai/v2/${id}/openai/v1/models`, { headers, signal: AbortSignal.timeout(15_000) }),
     ]);
-    // Every verification replaces the previous observation, including failed
-    // probes. Early health errors must not leave a pre-redeploy model cached.
     servedModel.delete(id);
     if (healthResult.status === "rejected") {
       const timedOut = healthResult.reason instanceof Error && (healthResult.reason.name === "TimeoutError" || healthResult.reason.name === "AbortError");
