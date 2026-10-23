@@ -1,3 +1,4 @@
+import {additionalVacancies} from "../lib/vacancy-catalogues";
 import { Router } from "express";
 import { z } from "zod";
 import { db, profilesTable, plansTable } from "@workspace/db";
@@ -10,6 +11,8 @@ import { scoreRole } from "../lib/scoring";
 import { extractSkills } from "../lib/cv";
 const router = Router();
 type Job = {
+  source?: string;
+  sourceUrl?: string;
   id: number;
   url: string;
   jobTitle: string;
@@ -146,7 +149,7 @@ router.get("/profiles/:id/jobs", async (req, res) => {
   }
   try {
     const [jobs, skills, roles, courses] = await Promise.all([
-      publicJobs(),
+      Promise.allSettled([publicJobs(),additionalVacancies()]).then(results=>{const lists=results.filter(r=>r.status==="fulfilled").flatMap(r=>r.status==="fulfilled"?r.value:[]);if(!lists.length&&results.every(r=>r.status==="rejected"))throw Error("jobs_unavailable");return lists;}),
       loadSkills(),
       loadRoles(),
       loadCourses(),
@@ -184,6 +187,7 @@ router.get("/profiles/:id/jobs", async (req, res) => {
           ? scoreRole({ ...p, skills: existing }, role.r, skills, courses).score
           : 0;
         return {
+          source:j.source??"Jobicy",sourceUrl:j.sourceUrl??j.url,
           id: j.id,
           title: j.jobTitle,
           company: j.companyName,
@@ -196,9 +200,10 @@ router.get("/profiles/:id/jobs", async (req, res) => {
           missing: required
             .filter((s) => !matched.includes(s))
             .map((s) => skills.find((k) => k.id === s.skillId)!.name),
-          score: matched.length * 10 + fit / 10,
+          score: matched.length * 10 + fit / 10 + plan.roleTitle.toLowerCase().split(/[^a-z]+/).filter(w=>w.length>3&&j.jobTitle.toLowerCase().includes(w)).length*15,
         };
       })
+      .filter(j=>j.matched.length>0 && !/nurse|physician|surgeon|dentist|licensed|mechanical|electrical|\bMSc\b|\bPhD\b/i.test(j.title))
       .sort((a, b) => b.score - a.score);
     res.setHeader("Cache-Control", "no-store");
     res.json({

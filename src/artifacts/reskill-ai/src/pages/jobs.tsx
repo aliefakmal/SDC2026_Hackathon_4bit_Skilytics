@@ -16,7 +16,7 @@ export default function Jobs() {
     queryFn: () =>
       customFetch<{
         jobs: {
-          id: number;
+          source?:string;sourceUrl?:string;id: number;
           title: string;
           company: string;
           location: string;
@@ -65,6 +65,7 @@ export default function Jobs() {
                   {j.missing.map((s) => skillLabel(s, lang)).join(", ")}
                 </details>
               )}
+              <a href={j.sourceUrl??j.url} target="_blank" rel="noreferrer" className="mb-3 block text-xs underline">{j.source??"Jobicy"}</a>
               <a
                 className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground"
                 href={j.url}

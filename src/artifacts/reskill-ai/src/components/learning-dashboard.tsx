@@ -161,7 +161,7 @@ export function LearningDashboard({ p, employer=false }: { p: Profile; employer?
         })}
       </ol>
       <h3 className="mb-3 mt-5 font-bold">{w.achievement}</h3>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible" tabIndex={0} aria-label={w.achievement}>
         {[
           [done > 0, w.first],
           [done > 0 && done >= Math.ceil(total / 2), w.half],
@@ -169,7 +169,7 @@ export function LearningDashboard({ p, employer=false }: { p: Profile; employer?
         ].map(([earned, label], i) => (
           <div
             key={String(label)}
-            className={`inline-flex items-center gap-2 rounded-xl border p-3 text-sm ${earned ? "border-accent bg-[hsl(var(--gold-soft))]" : "opacity-40"}`}
+            className={`inline-flex shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-xl border p-3 text-sm ${earned ? "border-accent bg-[hsl(var(--gold-soft))]" : "opacity-40"}`}
           >
             {i === 2 ? (
               <Award className="h-6 w-6" />
@@ -185,11 +185,13 @@ export function LearningDashboard({ p, employer=false }: { p: Profile; employer?
       {j.complete && (
         <div className="mt-5 space-y-3 rounded-2xl border-2 border-accent p-4">
           <h3 className="text-xl font-bold">{w.finish} 🎉</h3>
-          <Button asChild><Link href={`${employer?"/hr":"/me"}/certificates/${p.id}`}>
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+          <Button asChild className="h-auto min-h-11 whitespace-normal py-3"><Link href={`${employer?"/hr":"/me"}/certificates/${p.id}`}>
             <Award className="mr-2 h-4 w-4" />
             {w.certificate}
           </Link></Button>
-          {!employer && <Button asChild><Link href={`/me/jobs/${p.id}`}>{jobWords[lang].jobs} →</Link></Button>}
+          {!employer && <Button asChild className="h-auto min-h-11 whitespace-normal py-3"><Link href={`/me/jobs/${p.id}`}>{jobWords[lang].jobs} →</Link></Button>}
+          </div>
           <p className="text-xs">{j.certificateId}</p>
           <h3 className="pt-4 font-bold">{w.nextSkills}</h3>
           <p className="text-sm text-muted-foreground">{w.nextNote}</p>

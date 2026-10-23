@@ -16,7 +16,10 @@ test("job discovery requires completed owned pathway and uses canonical public l
   assert.equal((await get()).status,409);assert.equal((await get(randomUUID().replaceAll("-",""))).status,404);
   const [plan]=await db.insert(plansTable).values({profileId:p.id,roleId:1,roleTitle:"QA",totalWeeks:1,totalCostMyr:0,uncoveredSkills:[],items:[{courseId:1,title:"QA",provider:"QA",url:"https://example.test",startWeek:1,durationWeeks:1,costMyr:0,hrdcStatus:"not_claimable",skills:["SQL"],sdgCodes:[]}]}).returning();
   await saveLearningState(p.id,{stage:"active",planId:plan.id,completed:{"1":new Date().toISOString()},finishedAt:new Date().toISOString()});
-  const r=await get();assert.equal(r.status,200);const body=await r.json() as {jobs:{url:string;location:string}[]};assert.ok(body.jobs.every(j=>j.url.startsWith("https://jobicy.com/jobs/")&&eligibleLocation(j.location)));
+  const r=await get();assert.equal(r.status,200);const body=await r.json() as {jobs:{url:string;location:string}[]};assert.ok(body.jobs.every(j=>j.url.startsWith("https://")&&eligibleLocation(j.location)));
   const demand=await fetch(base+"/market/skill-demand");assert.equal(demand.status,200);const d=await demand.json() as {skills:unknown[]};assert.ok(d.skills.length>=3);
  }finally{await db.delete(profilesTable).where(eq(profilesTable.id,p.id));await new Promise<void>(r=>server.close(()=>r()));await pool.end();}
 });
+
+import {himalayasMalaysia} from "./vacancy-catalogues";
+test("Himalayas eligibility requires both Malaysia location and UTC+8",()=>{assert.equal(himalayasMalaysia({locationRestrictions:[],timezoneRestrictions:[8]}),true);assert.equal(himalayasMalaysia({locationRestrictions:["United States"],timezoneRestrictions:[8]}),false);assert.equal(himalayasMalaysia({locationRestrictions:["Malaysia"],timezoneRestrictions:[-5]}),false);assert.equal(himalayasMalaysia({}),false);});

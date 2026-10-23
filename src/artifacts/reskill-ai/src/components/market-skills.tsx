@@ -26,9 +26,9 @@ export const jobWords = {
     matched: "Skills you can bring",
     missing: "Skills to check",
     jobNote:
-      "Suggested from CV skills, completed courses and Holland role fit. Not a hiring score. Job titles stay in their original language. Confirm location, qualifications and availability on Jobicy; applying may require an employer account.",
+      "Suggested from CV skills, completed courses and Holland role fit. Not a hiring score. Job titles stay in their original language. Confirm location, qualifications and availability on the original listing; applying may require an employer account.",
     source:
-      "Public source: Jobicy · no API key · cached hourly · latest 200 postings within seven days. Original listing links and attribution are retained.",
+      "Public vacancy catalogues: Jobicy (hourly), Himalayas and Remotive (daily). No API keys. Location restrictions, original links and source attribution are retained. Remotive listings are delayed by 24 hours.",
     none: "No Malaysia or worldwide remote vacancies in the current sample.",
     more: "Load more",
   },
@@ -48,9 +48,9 @@ export const jobWords = {
     matched: "Kemahiran yang anda bawa",
     missing: "Kemahiran untuk disemak",
     jobNote:
-      "Cadangan berdasarkan kemahiran CV, kursus selesai dan padanan minat Holland. Bukan skor pengambilan kerja. Tajuk kerja kekal dalam bahasa asal. Semak lokasi, kelayakan dan ketersediaan di Jobicy; permohonan mungkin memerlukan akaun majikan.",
+      "Cadangan berdasarkan kemahiran CV, kursus selesai dan padanan minat Holland. Bukan skor pengambilan kerja. Tajuk kerja kekal dalam bahasa asal. Semak lokasi, kelayakan dan ketersediaan pada iklan asal; permohonan mungkin memerlukan akaun majikan.",
     source:
-      "Sumber awam: Jobicy · tanpa kunci API · cache sejam · 200 iklan terkini dalam tujuh hari. Pautan asal dan atribusi dikekalkan.",
+      "Katalog vacancy awam: Jobicy (sejam), Himalayas dan Remotive (harian). Tanpa kunci API. Syarat lokasi, pautan asal dan atribusi dikekalkan. Iklan Remotive lewat 24 jam.",
     none: "Tiada kekosongan Malaysia atau remote seluruh dunia dalam sampel semasa.",
     more: "Muat lagi",
   },
@@ -68,9 +68,9 @@ export const jobWords = {
     matched: "您具备的相关技能",
     missing: "需要核对的技能",
     jobNote:
-      "根据简历技能、已完成课程和霍兰德兴趣匹配推荐，并非招聘评分。职位名称保留原文。请在Jobicy确认地点、资格与职位状态；申请可能需要雇主账号。",
+      "根据简历技能、已完成课程和霍兰德兴趣匹配推荐，并非招聘评分。职位名称保留原文。请在原招聘页面确认地点、资格与职位状态；申请可能需要雇主账号。",
     source:
-      "公开来源：Jobicy · 无API密钥 · 缓存一小时 · 最近七天的200条招聘。保留原链接与来源标注。",
+      "公开招聘目录：Jobicy每小时缓存，Himalayas及Remotive每天缓存，无需密钥。保留地点限制、原链接和来源。Remotive职位延迟24小时。",
     none: "当前样本没有马来西亚或全球远程职位。",
     more: "加载更多",
   },
@@ -232,8 +232,8 @@ export function JobsSource() {
   const { lang } = useT(),
     w = jobWords[lang];
   return (
-    <Panel title="Jobicy" meta={w.source}>
-      <p className="text-sm">{w.note}</p>
+    <Panel title="Jobicy · Himalayas · Remotive" meta={w.source}>
+      <div className="flex flex-wrap gap-4 text-sm"><a href="https://himalayas.app/api" target="_blank" rel="noreferrer" className="underline">Himalayas · API</a><a href="https://github.com/remotive-com/remote-jobs-api" target="_blank" rel="noreferrer" className="underline">Remotive · API</a></div>
       <a
         href="https://www.dosm.gov.my/uploads/release-content/file_20260525094010.pdf"
         className="block min-h-11 text-sm underline"

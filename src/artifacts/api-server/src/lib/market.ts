@@ -392,5 +392,6 @@ export function startMarketScheduler(): void {
     refreshAll().catch((err) => logger.error({ err }, "Scheduled market refresh failed"));
     loadCareerNews().catch((err) => logger.warn({ err }, "Career news refresh unavailable"));
   }, SIX_HOURS).unref();
+  void ingestOnet().catch(err=>logger.warn({err},"Daily occupation discovery unavailable; retaining last good catalogue"));
   void loadCareerNews().catch((err) => logger.warn({ err }, "Initial career news unavailable"));
 }

@@ -713,7 +713,7 @@ export function Sources() {
         <div className="space-y-6">
           {KINDS.map((k) => {
             const items = src.data!.filter((s) => s.kind === k);
-            if (!items.length) return null;
+            if (!items.length && k !== "catalogue") return null;
             const Icon = KIND_ICON[k];
             return (
               <section key={k}>
@@ -724,6 +724,7 @@ export function Sources() {
                     ({items.length})
                   </span>
                 </h2>
+                {k === "catalogue" && <JobsSource/>}
                 <div className="grid gap-3 lg:grid-cols-2">
                   {items.map((s) => {
                     const name = tk("src", `${s.id}.name`);
@@ -844,7 +845,7 @@ export function Sources() {
           })}
         </div>
       )}
-      <JobsSource/><SourceDocumentation sources={src.data ?? []} ai={a} />
+      <SourceDocumentation sources={src.data ?? []} ai={a} />
     </>
   );
 }

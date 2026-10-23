@@ -7,7 +7,7 @@ export function selfDirectedRoles(roles: RoleView[], courses: CourseView[]) {
   return roles.filter(role => {
     if (Object.hasOwn(policy.excluded, role.title) || /engineering|healthcare/i.test(role.sector)) return false;
     const core = (policy.coreSkills as Record<string,string[]>)[role.title]
-      ?? ROLES.find(r=>r.title === role.title)?.skills.filter(([,importance])=>importance >= 3).map(([name])=>name) ?? [];
+      ?? ROLES.find(r=>r.title === role.title)?.skills.filter(([,importance])=>importance >= 3).map(([name])=>name) ?? role.skills.filter(s=>s.category!=="Human").map(s=>s.name);
     return role.skills.some(skill => core.includes(skill.name) && courses.some(course => courseFitsRole(course,role.title) && course.skills.some(k=>k.id === skill.skillId)));
   });
 }
