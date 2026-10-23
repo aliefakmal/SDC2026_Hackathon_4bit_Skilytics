@@ -55,7 +55,7 @@ export async function publicJobs() {
 }
 router.get("/market/skill-demand", async (_req, res) => {
   try {
-    const [jobs, skills] = await Promise.all([publicJobs(), loadSkills()]);
+    const [jobs, skills] = await Promise.all([publicJobs().catch(() => [] as Job[]), loadSkills()]);
     const local = jobs.filter((j) => malaysiaLocation(j.jobGeo));
     const counts = new Map<number, number>();
     for (const j of local)
