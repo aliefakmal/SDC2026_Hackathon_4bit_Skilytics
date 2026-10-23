@@ -6,7 +6,7 @@ import {
   AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, BarChart2, Check, CheckCircle2, Compass, Copy, FileCheck, FileImage, FileText, FileUp, GraduationCap, HelpCircle, Lightbulb, Loader2, PlusCircle, Quote, RotateCw, Sparkles, Volume2, VolumeX, X,
 } from "lucide-react";
 import {
-  createProfile, runProfileAgent, useGetProfile, useListProfileInsights, useListRiasecQuestions, useSubmitRiasec, useUpdateProfile, useUploadCv,
+  createProfile, runProfileAgent, useGetProfile, useListProfileInsights, useListRiasecQuestions, useListRoles, useListCourses, useSubmitRiasec, useUpdateProfile, useUploadCv,
   getGetProfileQueryKey, getListProfileInsightsQueryKey,
   type AgentInsight, type CvEvidence, type Profile, type ProfileUpdate, type Segment,
 } from "@workspace/api-client-react";
@@ -473,7 +473,7 @@ function CvStep({
     if (pendingFile) {
       const f = pendingFile;
       setPendingFile(null);
-      send(f);
+      send(f, undefined, true);
     } else {
       setLocal(null);
       ref.current?.click();
@@ -492,7 +492,7 @@ function CvStep({
       const file = new File([blob], fileName, {
         type: blob.type || (fileName.endsWith(".pdf") ? "application/pdf" : "image/jpeg"),
       });
-      await send(file);
+      await send(file, undefined, true);
     } catch (err) {
       setSince(null);
       setLocal(et(err));
@@ -546,9 +546,9 @@ function CvStep({
     },
   });
 
-  const send = async (file: File, replacement?: Profile) => {
+  const send = async (file: File, replacement?: Profile, consentConfirmed = false) => {
     setLocal(null);
-    if (!consent) {
+    if (!consent && !consentConfirmed) {
       promptConsent();
       return;
     }
@@ -959,6 +959,17 @@ function ReviewStep({ p, scope, onProfileReady }: { p: Profile; scope: string; o
       },
     },
   });
+  const roles = useListRoles();
+  const courses = useListCourses();
+  const [skillQuery, setSkillQuery] = useState("");
+  const skillOptions = useMemo(() => {
+    const catalogue = new Map<number, { name: string; category: string }>();
+    (roles.data ?? []).forEach((role) => role.skills.forEach((skill) => catalogue.set(skill.skillId, { name: skill.name, category: skill.category })));
+    (courses.data ?? []).forEach((course) => course.skills.forEach((skill) => catalogue.set(skill.id, { name: skill.name, category: skill.category })));
+    const have = new Set(p.skills.map((skill) => skill.skillId));
+    const query = skillQuery.trim().toLocaleLowerCase();
+    return [...catalogue].filter(([id, skill]) => !have.has(id) && (!query || skill.name.toLocaleLowerCase().includes(query))).sort((a, b) => a[1].name.localeCompare(b[1].name)).slice(0, 8);
+  }, [roles.data, courses.data, p.skills, skillQuery]);
   const [form, setForm] = useState<ReviewForm>(() => initReviewForm(p, scope));
   useEffect(() => {
     const existing = readDraft(scope, p.id).form ?? {};
@@ -1100,6 +1111,13 @@ function ReviewStep({ p, scope, onProfileReady }: { p: Profile; scope: string; o
               <p className="mt-0.5 text-xs text-muted-foreground">{t("ob.review.skillsSub")}</p>
             </div>
           </div>
+          <div className="mt-3">
+            <Input value={skillQuery} onChange={(event) => setSkillQuery(event.target.value)} placeholder={t("ob.review.skillSearch")} aria-label={t("ob.review.skillSearch")} data-testid="input-review-skill-search" />
+            {skillQuery.trim() && <ul className="mt-1 max-h-56 overflow-y-auto rounded-xl border border-border bg-background" aria-label={t("ob.review.skillSuggestions")}>
+              {skillOptions.map(([id, skill]) => <li key={id}><button type="button" disabled={skillUpd.isPending} onClick={() => { skillUpd.mutate({ id: p.id, data: { addSkills: [{ skillId: id, status: "self_reported" }] } }); setSkillQuery(""); }} className="flex min-h-11 w-full items-center justify-between gap-2 px-3 text-left text-sm hover:bg-muted" data-testid={`button-review-add-skill-${id}`}><span>{skill.name}</span><PlusCircle className="h-4 w-4 text-primary" /></button></li>)}
+              {!skillOptions.length && <li className="px-3 py-2 text-sm text-muted-foreground">{t("ob.review.skillNoMatch")}</li>}
+            </ul>}
+          </div>
           {!p.skills.length ? (
             <p className="mt-3 rounded-xl bg-muted/60 p-4 text-sm text-muted-foreground">{t("ob.review.skillsEmpty")}</p>
           ) : (
@@ -1192,6 +1210,7 @@ function GoalsStep({ p, scope, onProfileReady }: { p: Profile; scope: string; on
   const et = useErrText();
   const { go, upd } = useAdvance(p, scope, onProfileReady);
   const [form, setForm] = useState<GoalsForm>(() => initGoalsForm(p, scope));
+  const [showDemoGoal, setShowDemoGoal] = useState(false);
   useEffect(() => {
     const existing = readDraft(scope, p.id).form ?? {};
     writeDraft(scope, p.id, { form: { ...existing, ...form } });
@@ -1223,6 +1242,8 @@ function GoalsStep({ p, scope, onProfileReady }: { p: Profile; scope: string; on
     <>
       <StepHead title={t("ob.goals.title")} sub={t("ob.goals.sub")} />
       <div className="max-w-2xl space-y-6">
+        <Button type="button" variant="outline" onClick={() => setShowDemoGoal((value) => !value)} data-testid="button-goals-demo">{t("ob.goals.demoToggle")}</Button>
+        {showDemoGoal && <div className="rounded-xl border border-primary/25 bg-primary/5 p-3 text-sm"><p>{t("ob.goals.demoExample")}</p><Button type="button" variant="ghost" className="mt-2" onClick={() => setForm({ goals: t("ob.goals.demoExample"), hours: "8", budget: "100" })}>{t("ob.goals.demoUse")}</Button></div>}
         <div className="space-y-1.5">
           <Label htmlFor="f-goals">{t("ob.goals.label")}</Label>
           <Textarea
@@ -1314,6 +1335,13 @@ function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; 
     if (d && Object.keys(d).length) return d;
     return Object.fromEntries((p.riasecAnswers ?? []).map((a) => [a.questionId, a.value]));
   });
+  const [showDemo, setShowDemo] = useState(false);
+  const randomDemo = () => {
+    if (!qs.data?.length) return;
+    const next = Object.fromEntries(qs.data.map((question) => [question.id, 1 + Math.floor(Math.random() * 5)]));
+    setAns(next);
+    setShowDemo(true);
+  };
   const saveRef = useRef(upd.mutate);
   saveRef.current = upd.mutate;
   const questionIds = new Set((qs.data ?? []).map((q) => q.id));
@@ -1340,6 +1368,10 @@ function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; 
   });
   const total = qs.data?.length ?? 0;
   const done = (qs.data ?? []).filter((x) => ans[x.id] >= 1 && ans[x.id] <= 5).length;
+  const demoCode = showDemo && done === total && total > 0 ? [...RIASEC].sort((a, b) => {
+    const score = (type: string) => (qs.data ?? []).filter((q) => q.type === type).reduce((sum, q) => sum + ans[q.id], 0);
+    return score(b) - score(a) || RIASEC.indexOf(a) - RIASEC.indexOf(b);
+  }).slice(0, 3).join("") : null;
   const valid = new Set((qs.data ?? []).map((x) => x.id));
   const submit = () => sub.mutate({ id: p.id, data: { answers: Object.entries(ans).filter(([k]) => valid.has(Number(k))).map(([k, v]) => ({ questionId: Number(k), value: v })) } });
   return (
@@ -1353,6 +1385,9 @@ function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; 
           <div className="sticky top-0 z-10 -mx-2 mb-3 rounded-xl bg-card/95 px-2 py-2 backdrop-blur">
             <Meter value={done} max={total} label={`${done}/${total}`} />
             <div className="mt-1 text-[11px] text-muted-foreground">{t("riasec.scale")}</div>
+            <Button type="button" variant="outline" className="mt-2 min-h-11" onClick={randomDemo} data-testid="button-random-demo-answer"><RotateCw className="mr-2 h-4 w-4" />{showDemo ? t("ob.holland.refreshDemo") : t("ob.holland.randomDemo")}</Button>
+            {showDemo && <p className="mt-2 text-xs font-medium text-accent" role="status">{t("ob.holland.demoReady")}</p>}
+            {demoCode && <p className="mt-1 text-sm font-bold text-primary" data-testid="text-demo-holland-code">{t("ob.holland.demoCode", { code: demoCode })}</p>}
           </div>
           <ol className="space-y-2">
             {qs.data!.map((qq, i) => (
@@ -1466,6 +1501,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [activeTranslatingLang, setActiveTranslatingLang] = useState<string | null>(null);
+  const translationRequests = useRef(new Set<string>());
   const [explainError, setExplainError] = useState<string | null>(null);
 
   // Sync existing insights from database on load
@@ -1523,6 +1559,8 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
       setExplainError(null);
       return;
     }
+    if (translationRequests.current.has(lang)) return;
+    translationRequests.current.add(lang);
 
     setActiveTranslatingLang(lang);
     setSince(Date.now());
@@ -1540,6 +1578,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
         }
       })
       .catch((err: any) => {
+        translationRequests.current.delete(lang);
         if (isSubscribed && currentLangRef.current === lang) {
           console.error("Auto-translation error for", lang, err);
           setExplainError(err?.message || "Translation error");
@@ -1717,10 +1756,10 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
               ))}
             </div>
           ) : activeTranslatingLang && since ? (
-            <AiWait
-              since={since}
-              note={t("ob.results.translating", { lang: LANG_NAME[lang] ?? lang })}
-            />
+            <div>
+              <AiWait since={since} note={hasGeneratedInsight ? t("ob.results.translating", { lang: LANG_NAME[lang] ?? lang }) : t("ob.results.generating")} />
+              <p className="mt-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">{t("ob.results.eli5Loading")}</p>
+            </div>
           ) : explainError ? (
             /* ONLY ONE BUTTON APPEARS HERE: Retry */
             <div className="rounded-xl border border-destructive/40 bg-card p-4 text-sm" role="alert" data-testid="status-explain-error">
