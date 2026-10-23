@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "installCommand": "pnpm install --frozen-lockfile",
+  "installCommand": "pnpm --filter @workspace/reskill-ai... install --frozen-lockfile",
   "buildCommand": "pnpm --filter @workspace/reskill-ai run build",
   "outputDirectory": "artifacts/reskill-ai/dist/public",
   "rewrites": [
