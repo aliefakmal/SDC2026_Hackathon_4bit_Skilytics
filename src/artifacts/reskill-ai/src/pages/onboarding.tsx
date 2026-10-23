@@ -706,7 +706,6 @@ function CvStep({
       <div className="mt-4 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.04] via-muted/30 to-background p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2 mb-2.5">
           <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
             {lang === "ms" ? "Uji Cepat Dengan Fail Demo CV:" : lang === "zh" ? "使用演示简历快速测试：" : "Quick Test with Demo CVs:"}
           </span>
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
@@ -1248,7 +1247,13 @@ function GoalsStep({ p, scope, onProfileReady }: { p: Profile; scope: string; on
     <>
       <StepHead title={t("ob.goals.title")} sub={t("ob.goals.sub")} />
       <div className="max-w-2xl space-y-6">
-        <Button type="button" variant="outline" className="min-h-11" onClick={nextDemoGoal} data-testid="button-goals-demo"><RotateCw className="mr-2 h-4 w-4" />{t(demoGoalIndex < 0 ? "ob.goals.demoFill" : "ob.goals.demoRefresh")}</Button>
+        <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.04] via-muted/30 to-background p-4 shadow-sm">
+          <p className="mb-2.5 text-xs font-bold text-foreground">{t("ob.goals.demoTitle")}</p>
+          <Button type="button" variant="outline" size="sm" className="h-auto min-h-11 flex flex-col items-start gap-1 border-border/80 bg-background/90 px-3 py-2.5 text-left shadow-xs transition-all hover:border-primary hover:bg-background" onClick={nextDemoGoal} data-testid="button-goals-demo">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-primary"><RotateCw className="h-3.5 w-3.5" />{t(demoGoalIndex < 0 ? "ob.goals.demoFill" : "ob.goals.demoRefresh")}</span>
+            <span className="text-[10px] font-medium text-muted-foreground">{t("ob.goals.demoHint")}</span>
+          </Button>
+        </div>
         <div className="space-y-1.5">
           <Label htmlFor="f-goals">{t("ob.goals.label")}</Label>
           <Textarea
@@ -1390,9 +1395,15 @@ function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; 
           <div className="sticky top-0 z-10 -mx-2 mb-3 rounded-xl bg-card/95 px-2 py-2 backdrop-blur">
             <Meter value={done} max={total} label={`${done}/${total}`} />
             <div className="mt-1 text-[11px] text-muted-foreground">{t("riasec.scale")}</div>
-            <Button type="button" variant="outline" className="mt-2 min-h-11" onClick={randomDemo} data-testid="button-random-demo-answer"><RotateCw className="mr-2 h-4 w-4" />{showDemo ? t("ob.holland.refreshDemo") : t("ob.holland.randomDemo")}</Button>
-            {showDemo && <p className="mt-2 text-xs font-medium text-accent" role="status">{t("ob.holland.demoReady")}</p>}
-            {demoCode && <p className="mt-1 text-sm font-bold text-primary" data-testid="text-demo-holland-code">{t("ob.holland.demoCode", { code: demoCode })}</p>}
+            <div className="mt-2 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.04] via-muted/30 to-background p-3 shadow-sm">
+              <p className="mb-2 text-xs font-bold text-foreground">{t("ob.holland.demoTitle")}</p>
+              <Button type="button" variant="outline" size="sm" className="h-auto min-h-11 flex flex-col items-start gap-1 border-border/80 bg-background/90 px-3 py-2.5 text-left shadow-xs transition-all hover:border-primary hover:bg-background" onClick={randomDemo} data-testid="button-random-demo-answer">
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-primary"><RotateCw className="h-3.5 w-3.5" />{showDemo ? t("ob.holland.refreshDemo") : t("ob.holland.randomDemo")}</span>
+                <span className="text-[10px] font-medium text-muted-foreground">{t("ob.holland.demoHint")}</span>
+              </Button>
+              {showDemo && <p className="mt-2 text-xs font-medium text-accent" role="status">{t("ob.holland.demoReady")}</p>}
+              {demoCode && <p className="mt-1 text-sm font-bold text-primary" data-testid="text-demo-holland-code">{t("ob.holland.demoCode", { code: demoCode })}</p>}
+            </div>
           </div>
           <ol className="space-y-2">
             {qs.data!.map((qq, i) => (
