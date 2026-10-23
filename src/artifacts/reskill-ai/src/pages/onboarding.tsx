@@ -293,7 +293,7 @@ export default function Onboarding() {
       {step === "review" && <ReviewStep p={p} scope={scope} onProfileReady={handleProfileReady} />}
       {step === "goals" && <GoalsStep p={p} scope={scope} onProfileReady={handleProfileReady} />}
       {step === "holland" && <HollandStep p={p} scope={scope} onProfileReady={handleProfileReady} />}
-      {step === "results" && <ResultsStep p={p} scope={scope} onProfileReady={handleProfileReady} />}
+      {step === "results" && <ResultsStep key={resultSourceKey(p)} p={p} scope={scope} onProfileReady={handleProfileReady} />}
       {step === "save" && <SaveStep p={p} scope={scope} onProfileReady={handleProfileReady} />}
     </Frame>
   );
@@ -305,18 +305,25 @@ function Frame({ step, maxIdx = 0, pid, children }: { step?: ObStep; maxIdx?: nu
   const { user } = useAuth();
   const [help, setHelp] = useState(false);
   const cur = step ? idx(step) : 0;
+  useEffect(() => { window.scrollTo({top:0,behavior:"instant"}); }, [step]);
   return (
     <div className="paper min-h-[100dvh] bg-background">
-      <header className="relative z-[2] mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 md:px-8">
-        <Brand />
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur md:relative md:z-[2]">
+      <header className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-2 md:px-8 md:py-4">
+        <Brand small />
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="min-h-11" onClick={() => setHelp(true)} data-testid="button-help"><HelpCircle className="mr-1.5 h-4 w-4" /><span className="hidden sm:inline">{t("ob.help.btn")}</span></Button>
+          <Button variant="outline" aria-label={t("ob.help.btn")} className="h-11 w-11 shrink-0 rounded-full p-0 sm:w-auto sm:gap-1.5 sm:px-4" onClick={() => setHelp(true)} data-testid="button-help"><HelpCircle className="h-4 w-4" /><span className="hidden sm:inline">{t("ob.help.btn")}</span></Button>
           <LangToggle />
           <Link href={user ? "/me" : "/"} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:text-primary" aria-label={t("ob.exit")} data-testid="link-exit"><X className="h-4 w-4" /></Link>
         </div>
       </header>
+      <div className="mx-auto max-w-6xl px-4 pb-3 md:hidden">
+        <div className="flex items-center justify-between gap-2 text-xs"><span className="font-bold text-accent">{t("ob.title")}</span>{step && <span>{t("ob.stepOf", { n: cur + 1, total: OB_STEPS.length })}</span>}</div>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full origin-left rounded-full bg-primary transition-transform" style={{transform:`scaleX(${(cur+1)/OB_STEPS.length})`}} /></div>
+      </div>
+      </div>
       <main className="relative z-[1] mx-auto grid max-w-6xl items-start gap-6 px-4 pb-16 md:grid-cols-[15rem_1fr] md:px-8">
-        <aside aria-label={t("ob.title")} className="self-start md:sticky md:top-6 md:z-10 md:max-h-[calc(100vh-3rem)] md:overflow-y-auto">
+        <aside aria-label={t("ob.title")} className="hidden self-start md:block md:sticky md:top-6 md:z-10 md:max-h-[calc(100vh-3rem)] md:overflow-y-auto">
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-accent">{t("ob.title")}</div>
           {step && <div className="tnum mt-1 text-sm text-muted-foreground" data-testid="text-step-count">{t("ob.stepOf", { n: cur + 1, total: OB_STEPS.length })}</div>}
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted md:hidden"><div className="h-full rounded-full bg-primary transition-transform duration-500 origin-left" style={{ transform: `scaleX(${(cur + 1) / OB_STEPS.length})` }} /></div>
@@ -341,7 +348,7 @@ function Frame({ step, maxIdx = 0, pid, children }: { step?: ObStep; maxIdx?: nu
         <section className="min-w-0">
           <AnimatePresence mode="wait">
             <motion.div key={step ?? "x"} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.28 }}
-              className="rounded-3xl border border-card-border bg-card p-5 shadow-md md:p-8">
+              className="rounded-2xl border border-card-border bg-card p-4 shadow-md sm:p-5 md:rounded-3xl md:p-8">
               {children}
             </motion.div>
           </AnimatePresence>
@@ -358,7 +365,7 @@ function Walkthrough({ start, onClose }: { start: number; onClose: () => void })
   const s = OB_STEPS[i];
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/30 p-4 md:items-center" role="dialog" aria-modal="true" aria-label={t("ob.help.title")} onClick={onClose}>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md rounded-3xl border border-card-border bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-card-border bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-2">
           <h2 className="text-lg font-bold">{t("ob.help.title")}</h2>
           <Button variant="ghost" className="min-h-11 min-w-11 px-0" onClick={onClose} aria-label={t("ob.help.close")} data-testid="button-help-close"><X className="h-4 w-4" /></Button>
@@ -369,9 +376,9 @@ function Walkthrough({ start, onClose }: { start: number; onClose: () => void })
           <div className="text-[11px] font-bold uppercase tracking-wider text-accent">{i + 1}. {t(`ob.step.${s}` as DictKey)}</div>
           <p className="mt-1 text-sm" data-testid="text-help-tip">{t(`ob.help.${s}` as DictKey)}</p>
         </div>
-        <div className="mt-4 flex flex-wrap justify-between gap-2">
-          <Button variant="ghost" className="min-h-11" onClick={() => setI(0)} data-testid="button-help-replay"><RotateCw className="mr-1.5 h-4 w-4" />{t("ob.help.replay")}</Button>
-          <div className="flex gap-2">
+        <div className="mt-4 flex items-center gap-2">
+          <Button variant="ghost" className="h-11 w-11 shrink-0 p-0" aria-label={t("ob.help.replay")} title={t("ob.help.replay")} onClick={() => setI(0)} data-testid="button-help-replay"><RotateCw className="h-4 w-4" /></Button>
+          <div className="ml-auto flex min-w-0 gap-2 [&>button]:min-h-11 [&>button]:whitespace-normal [&>button]:px-3 [&>button]:text-xs sm:[&>button]:text-sm">
             <Button variant="outline" className="min-h-11" disabled={i === 0} onClick={() => setI(i - 1)}>{t("ob.help.prev")}</Button>
             {i < OB_STEPS.length - 1 ? <Button className="min-h-11" onClick={() => setI(i + 1)} data-testid="button-help-next">{t("ob.help.nextTip")}</Button>
               : <Button className="min-h-11" onClick={onClose}>{t("ob.help.close")}</Button>}
@@ -1253,7 +1260,7 @@ function GoalsStep({ p, scope, onProfileReady }: { p: Profile; scope: string; on
           <p className="mb-2.5 text-xs font-bold text-foreground">{t("ob.goals.demoTitle")}</p>
           <Button type="button" variant="outline" size="sm" className="h-auto min-h-11 flex flex-col items-start gap-1 border-border/80 bg-background/90 px-3 py-2.5 text-left shadow-xs transition-all hover:border-primary hover:bg-background" onClick={nextDemoGoal} data-testid="button-goals-demo">
             <span className="flex items-center gap-1.5 text-xs font-semibold text-primary"><RotateCw className="h-3.5 w-3.5" />{t(demoGoalIndex < 0 ? "ob.goals.demoFill" : "ob.goals.demoRefresh")}</span>
-            <span className="text-[10px] font-medium text-muted-foreground">{t("ob.goals.demoHint")}</span>
+            <span className="whitespace-normal text-[10px] font-medium text-muted-foreground">{t("ob.goals.demoHint")}</span>
           </Button>
         </div>
         <div className="space-y-1.5">
@@ -1394,14 +1401,14 @@ function HollandStep({ p, scope, onProfileReady }: { p: Profile; scope: string; 
       </p>
       {qs.isLoading ? <Rows n={6} /> : qs.isError ? <ErrorBox error={qs.error} retry={() => qs.refetch()} /> : !total ? <ErrorBox message={t("riasec.none")} /> : (
         <>
-          <div className="sticky top-0 z-10 -mx-2 mb-3 rounded-xl bg-card/95 px-2 py-2 backdrop-blur">
+          <div className="relative z-10 -mx-2 mb-3 rounded-xl bg-card/95 px-2 py-2 backdrop-blur">
             <Meter value={done} max={total} label={`${done}/${total}`} />
             <div className="mt-1 text-[11px] text-muted-foreground">{t("riasec.scale")}</div>
             <div className="mt-2 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.04] via-muted/30 to-background p-3 shadow-sm">
               <p className="mb-2 text-xs font-bold text-foreground">{t("ob.holland.demoTitle")}</p>
               <Button type="button" variant="outline" size="sm" className="h-auto min-h-11 flex flex-col items-start gap-1 border-border/80 bg-background/90 px-3 py-2.5 text-left shadow-xs transition-all hover:border-primary hover:bg-background" onClick={randomDemo} data-testid="button-random-demo-answer">
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-primary"><RotateCw className="h-3.5 w-3.5" />{showDemo ? t("ob.holland.refreshDemo") : t("ob.holland.randomDemo")}</span>
-                <span className="text-[10px] font-medium text-muted-foreground">{t("ob.holland.demoHint")}</span>
+                <span className="whitespace-normal text-[10px] font-medium text-muted-foreground">{t("ob.holland.demoHint")}</span>
               </Button>
               {showDemo && <p className="mt-2 text-xs font-medium text-accent" role="status">{t("ob.holland.demoReady")}</p>}
               {demoCode && <p className="mt-1 text-sm font-bold text-primary" data-testid="text-demo-holland-code">{t("ob.holland.demoCode", { code: demoCode })}</p>}
@@ -1498,6 +1505,10 @@ function parseHollandSections(content: string, lang: string): ParsedHollandSecti
   return valid;
 }
 
+function resultSourceKey(p: Profile) {
+  return JSON.stringify([p.cvExtractionKey,p.cvUploadedAt,p.name,p.currentRole,p.organization,p.education,p.experience,p.goals,p.weeklyHours,p.budgetMyr,p.skills,p.riasecAnswers,p.riasecScores,p.riasecCode]);
+}
+
 /* ---------- 5. results ---------- */
 function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string; onProfileReady?: (np: Profile) => void }) {
   const { t, tk, lang } = useT();
@@ -1509,7 +1520,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
 
   // Query existing insights from server
   const insList = useListProfileInsights(p.id, {
-    query: { queryKey: getListProfileInsightsQueryKey(p.id) },
+    query: { queryKey: [...getListProfileInsightsQueryKey(p.id), resultSourceKey(p)] },
   });
 
   // Cache insights by language so switching is seamless
@@ -1591,7 +1602,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-end gap-3 sm:gap-4">
+      <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:gap-4">
         <div className="tnum flex gap-1" role="group" aria-label={t("ob.results.exploreCode")}>
           {code.split("").slice(0, 3).map((c, i) => (
             <motion.button type="button" key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.12 }}

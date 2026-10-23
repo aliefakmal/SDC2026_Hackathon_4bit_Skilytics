@@ -76,6 +76,7 @@ export function LearningDashboard({ p }: { p: Profile }) {
         </div>
         <Button
           variant="outline"
+          className="h-auto min-h-11 w-full whitespace-normal py-2 sm:w-auto"
           onClick={() =>
             learningCalendar(
               j.items,

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { JourneyReady } from "./journey-welcome";
+import { useEffect, useState } from "react";
 import { Link, Redirect, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -22,6 +23,7 @@ export function GuidedJourney({ p, mod }: { p: Profile; mod: string }) {
   const { lang } = useT(),
     w = learningWords[lang];
   const q = useLearning(p.id);
+  useEffect(() => { window.scrollTo({top:0,behavior:"instant"}); }, [mod,p.id]);
   if (q.isLoading) return <Rows n={3} />;
   if (q.isError) return <ErrorBox error={q.error} retry={() => q.refetch()} />;
   if (p.onboardingStep !== "complete")
@@ -39,6 +41,8 @@ export function GuidedJourney({ p, mod }: { p: Profile; mod: string }) {
         replace
       />
     );
+  if (stage !== "active" && mod === "ready") return <Redirect to={`/me/profiles/${p.id}/${stage}`} replace />;
+  if (stage === "active" && mod === "ready") return <JourneyReady />;
   if (stage === "active" && mod !== "intake")
     return <Redirect to="/me" replace />;
   const index = mod === "matcher" ? 1 : mod === "pathway" ? 2 : 0;
@@ -50,18 +54,18 @@ export function GuidedJourney({ p, mod }: { p: Profile; mod: string }) {
       >
         ← {w.back}
       </Link>
-      <h1 className="text-3xl font-bold">{p.name}</h1>
+      <h1 className="break-words text-2xl font-bold sm:text-3xl">{p.name}</h1>
       <p className="text-sm text-muted-foreground">{w.review}</p>
       {stage !== "active" && (
-        <ol className="grid grid-cols-3 gap-2" aria-label={w.review}>
+        <ol className="sticky top-[61px] z-20 grid grid-cols-3 gap-1.5 bg-background/95 py-2 backdrop-blur sm:gap-2" aria-label={w.review}>
           {w.steps.map((name, i) => (
             <li
               key={name}
               aria-current={index === i ? "step" : undefined}
-              className={`rounded-xl border p-3 text-sm ${index === i ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}
+              className={`rounded-xl border p-2 text-xs sm:p-3 sm:text-sm ${index === i ? "border-primary bg-primary text-primary-foreground" : "bg-card text-muted-foreground"}`}
             >
               <b>{i + 1}</b>
-              <span className="ml-2">{name}</span>
+              <span className="ml-1 sm:ml-2">{name}</span>
             </li>
           ))}
         </ol>

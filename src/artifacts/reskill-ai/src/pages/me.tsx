@@ -1,3 +1,4 @@
+import { WorkspaceWelcome } from "@/components/journey-welcome";
 import { LearningDashboard } from "@/components/learning-dashboard";
 import { useState, type FormEvent } from "react";
 import { Link, Redirect, useLocation, useSearch } from "wouter";
@@ -41,6 +42,7 @@ export function Workspace() {
   if (preset === "worker" || preset === "graduate") return <Redirect to={`/onboarding/cv?seg=${preset}&new=1`} replace />;
   return (
     <>
+      <WorkspaceWelcome />
       <PageHeader eyebrow={t(user ? "portal.individual" : "portal.guest")} title={user ? t("me.hello", { name: user.name }) : t("me.title")} sub={t("me.sub")}
         actions={<Button className="min-h-11" onClick={() => start("worker")} data-testid="button-new-profile"><Plus className="mr-1.5 h-4 w-4" />{t("me.newProfile")}</Button>} />
       {!user && <div className="mb-5"><GuestBanner /></div>}

@@ -1,3 +1,4 @@
+import { hollandSource } from "../lib/holland-source";
 import { Router, type IRouter } from "express";
 import { performance } from "node:perf_hooks";
 import { z } from "zod";
@@ -468,7 +469,11 @@ router.get("/profiles/:id/insights", async (req, res) => {
   if (!p) return;
   const rows = await db.select().from(insightsTable).where(eq(insightsTable.profileId, id)).orderBy(desc(insightsTable.createdAt));
   const latest = new Map<string, (typeof rows)[number]>();
-  for (const r of rows) if (!latest.has(`${r.agent}|${r.lang}`)) latest.set(`${r.agent}|${r.lang}`, r);
+  const sourcePrefix = hollandSource(p) + ":";
+  for (const r of rows) {
+    if (r.agent === "holland" && !r.inputHash.startsWith(sourcePrefix)) continue;
+    if (!latest.has(`${r.agent}|${r.lang}`)) latest.set(`${r.agent}|${r.lang}`, r);
+  }
   res.json([...latest.values()].map((r) => ({ ...insightToApi(r), cached: true })));
 });
 
@@ -565,7 +570,8 @@ router.post("/profiles/:id/insights", async (req, res) => {
   }
   if (targetRole) ctx["peranSasaran"] = targetRole.title;
 
-  const inputHash = hashInput(agent, lang, ctx, agent === "holland" ? "eli5-v2" : null, agentRoutes().find((route) => route.agent === agent));
+  const sourcePrefix = agent === "holland" ? hollandSource(p)+":" : "";
+  const inputHash = sourcePrefix + hashInput(agent, lang, ctx, agent === "holland" ? "eli5-v2" : null, agentRoutes().find((route) => route.agent === agent));
   if (!body.refresh) {
     const [cached] = await db
       .select()
@@ -584,7 +590,7 @@ router.post("/profiles/:id/insights", async (req, res) => {
       const [existingOtherLang] = await db
         .select()
         .from(insightsTable)
-        .where(and(eq(insightsTable.profileId, id), eq(insightsTable.agent, "holland"), ne(insightsTable.lang, lang)))
+        .where(and(eq(insightsTable.profileId, id), eq(insightsTable.agent, "holland"), ne(insightsTable.lang, lang), sql`${insightsTable.inputHash} LIKE ${sourcePrefix+"%"}`))
         .orderBy(desc(insightsTable.createdAt))
         .limit(1);
 

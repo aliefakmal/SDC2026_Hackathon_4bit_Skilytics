@@ -38,19 +38,14 @@ function useNav(): NavSet {
     const more: Item[] = [{ href: "/sources", label: "nav.sources", icon: Database }];
     return { primary, more, groups: [{ label: "nav.group.portal", items: primary }, { label: "nav.group.data", items: more }] };
   }
-  const primary: Item[] = [{ href: "/me", label: "nav.workspace", icon: LayoutGrid, match: l => l === "/me" }];
-  const ws: Item[] = [{ href: "/me/outlook", label: "nav.outlook", icon: Sparkles }];
-  const explore: Item[] = [
+  const primary: Item[] = [
+    { href: "/me", label: "nav.workspace", icon: LayoutGrid, match: l => l === "/me" },
     { href: "/roles", label: "nav.roles", icon: Target },
     { href: "/courses", label: "nav.courses", icon: BookOpen },
     { href: "/market", label: "nav.market", icon: BarChart3 },
     { href: "/sources", label: "nav.sources", icon: Database },
   ];
-  return {
-    primary,
-    more: [...ws, ...explore],
-    groups: [{ label: "nav.group.workspace", items: [...primary,...ws] }, { label: "nav.group.explore", items: explore }],
-  };
+  return { primary, more: primary, groups: [{label:"nav.group.workspace",items:primary.slice(0,1)},{label:"nav.group.explore",items:primary.slice(1)}] };
 }
 
 const isActive = (it: Item, loc: string) => (it.match ? it.match(loc) : loc === it.href || loc.startsWith(it.href + "/"));
@@ -129,7 +124,15 @@ export function Shell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [loc] = useLocation();
   const nav = useNav();
-  const { t } = useT();
+  const { t, lang } = useT();
+  const mobileLabels: Record<string,string> = lang === "ms" ? {"/me":"Utama","/roles":"Kerjaya","/courses":"Belajar","/market":"Pasaran","/sources":"Data"} : lang === "zh" ? {"/me":"主页","/roles":"职业","/courses":"学习","/market":"市场","/sources":"数据"} : {"/me":"Home","/roles":"Roles","/courses":"Learn","/market":"Market","/sources":"Data"};
+  const guided = /^\/me\/profiles\/\d+(?:\/[^/]+)?$/.test(loc);
+  if (guided) return (
+    <div className="paper min-h-[100dvh] bg-background">
+      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur"><div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-2"><Brand small /><LangToggle /></div></header>
+      <main className="mx-auto max-w-5xl px-4 py-4 sm:px-6 sm:py-6">{children}</main>
+    </div>
+  );
   return (
     <div className="paper min-h-[100dvh] bg-background">
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-sidebar-border bg-sidebar lg:block"><SideNav /></aside>
@@ -160,7 +163,7 @@ export function Shell({ children }: { children: ReactNode }) {
         </motion.div>
       </main>
 
-      <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-border bg-card/97 px-1 pt-1 shadow-[0_-6px_20px_-12px_hsl(350_30%_20%/0.25)] backdrop-blur lg:hidden" aria-label={t("nav.primary")}>
+      <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 grid border-t border-border bg-card/97 px-1 pt-1 shadow-[0_-6px_20px_-12px_hsl(350_30%_20%/0.25)] backdrop-blur lg:hidden" aria-label={t("nav.primary")} style={{gridTemplateColumns:`repeat(${nav.primary.length},minmax(0,1fr))`}}>
         {nav.primary.map((it) => {
           const active = isActive(it, loc);
           const label = t(it.label);
@@ -168,7 +171,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link key={it.label} href={it.href} title={label} data-testid={`tab-${it.label}`}
               className={cn("flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1", active ? "text-primary" : "text-muted-foreground")}>
               <span className={cn("flex h-7 w-11 items-center justify-center rounded-full transition-colors", active && "bg-[hsl(var(--maroon-soft))]")}><it.icon className="h-5 w-5" /></span>
-              <span className={cn("w-full truncate whitespace-nowrap text-center text-[10.5px]", active ? "font-bold" : "font-medium")}>{label}</span>
+              <span className={cn("w-full truncate whitespace-nowrap text-center text-[10.5px]", active ? "font-bold" : "font-medium")}>{mobileLabels[it.href] ?? label}</span>
             </Link>
           );
         })}

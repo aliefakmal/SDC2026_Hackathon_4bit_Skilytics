@@ -11,7 +11,7 @@ export const learningWords = {
     empty: "Not provided",
     review: "Review your details, choose your career, then start learning.",
     steps: ["Intake summary", "Career choice", "Learning timeline"],
-    activate: "Start learning in my workspace",
+    activate: "Confirm my learning plan",
     activateNote: "Save this plan and track each course in your dashboard.",
     estimate: "Study weeks · your estimate",
     estimateNote:
@@ -63,7 +63,7 @@ export const learningWords = {
     empty: "Tidak diberikan",
     review: "Semak maklumat, pilih kerjaya, kemudian mula belajar.",
     steps: ["Ringkasan intake", "Pilihan kerjaya", "Garis masa belajar"],
-    activate: "Mula belajar di ruang kerja saya",
+    activate: "Sahkan pelan pembelajaran saya",
     activateNote:
       "Simpan pelan ini dan jejak setiap kursus dalam dashboard anda.",
     estimate: "Minggu belajar · anggaran anda",
@@ -116,7 +116,7 @@ export const learningWords = {
     empty: "未提供",
     review: "核对资料，选择职业，然后开始学习。",
     steps: ["录入摘要", "职业选择", "学习时间线"],
-    activate: "在工作区开始学习",
+    activate: "确认我的学习计划",
     activateNote: "保存计划，在仪表盘跟踪每门课程。",
     estimate: "学习周数 · 你的估计",
     estimateNote: "机构尚未公布时长。请输入估计周数以设置截止日期。",

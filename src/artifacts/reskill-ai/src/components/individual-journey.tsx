@@ -528,7 +528,7 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
             <label className="text-sm font-semibold">
               {lw.calendar}
               <select
-                className="ml-3 rounded-lg border bg-card p-2"
+                className="mt-2 block min-h-11 w-full rounded-lg border bg-card p-2 sm:ml-3 sm:mt-0 sm:inline-block sm:w-auto"
                 aria-label={lw.calendar}
                 value={calendarTarget}
                 onChange={(e) => setCalendarTarget(e.target.value)}
@@ -538,7 +538,7 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
               </select>
             </label>
             <Button
-              className="mt-3 block min-h-12 w-full"
+              className="mt-3 block h-auto min-h-12 w-full whitespace-normal px-3 py-3"
               disabled={!items.length || dated.some((i) => !i.deadline)}
               onClick={() =>
                 learningCalendar(
@@ -698,7 +698,7 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
                     startDate: start,
                     durationWeeks: estimates,
                   });
-                  navigate("/me");
+                  navigate(`/me/profiles/${p.id}/ready`);
                 } catch {}
               }}
             >

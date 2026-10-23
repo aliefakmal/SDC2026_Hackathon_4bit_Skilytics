@@ -1,3 +1,4 @@
+import { hollandSource } from "./holland-source";
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { randomUUID } from "node:crypto";
@@ -365,4 +366,32 @@ test("guided journey prevents skipping and persists completion with a scoped cer
  await request('/profiles/'+id+'/journey','POST',{action:'complete_course',courseId:active.body.items[0].courseId,done:false});
  assert.equal((await request('/profiles/'+id+'/journey/certificate')).status,409);
  assert.equal((await request('/profiles/'+id+'/plan','POST',{roleId:role.id})).status,409);
+});
+
+
+test("Holland summaries only expose the current CV, goals and interest answers", async () => {
+  const id = await draft("graduate");
+  await extractedFixture(id);
+  await request(`/profiles/${id}`, "PATCH", {verified:true,goals:"Explore data"});
+  await request(`/profiles/${id}/riasec`, "POST", {answers});
+  const seed = async () => {
+    const [p] = await db.select().from(profilesTable).where(eq(profilesTable.id,id));
+    const prefix = hollandSource(p);
+    await db.insert(insightsTable).values(["en","ms","zh"].map(lang=>({profileId:id,agent:"holland",lang,inputHash:prefix+":test",content:"TEST ONLY CURRENT "+lang,sources:[],model:"test-fixture"})));
+    return prefix;
+  };
+  const count = async () => (await request(`/profiles/${id}/insights`)).body.filter((r:any)=>r.agent==="holland").length;
+  const original = await seed();
+  assert.equal(await count(),3);
+  await request(`/profiles/${id}`, "PATCH", {onboardingStep:"results"});
+  assert.equal(await count(),3,"navigation must preserve existing translations");
+  await request(`/profiles/${id}`, "PATCH", {goals:"Explore a different direction"});
+  assert.equal(await count(),0,"changed goals must reset all languages");
+  assert.notEqual(await seed(),original);
+  assert.equal(await count(),3);
+  await request(`/profiles/${id}/riasec`, "POST", {answers:answers.map(a=>({...a,value:a.value===5?2:4}))});
+  assert.equal(await count(),0,"new interest answers invalidate old summaries");
+  await seed();
+  await db.update(profilesTable).set({cvUploadedAt:new Date(),cvExtractionKey:"NEW TEST CV"}).where(eq(profilesTable.id,id));
+  assert.equal(await count(),0,"new CV also hides in-flight old-source results");
 });
