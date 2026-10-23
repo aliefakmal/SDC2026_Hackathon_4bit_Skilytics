@@ -19,6 +19,7 @@ import { consumeAiRequest } from "./ai-rate-limit";
 import { hashInput, type AgentName, type Lang } from "./agents";
 import { agentRoutes } from "./agent-routing";
 import { loadCourses, loadRoles, loadSkills, roleToApi } from "./catalog";
+import { selfDirectedRoles } from "./self-directed";
 import { profileToApi } from "./profiles";
 import { scoreRole } from "./scoring";
 import { RIASEC_QUESTIONS } from "../data/riasec";
@@ -124,9 +125,9 @@ async function insertCachedProfilerInsight(guestToken: string) {
 
   const [skills, roles, courses] = await Promise.all([loadSkills(), loadRoles(), loadCourses()]);
   const profile = profileToApi(profileRow!, skills);
-  const matches = roles
+  const matches = selfDirectedRoles(roles,courses)
     .map((role) => ({ role: roleToApi(role), ...scoreRole(profileRow!, role, skills, courses) }))
-    .sort((a, b) => b.score - a.score);
+    .sort((a, b) => b.score - a.score || a.gapSkills.length - b.gapSkills.length);
   const top = matches.slice(0, 5).map((m) => ({
     title: m.role.title,
     score: m.score,

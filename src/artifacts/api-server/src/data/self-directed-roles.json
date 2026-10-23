@@ -1,0 +1,119 @@
+{
+  "version": "self-directed-v1",
+  "reviewedAt": "2026-10-23",
+  "method": "Application scope review, not an official O*NET classification or a promise of employment. Include desk-based roles with practical self-paced online learning pathways and at least one role-specific skill covered by the current public catalogue. Exclude clinical, licensed/professional-signoff, research-scientist crosswalks and physical trades requiring supervised practice. Advanced digital roles may need prior knowledge; online courses do not replace employer entry requirements.",
+  "sources": [
+    "https://www.onetcenter.org/database.html",
+    "https://learn.microsoft.com/en-us/training/career-paths/",
+    "https://www.freecodecamp.org/learn/",
+    "https://www.open.edu/openlearn/",
+    "https://www.bls.gov/ooh/computer-and-information-technology/web-developers.htm",
+    "https://www.bls.gov/ooh/healthcare/registered-nurses.htm",
+    "https://www.mynextmove.org/profile/summary/47-2231.00",
+    "https://academy.hubspot.com/courses/digital-marketing",
+    "https://academy.hubspot.com/courses/content-marketing"
+  ],
+  "included": [
+    "Data Analyst",
+    "Data Scientist",
+    "Software Developer",
+    "Web Developer",
+    "Cybersecurity Analyst",
+    "Network and Cloud Administrator",
+    "IT Support Specialist",
+    "Digital Marketing Specialist",
+    "Graphic Designer",
+    "UX / UI Designer",
+    "Content Writer",
+    "Bookkeeping and Accounts Clerk",
+    "Customer Service Representative",
+    "Administrative Assistant",
+    "Sales Representative"
+  ],
+  "excluded": {
+    "AI / Machine Learning Engineer": "The current SOC 15-1221 crosswalk describes computer research scientists, not an online-only AI application pathway.",
+    "Translator and Interpreter": "Professional interpreting and specialised translation competence are not established by this catalogue.",
+    "Accountant": "Professional accounting/audit/tax signoff requires credentials beyond this catalogue.",
+    "Financial Analyst": "Formal/regulated financial practice is outside this online learning prototype.",
+    "Human Resources Specialist": "Employment-law/compliance responsibilities need professional context not established by this catalogue.",
+    "Training and Development Specialist": "The available catalogue does not establish full trainer readiness.",
+    "Project Management Specialist": "Professional delivery experience is not replaced by online coursework.",
+    "Logistics and Supply Chain Executive": "Operational workplace competence is not established by online coursework alone.",
+    "Electrical Engineer": "Formal engineering education and supervised professional practice.",
+    "Mechanical Engineer": "Formal engineering education and supervised professional practice.",
+    "Electrical and Electronics Technician": "Practical equipment training and supervised work.",
+    "Industrial Maintenance Technician": "Physical maintenance and supervised safety training.",
+    "Production Operator": "Practical equipment operation and workplace safety training.",
+    "Quality Control Inspector": "On-site inspection competence and equipment practice.",
+    "Solar PV Installer": "Site installation, electrical safety and supervised practical training; not assumed to require a degree in every jurisdiction.",
+    "Sustainability and ESG Executive": "Specialised reporting context beyond current catalogue coverage.",
+    "Registered Nurse": "Clinical education, supervised placements and professional registration.",
+    "Medical Records and Health Information Specialist": "Specialised healthcare administration and coding requirements beyond this catalogue."
+  },
+  "coreSkills": {
+    "Data Analyst": [
+      "SQL",
+      "Data Visualisation",
+      "Power BI",
+      "Microsoft Excel"
+    ],
+    "Data Scientist": [
+      "Machine Learning",
+      "Python",
+      "Statistics"
+    ],
+    "Software Developer": [
+      "JavaScript",
+      "Python",
+      "Software Testing"
+    ],
+    "Web Developer": [
+      "HTML and CSS",
+      "JavaScript"
+    ],
+    "Cybersecurity Analyst": [
+      "Cybersecurity",
+      "Networking"
+    ],
+    "Network and Cloud Administrator": [
+      "Networking",
+      "Cloud Computing"
+    ],
+    "IT Support Specialist": [
+      "IT Support and Troubleshooting",
+      "Networking"
+    ],
+    "Digital Marketing Specialist": [
+      "Digital Marketing",
+      "Social Media Management",
+      "Sales and Marketing"
+    ],
+    "Graphic Designer": [
+      "Graphic Design",
+      "Design",
+      "UX Design"
+    ],
+    "UX / UI Designer": [
+      "UX Design",
+      "HTML and CSS"
+    ],
+    "Content Writer": [
+      "Content Writing",
+      "Communications and Media"
+    ],
+    "Bookkeeping and Accounts Clerk": [
+      "Bookkeeping"
+    ],
+    "Customer Service Representative": [
+      "Customer Service",
+      "CRM Systems"
+    ],
+    "Administrative Assistant": [
+      "Office Administration"
+    ],
+    "Sales Representative": [
+      "Sales and Negotiation",
+      "CRM Systems"
+    ]
+  }
+}

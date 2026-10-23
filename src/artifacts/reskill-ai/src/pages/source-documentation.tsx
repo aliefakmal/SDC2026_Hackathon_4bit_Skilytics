@@ -14,6 +14,12 @@ type Row = { label: DictKey; k?: DictKey[]; ref?: string; url?: string };
 type Doc = { id: string; types: DocType[]; name: DictKey; sourceIds?: string[]; ai?: boolean; rows: Row[] };
 
 const DOCS: Doc[] = [
+  {id:"hubspot",types:["external","static","derived"],name:"src.hubspot_catalogue.name",sourceIds:["hubspot_catalogue"],rows:[
+    {label:"docs.f.publisher",ref:"HubSpot Academy"},
+    {label:"docs.f.dataset",url:"https://academy.hubspot.com/courses/digital-marketing"},
+    {label:"docs.f.dataset",url:"https://academy.hubspot.com/courses/content-marketing"},
+    {label:"docs.f.method",k:["docs.hubspot.method"]},
+  ]},
   {id:"career_news",types:["external","derived"],name:"docs.news.name",sourceIds:["gdelt_career_news","career_news_rss"],rows:[
     {label:"docs.f.publisher",ref:"The GDELT Project / Google News RSS / original news publishers"},
     {label:"docs.f.api",url:"https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/"},
@@ -64,7 +70,7 @@ const DOCS: Doc[] = [
     { label: "docs.f.version", k: ["docs.onet.version"] },
     { label: "docs.f.files", ref: "software_skills.csv, task_statements.csv, knowledge.csv, essential_skills.csv, transferable_skills.csv, career_interest_types.csv, occupation_data.csv" },
     { label: "docs.f.coverage", k: ["docs.onet.coverage"] },
-    { label: "docs.f.method", k: ["docs.onet.method", "docs.onet.skills", "docs.onet.riasec", "docs.onet.provenance"] },
+    { label: "docs.f.method", k: ["docs.onet.method", "docs.onet.skills", "docs.onet.riasec", "docs.onet.provenance", "docs.onet.scope"] },
     { label: "docs.f.license", k: ["docs.onet.license"], url: "https://www.onetcenter.org/license_db.html" },
     { label: "docs.f.cadence", k: ["docs.onet.cadence"] },
   ] },
@@ -145,7 +151,7 @@ const TYPES: DocType[] = ["external", "static", "derived", "service", "demo", "u
 const CATEGORIES = [
   { key: "market", ids: ["dosm", "aei_usage", "aei_exposure", "bls", "career_news"] },
   { key: "career", ids: ["onet", "riasec", "match"] },
-  { key: "learning", ids: ["courses", "freecodecamp", "githubskills", "huggingface", "openlearn", "sdg"] },
+  { key: "learning", ids: ["hubspot", "courses", "freecodecamp", "githubskills", "huggingface", "openlearn", "sdg"] },
   { key: "aiService", ids: ["runpod"] },
   { key: "privacy", ids: ["demo", "learningRecords"] },
 ] as const;

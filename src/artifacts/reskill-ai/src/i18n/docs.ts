@@ -1,6 +1,11 @@
 // Data Sources documentation strings. URLs, dataset field names, file names and official
 // English titles are reference identifiers and are intentionally kept verbatim.
 export const docsEn = {
+  "src.hubspot_catalogue.name": "HubSpot Academy · reviewed public courses",
+  "src.hubspot_catalogue.desc": "Two self-paced marketing courses from public publisher metadata; reviewed 23 October 2026. Free account needed for enrolment.",
+  "docs.hubspot.method": "Manual metadata selection: Digital Marketing (3 hours 24 minutes) and Content Marketing (8 hours 23 minutes), reviewed 23 October 2026. Public titles, URLs, duration and free certification status come from HubSpot Academy. A free Academy account is required to learn and certify. Skill and SDG 8 associations are app-authored from learning outcomes. Not a live catalogue or an open licence to republish course content.",
+  "docs.onet.scope": "Individual Roles, Matcher, new Pathways and Market use the versioned self-directed-v1 scope review (23 October 2026): 15 desk-based career directions with at least one core skill supported by a current public online course. Clinical, licensed/professional-signoff and physical trades are excluded from new suggestions. Solar installation needs practical site training, not necessarily a degree. The AI/ML Engineer SOC crosswalk refers to research scientists and is excluded. Advanced digital paths can require prior skills; courses do not guarantee employment or replace employer requirements. Original public O*NET skills/interest codes, SOC-linked AI exposure and existing learning records are retained. This is an app scope policy, not an official dataset classification.",
+
   "docs.news.failure": "Provider errors are shown separately. Retain the last snapshot or use the alternate feed; mark stale when needed. If unavailable, AI uses statistics only. News does not change scenario formulas.",
   "docs.news.license": "GDELT datasets are free with attribution and a GDELT link. Google News RSS is a public feed, not a documented API or an open licence for publisher articles. Article rights remain with publishers. Only headline metadata and links are used, never full text.",
   "docs.news.method": "GDELT DOC 2.0 ArtList is the primary public keyless API; public Google News RSS is the fallback. Only title, news link, publisher domain, feed/index date and region are stored. Duplicate titles/URLs and items older than 35 days are excluded. Analyst RAG treats headlines as untrusted, tentative context alongside statistics, not verified article content or numeric forecast evidence. Public snapshots are cached six hours. No CV or user data is sent to news providers. Original titles stay in their source language.",
@@ -113,6 +118,11 @@ export const docsEn = {
 export type DocsKey = keyof typeof docsEn;
 
 export const docsMs: Record<DocsKey, string> = {
+  "src.hubspot_catalogue.name": "HubSpot Academy · kursus awam disemak",
+  "src.hubspot_catalogue.desc": "Dua kursus pemasaran kendiri daripada metadata penerbit awam; disemak 23 Oktober 2026. Akaun percuma diperlukan untuk mendaftar.",
+  "docs.hubspot.method": "Pilihan metadata manual: Digital Marketing (3 jam 24 minit) dan Content Marketing (8 jam 23 minit), disemak 23 Oktober 2026. Tajuk, URL, tempoh dan status pensijilan percuma datang daripada HubSpot Academy. Akaun Academy percuma diperlukan untuk belajar dan memperoleh sijil. Padanan kemahiran dan SDG 8 ditulis aplikasi daripada hasil pembelajaran. Bukan katalog langsung atau lesen terbuka menerbitkan semula kandungan kursus.",
+  "docs.onet.scope": "Roles individu, Matcher, Pathway baharu dan Market menggunakan semakan skop self-directed-v1 (23 Oktober 2026): 15 hala tuju kerja digital/pejabat dengan sekurang-kurangnya satu kemahiran teras disokong kursus dalam talian awam semasa. Kerja klinikal, profesion berlesen/pengesahan profesional dan kerja fizikal khusus dikecualikan daripada cadangan baharu. Pemasangan solar memerlukan latihan praktikal tapak, bukan semestinya degree. Padanan SOC AI/ML Engineer merujuk saintis penyelidikan dan dikecualikan. Laluan digital lanjutan mungkin memerlukan kemahiran awal; kursus tidak menjamin pekerjaan atau menggantikan syarat majikan. Kemahiran/kod minat O*NET asal, pendedahan AI berasaskan SOC dan rekod pembelajaran sedia ada dikekalkan. Ini dasar skop aplikasi, bukan klasifikasi dataset rasmi.",
+
   "docs.news.failure": "Ralat penyedia dipaparkan berasingan. Snapshot terakhir atau feed gantian digunakan; label lapuk ditunjukkan jika perlu. Jika tiada, AI hanya menggunakan statistik. Berita tidak mengubah formula senario.",
   "docs.news.license": "Dataset GDELT percuma dengan atribusi dan pautan GDELT. RSS Google News ialah feed awam, bukan API berdokumentasi atau lesen terbuka artikel penerbit. Hak artikel kekal milik penerbit. Hanya metadata tajuk dan pautan digunakan, tanpa teks penuh.",
   "docs.news.method": "GDELT DOC 2.0 ArtList ialah API awam utama tanpa kunci; RSS awam Google News menjadi gantian. Hanya tajuk, pautan berita, domain penerbit, tarikh feed/indeks dan rantau disimpan. Tajuk/URL pendua serta berita melebihi 35 hari dikecualikan. Analyst RAG menganggap tajuk sebagai konteks tentatif yang tidak dipercayai bersama statistik, bukan kandungan artikel disahkan atau bukti ramalan angka. Snapshot dicache enam jam. Tiada CV atau data pengguna dihantar ke penyedia berita. Tajuk asal dikekalkan dalam bahasa sumber.",
@@ -223,6 +233,11 @@ export const docsMs: Record<DocsKey, string> = {
 };
 
 export const docsZh: Record<DocsKey, string> = {
+  "src.hubspot_catalogue.name": "HubSpot Academy · 已审核公开课程",
+  "src.hubspot_catalogue.desc": "两门自学营销课程，采用公开机构元数据，2026 年 10 月 23 日审核。报名需免费账户。",
+  "docs.hubspot.method": "人工选择元数据：Digital Marketing（3 小时 24 分钟）及 Content Marketing（8 小时 23 分钟），2026 年 10 月 23 日审核。公开标题、URL、时长和免费认证状态来自 HubSpot Academy。学习与认证需免费 Academy 账户。技能及 SDG 8 关联由应用根据学习成果编写。非实时目录，亦非转载课程内容的开放许可。",
+  "docs.onet.scope": "个人职业、匹配、新学习路径及市场采用 self-directed-v1 范围审核（2026 年 10 月 23 日）：15 个数字/办公职业方向，每个至少有一项核心技能由当前公开在线课程支持。新推荐排除临床、须执照/专业签署及现场实操工种。太阳能安装需现场实践，并非一定需要学位。AI/ML Engineer 当前 SOC 对应研究科学家，因此排除。进阶数字路径可能需要已有技能；课程不保证就业或取代雇主要求。保留 O*NET 原技能/兴趣代码、SOC 对应 AI 参与度及已有学习记录。这是应用范围政策，非官方数据分类。",
+
   "docs.news.failure": "分别显示提供方错误。保留最近快照或使用备用源，必要时标记过期。均不可用时 AI 只参考统计。新闻不改变情景公式。",
   "docs.news.license": "GDELT 数据集免费使用，须署名并链接 GDELT。Google News RSS 是公开源，并非有文档的 API 或出版商文章开放许可。版权归原出版商。仅使用标题元数据及链接，不转载正文。",
   "docs.news.method": "主要使用无需密钥的 GDELT DOC 2.0 ArtList 公开 API，以 Google News 公开 RSS 备用。仅保存标题、新闻链接、出版商域名、源/索引日期和地区。排除重复标题/URL 及超过 35 天的新闻。Analyst RAG 将标题视为未经信任的暂定背景，结合统计，而非已核实正文或数值预测证据。快照缓存六小时，不向新闻方发送 CV 或用户数据。标题保留来源语言。",

@@ -7,7 +7,8 @@ import {
   labourMonthlyTable,
 } from "@workspace/db";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
-import { loadRoles } from "../lib/catalog";
+import { loadRoles, loadCourses } from "../lib/catalog";
+import { selfDirectedRoles } from "../lib/self-directed";
 import { ROLE_TITLE_ZH } from "../data/roles-zh";
 import {
   BLS_SOURCE,
@@ -23,7 +24,7 @@ import { loadCareerNews, GDELT_DOCS } from "../lib/career-news";
 const router = Router();
 const running = new Map<string, Promise<unknown>>();
 async function contextFor(horizon: number) {
-  const [roles, sources, labour, news] = await Promise.all([
+  const [roles, sources, labour, news, courses] = await Promise.all([
     loadRoles(),
     db.select().from(marketSourcesTable),
     db
@@ -32,8 +33,9 @@ async function contextFor(horizon: number) {
       .orderBy(desc(labourMonthlyTable.date))
       .limit(1),
     loadCareerNews(),
+    loadCourses(),
   ]);
-  const candidates = outlookCandidates(roles).map((r) => ({
+  const candidates = outlookCandidates(selfDirectedRoles(roles,courses)).map((r) => ({
     ...r,
     titleZh: ROLE_TITLE_ZH[r.title] ?? r.title,
   }));

@@ -1,6 +1,7 @@
 import { ROLE_TITLE_ZH } from "../data/roles-zh";
 import { liveCourses } from "./live-courses";
 import { openLearnCourses } from "../data/openlearn";
+import { hubspotCourses } from "../data/hubspot";
 import { courseFitsRole, courseSkillFit } from "./course-relevance";
 import {
   db,
@@ -85,7 +86,7 @@ export async function loadRoles(): Promise<RoleView[]> {
 
 export async function loadCourses(): Promise<CourseView[]> {
   const skills = await loadSkills();
-  return [...await liveCourses(skills), ...openLearnCourses(skills)];
+  return [...await liveCourses(skills), ...openLearnCourses(skills), ...hubspotCourses(skills)];
 }
 
 export async function loadDemoCourses(): Promise<CourseView[]> {

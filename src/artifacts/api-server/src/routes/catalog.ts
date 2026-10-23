@@ -2,13 +2,14 @@ import { Router, type IRouter } from "express";
 import { ListRolesQueryParams, GetRoleParams, ListCoursesQueryParams } from "@workspace/api-zod";
 import { loadCourses, loadRoles, courseToApi, roleToApi } from "../lib/catalog";
 import { SDG_TARGETS } from "../data/courses";
+import { selfDirectedRoles } from "../lib/self-directed";
 
 const router: IRouter = Router();
 
 router.get("/roles", async (req, res) => {
   const q = ListRolesQueryParams.parse(req.query);
   const [roles,courses] = await Promise.all([loadRoles(),loadCourses()]);
-  res.json(roles.filter((r) => !q.sector || r.sector === q.sector).map(r => roleToApi(r,courses)));
+  res.json(selfDirectedRoles(roles,courses).filter((r) => !q.sector || r.sector === q.sector).map(r => roleToApi(r,courses)));
 });
 
 router.get("/roles/:id", async (req, res) => {

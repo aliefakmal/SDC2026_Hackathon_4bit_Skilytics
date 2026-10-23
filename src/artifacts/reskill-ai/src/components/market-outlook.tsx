@@ -1,6 +1,7 @@
+import { GuideButton } from "./page-guide";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import {
   ArrowRight,
   ChevronDown,
@@ -91,8 +92,16 @@ export function MarketOutlook() {
   const { lang } = useT(),
     w = marketWords[lang];
   const qc = useQueryClient();
-  const [horizon, setHorizon] = useState(3);
-  const [mode, setMode] = useState<"ai" | "demand">("ai");
+  const search = new URLSearchParams(useSearch());
+  const inputYear = Number(search.get("years"));
+  const [horizon, setHorizon] = useState(
+    Number.isInteger(inputYear) && inputYear >= 1 && inputYear <= 10
+      ? inputYear
+      : 3,
+  );
+  const [mode, setMode] = useState<"ai" | "demand">(
+    search.get("view") === "demand" ? "demand" : "ai",
+  );
   const [visible, setVisible] = useState(5);
   const [guide, setGuide] = useState(false),
     [step, setStep] = useState(0);
@@ -150,7 +159,7 @@ export function MarketOutlook() {
         {includeGoals && <Goals role={r} />}
         <Link
           className="inline-flex min-h-11 items-center gap-2 text-xs font-bold text-primary"
-          href={`/roles/${r.roleId}`}
+          href={`/roles/${r.roleId}?from=market&years=${horizon}&view=${mode}`}
         >
           {w.next}
           <ArrowRight className="h-3.5 w-3.5" />
@@ -173,19 +182,13 @@ export function MarketOutlook() {
           <h1 className="text-2xl font-extrabold sm:text-3xl">{w.title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{w.sub}</p>
         </div>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-11 w-11 shrink-0 rounded-full"
-          aria-label={w.guide}
-          title={w.guide}
+        <GuideButton
+          label={w.guide}
           onClick={() => {
             setStep(0);
             setGuide(true);
           }}
-        >
-          <CircleHelp className="h-5 w-5" />
-        </Button>
+        />
       </header>
       <section
         className="min-w-0 rounded-2xl border bg-card p-4 sm:p-6"

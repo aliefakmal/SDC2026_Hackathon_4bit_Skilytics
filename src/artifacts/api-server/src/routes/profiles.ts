@@ -20,6 +20,7 @@ import {
   RunProfileAgentBody,
 } from "@workspace/api-zod";
 import { loadCourses, loadRoles, loadSkills, roleToApi } from "../lib/catalog";
+import { selfDirectedRoles } from "../lib/self-directed";
 import { extractCvDocument, extractSkills, CvError, isCvImageFile, validateCvImage, recognizeCvImage, type CvDocumentPage } from "../lib/cv";
 import { RIASEC_QUESTIONS } from "../data/riasec";
 import { scoreRiasec } from "../lib/riasec-scoring";
@@ -443,7 +444,7 @@ router.post("/profiles/:id/riasec", async (req, res) => {
 async function computeMatches(p: ProfileRow) {
   const [roles, skills, courses] = await Promise.all([loadRoles(), loadSkills(), loadCourses()]);
   const candidate = { ...p, skills: profileSkills(p, skills) };
-  return roles
+  return selfDirectedRoles(roles,courses)
     .map((role) => ({ role: roleToApi(role, courses), ...scoreRole(candidate, role, skills, courses) }))
     .sort((a, b) => b.score - a.score || a.gapSkills.length - b.gapSkills.length);
 }
@@ -474,7 +475,7 @@ router.post("/profiles/:id/plan", async (req, res) => {
   const [roles, skills, courses] = await Promise.all([loadRoles(), loadSkills(), loadCourses()]);
   if (!courses.length) { res.status(503).json({ error: "course_catalogue_unavailable" }); return; }
   if (journey && workplaceAiCourses(courses).length < 3) { res.status(503).json({ error: "course_catalogue_unavailable" }); return; }
-  const role = roles.find((r) => r.id === roleId);
+  const role = (journey ? selfDirectedRoles(roles,courses) : roles).find((r) => r.id === roleId);
   if (!role) {
     res.status(404).json({ error: "role_not_found" });
     return;
