@@ -721,7 +721,7 @@ export function Sources() {
                   <Icon className="h-4 w-4 text-accent" />
                   {tk("srcKind", k)}
                   <span className="text-xs font-normal text-muted-foreground">
-                    ({items.length})
+                    ({items.length + (k === "catalogue" ? 3 : 0)})
                   </span>
                 </h2>
                 {k === "catalogue" && <JobsSource/>}

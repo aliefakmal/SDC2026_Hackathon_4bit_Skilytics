@@ -209,7 +209,7 @@ router.get("/profiles/:id/jobs", async (req, res) => {
     res.json({
       checkedAt: new Date(snapshot!.at).toISOString(),
       jobs: ranked,
-      source: "Jobicy",
+      source: "Jobicy · Himalayas · Remotive",
     });
   } catch {
     res.status(503).json({ error: "jobs_unavailable" });
