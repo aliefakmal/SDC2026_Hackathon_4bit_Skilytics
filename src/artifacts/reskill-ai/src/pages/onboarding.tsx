@@ -1210,7 +1210,12 @@ function GoalsStep({ p, scope, onProfileReady }: { p: Profile; scope: string; on
   const et = useErrText();
   const { go, upd } = useAdvance(p, scope, onProfileReady);
   const [form, setForm] = useState<GoalsForm>(() => initGoalsForm(p, scope));
-  const [showDemoGoal, setShowDemoGoal] = useState(false);
+  const [demoGoalIndex, setDemoGoalIndex] = useState(-1);
+  const nextDemoGoal = () => {
+    const next = (demoGoalIndex + 1) % 3;
+    setDemoGoalIndex(next);
+    setForm((current) => ({ ...current, goals: t(`ob.goals.demoExample${next + 1}` as "ob.goals.demoExample1" | "ob.goals.demoExample2" | "ob.goals.demoExample3") }));
+  };
   useEffect(() => {
     const existing = readDraft(scope, p.id).form ?? {};
     writeDraft(scope, p.id, { form: { ...existing, ...form } });
@@ -1242,8 +1247,7 @@ function GoalsStep({ p, scope, onProfileReady }: { p: Profile; scope: string; on
     <>
       <StepHead title={t("ob.goals.title")} sub={t("ob.goals.sub")} />
       <div className="max-w-2xl space-y-6">
-        <Button type="button" variant="outline" onClick={() => setShowDemoGoal((value) => !value)} data-testid="button-goals-demo">{t("ob.goals.demoToggle")}</Button>
-        {showDemoGoal && <div className="rounded-xl border border-primary/25 bg-primary/5 p-3 text-sm"><p>{t("ob.goals.demoExample")}</p><Button type="button" variant="ghost" className="mt-2" onClick={() => setForm({ goals: t("ob.goals.demoExample"), hours: "8", budget: "100" })}>{t("ob.goals.demoUse")}</Button></div>}
+        <Button type="button" variant="outline" onClick={nextDemoGoal} data-testid="button-goals-demo"><RotateCw className="mr-2 h-4 w-4" />{t(demoGoalIndex < 0 ? "ob.goals.demoFill" : "ob.goals.demoRefresh")}</Button>
         <div className="space-y-1.5">
           <Label htmlFor="f-goals">{t("ob.goals.label")}</Label>
           <Textarea
