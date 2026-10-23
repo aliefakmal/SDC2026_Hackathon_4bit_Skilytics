@@ -29,7 +29,6 @@ import { en } from "@/i18n/en";
 import { ms } from "@/i18n/ms";
 import { zh } from "@/i18n/zh";
 import { cn } from "@/lib/utils";
-import { MultilingualListen } from "@/components/multilingual-listen";
 import { HollandLoadingStory, HollandStoryCard, HollandTranslationNote } from "@/components/holland-story";
 
 const RIASEC = ["R", "I", "A", "S", "E", "C"] as const;
@@ -1663,7 +1662,6 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
                 {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                 <span>{copied ? (lang === "ms" ? "Disalin!" : lang === "zh" ? "已复制!" : "Copied!") : (lang === "ms" ? "Salin" : lang === "zh" ? "复制" : "Copy")}</span>
               </button>
-              <MultilingualListen text={insight.content} language={insight.lang} />
             </div>
           )}
         </div>
