@@ -1590,73 +1590,72 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
 
   return (
     <>
-      <div className="mb-6 flex flex-wrap items-end gap-4">
+      <div className="mb-6 flex flex-wrap items-end gap-3 sm:gap-4">
         <div className="tnum flex gap-1" role="group" aria-label={t("ob.results.exploreCode")}>
           {code.split("").slice(0, 3).map((c, i) => (
             <motion.button type="button" key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.12 }}
               translate="no" onClick={() => setSelectedLetter(i)} aria-pressed={selectedLetter === i} aria-label={`${c}: ${tk("riasec", c)}`}
-              className={cn("flex h-16 w-14 items-center justify-center rounded-2xl text-3xl font-extrabold transition-transform hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary", selectedLetter === i ? "bg-primary text-primary-foreground" : "bg-[hsl(var(--gold-soft))] text-primary")}>{c}</motion.button>
+              className={cn("flex h-14 w-12 sm:h-16 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl text-2xl sm:text-3xl font-extrabold transition-transform hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary", selectedLetter === i ? "bg-primary text-primary-foreground" : "bg-[hsl(var(--gold-soft))] text-primary")}>{c}</motion.button>
           ))}
         </div>
-        <div className="min-w-0">
-          <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl" data-testid="text-riasec-code">{t("ob.results.title", { code })}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("ob.results.sub")}</p>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight" data-testid="text-riasec-code">{t("ob.results.title", { code })}</h1>
+          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground">{t("ob.results.sub")}</p>
         </div>
       </div>
-      {selectedType && selectedType !== "-" && <div className="mb-6 rounded-2xl border border-primary/25 bg-card p-4" data-testid="holland-letter-detail">
-        <p className="text-xs font-semibold uppercase tracking-wide text-accent">{t("ob.results.exploreCode")}</p>
-        <p className="mt-1 font-bold"><span translate="no" className="notranslate">{selectedType}</span> · {tk("riasec", selectedType)}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{t(`ob.results.type.${selectedType}` as Parameters<typeof t>[0])}</p>
+      {selectedType && selectedType !== "-" && <div className="mb-6 rounded-2xl border border-primary/25 bg-card p-3.5 sm:p-4" data-testid="holland-letter-detail">
+        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-accent">{t("ob.results.exploreCode")}</p>
+        <p className="mt-0.5 sm:mt-1 font-bold text-sm sm:text-base"><span translate="no" className="notranslate">{selectedType}</span> · {tk("riasec", selectedType)}</p>
+        <p className="mt-1 text-xs sm:text-sm text-muted-foreground leading-relaxed">{t(`ob.results.type.${selectedType}` as Parameters<typeof t>[0])}</p>
       </div>}
 
       {/* 1. YOUR SIX SCORES SECTION */}
-      <div className="mb-6 rounded-2xl border border-border bg-card p-5 md:p-6 shadow-xs">
+      <div className="mb-6 rounded-2xl border border-border bg-card p-4 sm:p-5 md:p-6 shadow-xs">
         <div className="flex items-center justify-between pb-3 border-b border-border/40">
           <div className="flex items-center gap-2">
             <BarChart2 className="h-4 w-4 text-accent" />
-            <h2 className="text-sm font-bold uppercase tracking-wider text-accent">{t("ob.results.scores")}</h2>
+            <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-accent">{t("ob.results.scores")}</h2>
           </div>
-          <span className="text-xs text-muted-foreground">{t("ob.results.exploreCode")}</span>
         </div>
         {scores ? (
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5">
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 sm:gap-y-3.5">
             {RIASEC.map((k) => (
-              <div key={k} className="grid grid-cols-[1.5rem_minmax(0,7.5rem)_1fr] items-center gap-2 text-sm" data-testid={`meter-riasec-${k}`}>
+              <div key={k} className="grid grid-cols-[1.5rem_minmax(0,6.5rem)_1fr] sm:grid-cols-[1.5rem_minmax(0,7.5rem)_1fr] items-center gap-2 text-xs sm:text-sm" data-testid={`meter-riasec-${k}`}>
                 <span translate="no" className="notranslate font-bold text-primary">{k}</span>
                 <span className="truncate font-medium">{tk("riasec", k)}</span>
                 <Meter value={scores[k]} max={max} tone={code.includes(k) ? "maroon" : "gold"} label={scores[k].toFixed(1)} />
               </div>
             ))}
           </div>
-        ) : <p className="mt-3 text-sm text-muted-foreground">-</p>}
-        <p className="mt-4 border-t border-border/40 pt-2 text-[11px] text-muted-foreground">{t("riasec.disclaimer")}</p>
+        ) : <p className="mt-3 text-xs sm:text-sm text-muted-foreground">-</p>}
+        <p className="mt-4 border-t border-border/40 pt-2 text-[10px] sm:text-[11px] text-muted-foreground">{t("riasec.disclaimer")}</p>
       </div>
 
       {/* 2. RAG AI AGENT SUMMARY ELI-5 SECTION (FULL WIDTH BELOW SCORES) */}
-      <div className="mb-6 rounded-2xl border border-accent/30 bg-gradient-to-br from-card via-card to-[hsl(var(--gold-soft))]/20 p-5 md:p-6 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-accent/20">
+      <div className="mb-6 rounded-2xl border border-accent/30 bg-gradient-to-br from-card via-card to-[hsl(var(--gold-soft))]/20 p-4 sm:p-5 md:p-6 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-accent/20">
           <div>
-            <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
-              <Lightbulb className="h-4 w-4 text-accent" />
-              {t("ob.results.explainTitle")}
+            <h2 className="flex items-center gap-2 text-sm sm:text-base font-bold text-foreground">
+              <Lightbulb className="h-4 w-4 shrink-0 text-accent" />
+              <span>{t("ob.results.explainTitle")}</span>
             </h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">{t("ob.results.explainNote")}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">{t("ob.results.explainNote")}</p>
           </div>
           {insight && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-2.5 py-1 text-xs font-medium" data-testid="text-insight-lang">
+            <div className="flex flex-wrap items-center gap-2 pt-1 sm:pt-0">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/80 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-medium" data-testid="text-insight-lang">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 {t("ob.results.lang", { lang: LANG_NAME[insight.lang as Lang] ?? insight.lang })}
               </span>
               {insight.cached && (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-muted-foreground">
                   {t("common.cached")}
                 </span>
               )}
               <button
                 type="button"
                 onClick={() => copySummary(insight.content)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2 py-1 sm:px-2.5 text-xs font-medium text-foreground hover:bg-muted transition-colors cursor-pointer"
                 title={lang === "ms" ? "Salin ringkasan" : lang === "zh" ? "复制内容" : "Copy summary"}
               >
                 {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
@@ -1685,16 +1684,16 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
             <div className="rounded-xl border border-destructive/40 bg-card p-4 text-sm" role="alert" data-testid="status-explain-error">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="h-5 w-5 shrink-0 text-destructive mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-semibold text-destructive">{t("ob.results.explainFail")}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-xs sm:text-sm text-destructive">{t("ob.results.explainFail")}</p>
                   <Button
                     variant="outline"
-                    className="mt-3 min-h-11 border-destructive/30 text-destructive hover:bg-destructive/10"
+                    className="mt-3 w-full sm:w-auto max-w-full min-h-11 px-4 sm:px-6 whitespace-normal text-xs sm:text-sm border-destructive/30 text-destructive hover:bg-destructive/10"
                     onClick={explain}
                     data-testid="button-explain-retry"
                   >
-                    <RotateCw className="mr-1.5 h-4 w-4" />
-                    {t("ob.results.explainRetry")}
+                    <RotateCw className="mr-1.5 h-4 w-4 shrink-0" />
+                    <span>{t("ob.results.explainRetry")}</span>
                   </Button>
                 </div>
               </div>
@@ -1702,13 +1701,13 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
           ) : (
             /* ONLY ONE BUTTON APPEARS HERE: Connect / Explain */
             <Button
-              className="min-h-12 px-6 font-semibold shadow-xs"
+              className="w-full sm:w-auto max-w-full min-h-12 px-4 sm:px-6 py-3 font-semibold shadow-xs whitespace-normal text-center leading-snug rounded-xl cursor-pointer"
               onClick={explain}
               disabled={!scores}
               data-testid="button-explain"
             >
-              <Sparkles className="mr-2 h-4 w-4 text-accent" />
-              {t("ob.results.explainBtn")}
+              <Sparkles className="mr-2 h-4 w-4 shrink-0 text-accent" />
+              <span className="text-xs sm:text-sm md:text-base font-semibold">{t("ob.results.explainBtn")}</span>
             </Button>
           )}
         </div>

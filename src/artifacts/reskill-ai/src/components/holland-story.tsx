@@ -16,16 +16,16 @@ export function HollandLoadingStory() {
   const words = copy[lang];
   const [selected, setSelected] = useState(0);
   const reduce = useReducedMotion();
-  return <div className="rounded-2xl border border-accent/30 bg-[hsl(var(--gold-soft))]/40 p-5" data-testid="holland-loading-story">
-    <p className="text-xs font-bold text-accent">{words.simple}</p>
-    <h3 className="mt-2 text-lg font-extrabold">{words.title}</h3>
-    <p className="mt-1 text-sm text-muted-foreground">{words.note}</p>
-    <div className="my-5 grid grid-cols-3 gap-2">
-      {icons.map((Icon, i) => <button key={i} type="button" aria-pressed={selected === i} onClick={() => setSelected(i)} className={`flex min-h-24 flex-col items-center justify-center gap-2 rounded-2xl border p-2 text-xs font-bold transition-colors ${selected === i ? "border-primary bg-background text-primary" : "border-transparent bg-background/50 text-muted-foreground"}`}>
-        <motion.span animate={reduce ? {} : { y: [0, -6, 0], rotate: i === 0 ? [-8, 8, -8] : 0 }} transition={{ duration: 2.8, repeat: Infinity, delay: i * .3 }}><Icon className="h-8 w-8" /></motion.span>{words.labels[i]}
+  return <div className="rounded-2xl border border-accent/30 bg-[hsl(var(--gold-soft))]/40 p-4 sm:p-5" data-testid="holland-loading-story">
+    <p className="text-[11px] sm:text-xs font-bold text-accent">{words.simple}</p>
+    <h3 className="mt-1.5 sm:mt-2 text-base sm:text-lg font-extrabold">{words.title}</h3>
+    <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{words.note}</p>
+    <div className="my-4 sm:my-5 grid grid-cols-3 gap-2">
+      {icons.map((Icon, i) => <button key={i} type="button" aria-pressed={selected === i} onClick={() => setSelected(i)} className={`flex min-h-20 sm:min-h-24 flex-col items-center justify-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl border p-2 text-[11px] sm:text-xs font-bold transition-colors ${selected === i ? "border-primary bg-background text-primary" : "border-transparent bg-background/50 text-muted-foreground"}`}>
+        <motion.span animate={reduce ? {} : { y: [0, -6, 0], rotate: i === 0 ? [-8, 8, -8] : 0 }} transition={{ duration: 2.8, repeat: Infinity, delay: i * .3 }}><Icon className="h-6 w-6 sm:h-8 sm:w-8" /></motion.span><span className="text-center leading-tight">{words.labels[i]}</span>
       </button>)}
     </div>
-    <p className="min-h-20 rounded-xl bg-background p-4 text-sm leading-relaxed" aria-live="polite">{words.lessons[selected]}</p>
+    <p className="min-h-20 rounded-xl bg-background p-3.5 sm:p-4 text-xs sm:text-sm leading-relaxed" aria-live="polite">{words.lessons[selected]}</p>
   </div>;
 }
 
@@ -39,12 +39,12 @@ export function HollandStoryCard({ title, body, kind, index }: { title: string; 
   const paragraphs = body.trim().split(/\n\s*\n/);
   const preview = paragraphs[0] ?? body;
   const remainder = paragraphs.slice(1).join("\n\n");
-  return <motion.article initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * .08 }} className={`rounded-2xl border p-5 ${kind === "cv" ? "border-blue-500/25 bg-blue-500/5" : kind === "action" ? "border-amber-500/25 bg-amber-500/5" : "border-primary/20 bg-card"}`}>
-    {index === 0 && <p className="mb-3 text-xs font-bold text-accent">{words.simple}</p>}
-    <div className="mb-3 flex items-center gap-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-background text-primary"><Icon className="h-6 w-6" /></span><div><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{index + 1} · {words.labels[iconIndex]}</p><h3 className="text-base font-bold">{title}</h3></div></div>
-    <div className="prose-sk text-base leading-loose"><Markdown>{preview}</Markdown></div>
-    {remainder && <details className="mt-3 rounded-xl border border-border/60 bg-background/60 p-3"><summary className="flex min-h-8 cursor-pointer items-center gap-2 text-sm font-semibold text-primary"><ChevronDown className="h-4 w-4" />{words.more}</summary><div className="prose-sk mt-3 text-base leading-loose"><Markdown>{remainder}</Markdown></div></details>}
-    {kind === "action" && <button type="button" aria-pressed={done} onClick={() => setDone(!done)} className="mt-4 flex min-h-11 items-center gap-2 rounded-xl border border-primary/25 bg-background px-3 py-2 text-left text-sm font-semibold text-primary"><Check className={`h-4 w-4 ${done ? "opacity-100" : "opacity-30"}`} />{done ? words.done : words.action}</button>}
+  return <motion.article initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * .08 }} className={`rounded-2xl border p-4 sm:p-5 ${kind === "cv" ? "border-blue-500/25 bg-blue-500/5" : kind === "action" ? "border-amber-500/25 bg-amber-500/5" : "border-primary/20 bg-card"}`}>
+    {index === 0 && <p className="mb-2 sm:mb-3 text-[11px] sm:text-xs font-bold text-accent">{words.simple}</p>}
+    <div className="mb-3 flex items-center gap-3"><span className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-background text-primary"><Icon className="h-5 w-5 sm:h-6 sm:w-6" /></span><div className="min-w-0 flex-1"><p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{index + 1} · {words.labels[iconIndex]}</p><h3 className="text-sm sm:text-base font-bold leading-snug">{title}</h3></div></div>
+    <div className="prose-sk text-xs sm:text-sm md:text-base leading-relaxed sm:leading-loose"><Markdown>{preview}</Markdown></div>
+    {remainder && <details className="mt-3 rounded-xl border border-border/60 bg-background/60 p-3"><summary className="flex min-h-8 cursor-pointer items-center gap-2 text-xs sm:text-sm font-semibold text-primary"><ChevronDown className="h-4 w-4 shrink-0" />{words.more}</summary><div className="prose-sk mt-3 text-xs sm:text-sm md:text-base leading-relaxed sm:leading-loose"><Markdown>{remainder}</Markdown></div></details>}
+    {kind === "action" && <button type="button" aria-pressed={done} onClick={() => setDone(!done)} className="mt-4 flex min-h-11 max-w-full items-center gap-2 rounded-xl border border-primary/25 bg-background px-3 py-2 text-left text-xs sm:text-sm font-semibold text-primary"><Check className={`h-4 w-4 shrink-0 ${done ? "opacity-100" : "opacity-30"}`} /><span className="leading-snug">{done ? words.done : words.action}</span></button>}
   </motion.article>;
 }
 
