@@ -87,7 +87,7 @@ export default function ProfileWorkspace({ base, listHref }: { base: string; lis
   );
   const p = q.data;
   const individual = base === "/me/profiles";
-  if (individual) return <GuidedJourney p={p} mod={requestedMod}/>;
+  if (individual) return <GuidedJourney p={p} mod={params.module === "ready" ? "ready" : requestedMod}/>;
   const mod = individual && requestedMod === "radar" ? "matcher" : requestedMod;
   const seg = p.segment === "graduate" ? "graduate" : "worker";
   return (
