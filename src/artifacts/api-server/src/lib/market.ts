@@ -12,6 +12,7 @@ import { logger } from "./logger";
 import { endpointHealth } from "./llm";
 import { loadCourses } from "./catalog";
 import { ingestOnet } from "./onet";
+import { loadCareerNews, GDELT_DOCS, newsUrl } from "./career-news";
 
 export type SourceDef = {
   id: string;
@@ -28,6 +29,8 @@ const HF_DATASET = "Anthropic/EconomicIndex";
 
 // Consumer keys are translated in the frontend.
 export const SOURCES: SourceDef[] = [
+  { id: "gdelt_career_news", name: "GDELT · career news API", kind: "dataset", url: GDELT_DOCS, description: "Public keyless news metadata API, filtered to careers and workplace skills in Malaysia and globally. News is context, not a hiring forecast.", refreshCadence: "news_6h", consumers: ["market", "predictions"] },
+  { id: "career_news_rss", name: "Google News · public career RSS", kind: "dataset", url: newsUrl("rss", "my"), description: "Public RSS metadata fallback for Malaysia and global career news. No private API key; original publisher rights still apply.", refreshCadence: "news_6h", consumers: ["market", "predictions"] },
   {id:"bls_projections",name:"BLS occupational projections · reviewed public snapshot",kind:"dataset",url:blsSnapshot.url,description:"US 2025–2035 employment growth and annual openings matched by SOC. Reviewed 23 October 2026; not a live feed or Malaysian demand forecast.",refreshCadence:"reviewed_snapshot",consumers:["market","predictions"]},
   { id: "onet", name: "O*NET occupation references", kind: "catalogue", url: "https://www.onetcenter.org/database.html", description: "Official US occupation, skill and interest reference data; explicit SOC .00 crosswalk, not Malaysian vacancies.", refreshCadence: "release_6h", consumers: ["role_matcher", "agent_cv", "agent_holland"] },
   {
@@ -305,6 +308,7 @@ let running: Promise<void> | null = null;
 export function refreshAll(force = false): Promise<void> {
   if (running) return running;
   const jobs: [string, () => Promise<void>][] = [
+    ["gdelt_career_news", async () => { await loadCareerNews(); }],
     ["onet", ingestOnet],
     ["dosm_lfs_month", ingestLabour],
     ["aei_exposure", ingestExposure],
@@ -364,10 +368,12 @@ export function startMarketScheduler(): void {
       .select({ count: sql<number>`count(*)::int` })
       .from(marketSourcesTable)
       .where(eq(marketSourcesTable.status, "ok"));
-    if (count < SOURCES.filter(s=>s.id!=="bls_projections").length) await refreshAll();
+    if (count < SOURCES.filter(s=>!["bls_projections", "gdelt_career_news", "career_news_rss"].includes(s.id)).length) await refreshAll();
     else logger.info("Market data present; next check in 6 hours");
   })().catch((err) => logger.error({ err }, "Initial market refresh failed"));
   setInterval(() => {
     refreshAll().catch((err) => logger.error({ err }, "Scheduled market refresh failed"));
+    loadCareerNews().catch((err) => logger.warn({ err }, "Career news refresh unavailable"));
   }, SIX_HOURS).unref();
+  void loadCareerNews().catch((err) => logger.warn({ err }, "Initial career news unavailable"));
 }

@@ -205,14 +205,14 @@ export function StatusTag({ s }: { s: SkillStatus }) {
   const c = s === "evidenced" ? "bg-primary text-primary-foreground" : s === "self_reported" ? "bg-[hsl(var(--gold-soft))] text-foreground" : "bg-muted text-muted-foreground";
   return <span className={cn(chip, c)}>{tk("status", s)}</span>;
 }
-export function SdgBadge({ code, title, primary = false }: { code: string; title?: string; primary?: boolean }) {
+export function SdgBadge({ code, title, primary = false, compact = false }: { code: string; title?: string; primary?: boolean; compact?: boolean }) {
   const { tk } = useT();
   const goal = Number(code.split(".")[0]);
   if (!Number.isInteger(goal) || goal < 1 || goal > 17) return null;
   const label = title ?? tk("sdg", String(goal));
   return <a href={`https://sdgs.un.org/goals/goal${goal}`} target="_blank" rel="noopener noreferrer" title={label}
     className={cn("inline-flex items-center gap-1 rounded border bg-card p-1 text-xs", primary ? "border-[3px] border-primary font-bold" : "border-border")}>
-    <img src={`/sdg/${goal}.png`} alt={`SDG ${goal}: ${label}`} className="h-14 w-14 object-contain" loading="lazy" />
+    <img src={`/sdg/${goal}.png`} alt={`SDG ${goal}: ${label}`} className={cn("object-contain", compact ? "h-8 w-8" : "h-14 w-14")} loading="lazy" />
   </a>;
 }
 

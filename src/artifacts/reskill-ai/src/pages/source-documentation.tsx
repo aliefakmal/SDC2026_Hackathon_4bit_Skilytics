@@ -14,6 +14,15 @@ type Row = { label: DictKey; k?: DictKey[]; ref?: string; url?: string };
 type Doc = { id: string; types: DocType[]; name: DictKey; sourceIds?: string[]; ai?: boolean; rows: Row[] };
 
 const DOCS: Doc[] = [
+  {id:"career_news",types:["external","derived"],name:"docs.news.name",sourceIds:["gdelt_career_news","career_news_rss"],rows:[
+    {label:"docs.f.publisher",ref:"The GDELT Project / Google News RSS / original news publishers"},
+    {label:"docs.f.api",url:"https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/"},
+    {label:"docs.f.dataset",url:"https://news.google.com/rss/search?q=upskilling%20Malaysia%20when%3A30d&hl=en-MY&gl=MY&ceid=MY%3Aen"},
+    {label:"docs.f.coverage",k:["docs.news.coverage"]},
+    {label:"docs.f.method",k:["docs.news.method"]},
+    {label:"docs.f.license",k:["docs.news.license"],url:"https://www.gdeltproject.org/about.html#termsofuse"},
+    {label:"docs.f.failure",k:["docs.news.failure"]},
+  ]},
   {id:"bls",types:["external","static","derived"],name:"src.bls_projections.name",sourceIds:["bls_projections"],rows:[
     {label:"docs.f.publisher",ref:"U.S. Bureau of Labor Statistics"},
     {label:"docs.f.dataset",url:"https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm"},
@@ -134,7 +143,7 @@ const DOCS: Doc[] = [
 
 const TYPES: DocType[] = ["external", "static", "derived", "service", "demo", "user"];
 const CATEGORIES = [
-  { key: "market", ids: ["dosm", "aei_usage", "aei_exposure", "bls"] },
+  { key: "market", ids: ["dosm", "aei_usage", "aei_exposure", "bls", "career_news"] },
   { key: "career", ids: ["onet", "riasec", "match"] },
   { key: "learning", ids: ["courses", "freecodecamp", "githubskills", "huggingface", "openlearn", "sdg"] },
   { key: "aiService", ids: ["runpod"] },
