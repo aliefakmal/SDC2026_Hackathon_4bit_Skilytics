@@ -108,6 +108,7 @@ export async function companyData(req: Request) {
       targetRole: target?.r.title ?? null,
       stage: state?.stage ?? "intake",
       skillCount: evidence.length,
+      skillNames: [...new Set([...evidence.map(s=>skills.find(k=>k.id===s.skillId)?.name).filter((s):s is string=>!!s),...completedItems.flatMap(i=>i.skills)])],
       gapCount: gapNames.length,
       remainingGap: outstanding.length,
       gaps: outstanding,

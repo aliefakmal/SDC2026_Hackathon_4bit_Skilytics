@@ -10,6 +10,7 @@ export type CompanyMember = {
   targetRole: string | null;
   stage: string;
   skillCount: number;
+  skillNames?: string[];
   gapCount: number;
   remainingGap: number;
   gaps: string[];

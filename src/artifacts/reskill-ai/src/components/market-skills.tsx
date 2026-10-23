@@ -128,7 +128,7 @@ export function MarketSkills({
                   <p className="mt-2 text-xs">
                     {enterpriseWords[lang].gaps}:{" "}
                     {company.data?.members.filter((m) =>
-                      m.gaps.includes(s.name),
+                      m.skillNames && !m.skillNames.includes(s.name),
                     ).length ?? 0}{" "}
                     / {company.data?.profileCount ?? 0}
                   </p>
