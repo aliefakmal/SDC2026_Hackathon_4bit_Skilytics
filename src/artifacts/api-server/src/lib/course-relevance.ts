@@ -52,3 +52,33 @@ export function courseFitsRole(course: CourseView, title: string) {
     );
   return true;
 }
+
+/** Prefer a course teaching the named subject over a passing example in its summary. */
+export function courseSkillFit(
+  course: CourseView,
+  skill: { name: string; category: string },
+) {
+  let fit = mentions(course.title, skill.name) ? 20 : 0;
+  const aliases = SKILLS.find((s) => s.name === skill.name)?.aliases ?? [];
+  if (aliases.some((a) => mentions(course.title, a))) fit += 6;
+  if (
+    skill.name === "Data Visualisation" &&
+    /visuali[sz]|dashboard|chart|report design/i.test(course.title)
+  )
+    fit += 20;
+  if (
+    skill.name === "Generative AI Tools" &&
+    /generative ai|prompt|large language|\bllm\b/i.test(course.title)
+  )
+    fit += 20;
+  if (/beginner|introductory/i.test(course.level)) fit += 4;
+  if (/get started|introduction|fundamentals|\bbasics\b/i.test(course.title))
+    fit += 5;
+  if (
+    /prepare to teach|instructor|teach a course/i.test(course.title) &&
+    skill.name !== "Training Delivery" &&
+    skill.name !== "Instructional Design"
+  )
+    fit -= 15;
+  return fit;
+}

@@ -1,6 +1,6 @@
 import type { PlanItemStored } from "@workspace/db";
 import type { CourseView, RoleSkillView } from "./catalog";
-import { courseFitsRole } from "./course-relevance";
+import { courseFitsRole, courseSkillFit } from "./course-relevance";
 
 // Greedy constraint planner: covers gap skills with the fewest, cheapest,
 // shortest courses inside the user's budget and weekly hours. Only verified
@@ -34,7 +34,8 @@ export function buildPlan(opts: {
       if (personalCost(c) > budget) continue;
       const gain = c.skills.reduce((a, s) => a + (remaining.get(s.id)?.importance ?? 0), 0);
       if (gain === 0) continue;
-      const value = gain / (1 + c.costMyr / 300 + (c.durationHours ?? 0) / 40);
+      const topicFit = Math.max(0, ...c.skills.map(s => remaining.has(s.id) ? courseSkillFit(c,s) : 0));
+      const value = gain * (1 + topicFit / 10) / (1 + c.costMyr / 300 + (c.durationHours ?? 0) / 40);
       if (!best || value > best.value) best = { c, value };
     }
     if (!best) break;

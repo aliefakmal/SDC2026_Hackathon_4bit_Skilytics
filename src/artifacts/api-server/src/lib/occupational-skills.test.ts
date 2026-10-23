@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { softwareSkills, taskSkills } from "./occupational-skills";
 import { openLearnCourses } from "../data/openlearn";
 import { buildPlan } from "./planner";
-import { teachesSkill } from "./course-relevance";
+import { teachesSkill, courseSkillFit } from "./course-relevance";
 
 test("software crosswalk respects both occupation and narrower app role scope", () => {
   const rows = [
@@ -173,5 +173,24 @@ test("office administration means clerical work rather than administering an AI 
       category: "Business",
     }),
     true,
+  );
+});
+
+test("introductory subject courses rank above incidental or instructor courses", () => {
+  const base = openLearnCourses([
+    { id: 1, name: "Microsoft Excel", category: "Digital" },
+  ])[0];
+  const skill = { name: "Data Visualisation", category: "Digital" };
+  assert.ok(
+    courseSkillFit({ ...base, title: "Data visualisations in Excel" }, skill) >
+      courseSkillFit(
+        { ...base, title: "Implement continuous feedback" },
+        skill,
+      ),
+  );
+  const power = { name: "Power BI", category: "Digital" };
+  assert.ok(
+    courseSkillFit({ ...base, title: "Get started with Power BI" }, power) >
+      courseSkillFit({ ...base, title: "Prepare to teach Power BI" }, power),
   );
 });
