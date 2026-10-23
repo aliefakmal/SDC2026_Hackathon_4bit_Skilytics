@@ -132,6 +132,7 @@ export const en = {
   "landing.grad": "I am a student/graduate",
   "landing.honesty": "Labour data: {dosm}. AI usage data: {aei}. Checked every 6 hours.",
   "landing.howTitle": "How it works",
+  "landing.howSub": "Seamless progression from skill intake to certified career pathways.",
   "landing.sub": "Empowering youth, jobseekers, and organisations with AI-driven skill intelligence, live labour data, and personalised learning pathways.",
   "landing.title": "Find Your Fit. Fuel Your Future.",
   "landing.trustBody": "Every number shows its source and period. No made-up figures.",

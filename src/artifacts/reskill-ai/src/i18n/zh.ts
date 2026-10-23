@@ -133,6 +133,7 @@ export const zh: Record<DictKey, string> = {
   "landing.grad": "我是学生/毕业生",
   "landing.honesty": "劳动力数据：{dosm}。AI 使用数据：{aei}。每 6 小时检查一次。",
   "landing.howTitle": "使用方式",
+  "landing.howSub": "从技能录入到认证职业路径的无缝 AI 驱动全流程。",
   "landing.sub": "AI赋能的技能洞察与个性化跃升路径，紧密连接青年人才、实时劳动力市场大数据与可持续教育生态。",
   "landing.title": "Find Your Fit. Fuel Your Future.",
   "landing.trustBody": "每个数字都标明来源与期间，没有虚构数据。",

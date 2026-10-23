@@ -3,7 +3,7 @@ import { Link, useLocation, useSearch } from "wouter";
 import { motion } from "framer-motion";
 import {
   Activity, ArrowDown, ArrowRight, Briefcase, Building2, ChevronRight, Database, FileText,
-  GraduationCap, HardHat, Loader2, Map, School, ShieldCheck, Sparkles, UserRound
+  GraduationCap, HardHat, Loader2, Map, Pause, Play, School, ShieldCheck, Sparkles, UserRound
 } from "lucide-react";
 import { useGetMarketOverview, useListDemoAccounts, useLogin, useRegister, getGetMarketOverviewQueryKey, type UserRole } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -32,11 +32,36 @@ function HonestyLine() {
   );
 }
 
+const howItWorksSteps = [
+  {
+    step: "01",
+    titleKey: "landing.stepIntake" as const,
+    descKey: "landing.stepIntakeDesc" as const,
+    icon: FileText,
+    badge: "Step 1",
+  },
+  {
+    step: "02",
+    titleKey: "landing.stepMatcher" as const,
+    descKey: "landing.stepMatcherDesc" as const,
+    icon: Briefcase,
+    badge: "Step 2",
+  },
+  {
+    step: "03",
+    titleKey: "landing.stepPathway" as const,
+    descKey: "landing.stepPathwayDesc" as const,
+    icon: Map,
+    badge: "Step 3",
+  },
+];
+
 export function Landing() {
   const { t } = useT();
   const { user } = useAuth();
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [partnerModalOpen, setPartnerModalOpen] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     // Pre-warm backend API while visitor explores landing page to eliminate cold start
@@ -49,12 +74,15 @@ export function Landing() {
     fetch(`${base}/api/auth/demo-accounts`, { cache: "no-store" }).catch(() => {});
   };
 
+  const carouselItems = [...howItWorksSteps, ...howItWorksSteps, ...howItWorksSteps];
+
   return (
-    <div className="paper min-h-[100dvh] bg-background">
+    <div className="paper min-h-[100dvh] bg-background flex flex-col">
       <PublicHeader />
-      <main className="relative z-[1] mx-auto max-w-6xl px-4 pb-16 md:px-8">
-        {/* 1. HERO SECTION WITH IMAGE.PNG ON RIGHT */}
-        <section className="grid items-center gap-8 py-8 md:grid-cols-[1.15fr_1fr] md:py-14">
+
+      {/* 1. HERO SECTION WITH IMAGE.PNG (RAW PNG CUTOUT + BOTTOM FADE) */}
+      <section className="relative z-[1] mx-auto w-full max-w-6xl px-4 pt-4 pb-8 md:px-8 md:pt-8 md:pb-12">
+        <div className="grid items-center gap-8 md:grid-cols-[1.15fr_1fr]">
           <div className="rise min-w-0">
             <div className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-accent/50 bg-card px-3.5 py-1 text-xs font-semibold text-accent shadow-xs">
               <ShieldCheck className="h-4 w-4 shrink-0 text-accent" />
@@ -102,340 +130,363 @@ export function Landing() {
             <div className="mt-6"><HonestyLine /></div>
           </div>
 
-          {/* Right Side: image.png */}
-          <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-            <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-primary/20 bg-card shadow-xl transition-all hover:shadow-2xl">
+          {/* Right Side: image.png (RAW PNG CUTOUT, NO BOX, BOTTOM FADE EFFECT) */}
+          <div className="relative mx-auto flex w-full max-w-md items-end justify-center lg:max-w-none">
+            <div className="relative w-full max-w-[480px]">
+              {/* Soft ambient lighting backlight behind the cutout */}
+              <div className="pointer-events-none absolute inset-x-6 top-10 bottom-2 -z-10 rounded-full bg-gradient-to-t from-accent/25 via-primary/10 to-transparent blur-3xl opacity-80" />
               <img
                 src="/image.png"
                 alt="Find Your Fit. Fuel Your Future."
-                className="h-auto w-full object-cover max-h-[460px]"
+                className="relative z-10 mx-auto h-auto w-full max-h-[480px] object-contain drop-shadow-2xl select-none pointer-events-none"
+                style={{
+                  maskImage: "linear-gradient(to bottom, black 65%, transparent 98%)",
+                  WebkitMaskImage: "linear-gradient(to bottom, black 65%, transparent 98%)",
+                }}
                 loading="eager"
               />
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* 2. TARGET MARKET HORIZONTAL CARDS (4 CHOICES) */}
-        <section className="mt-12 sm:mt-16" aria-label={t("landing.marketTitle")}>
-          <div className="mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("landing.marketTitle")}</h2>
-            <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t("landing.marketSub")}</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* 1. Student / Fresh Graduate */}
-            <Link
-              href="/onboarding/cv?seg=graduate&new=1"
-              onMouseEnter={prewarm}
-              data-testid="card-market-graduate"
-              className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <GraduationCap className="h-5 w-5" />
-                  </span>
-                  <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Talent</span>
-                </div>
-                <h3 className="mt-4 font-bold text-sm sm:text-base text-foreground">{t("landing.grad")}</h3>
-                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{t("landing.gradSub")}</p>
-              </div>
-              <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-primary">
-                <span>Start Assessment</span>
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </Link>
+      {/* SECTION WITH DIFFERENT TONE BACKGROUND & UPWARD LIGHTING EFFECT */}
+      <div className="relative w-full border-t border-border/60 bg-muted/35 dark:bg-card/25 flex-1">
+        {/* Upward lighting & glow effect directed towards hero */}
+        <div className="pointer-events-none absolute -top-24 inset-x-0 h-24 bg-gradient-to-t from-muted/50 via-accent/15 to-transparent" />
+        <div className="pointer-events-none absolute -top-14 left-1/2 -translate-x-1/2 w-3/4 max-w-3xl h-14 bg-accent/25 blur-3xl rounded-full" />
+        <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
 
-            {/* 2. Jobseeker / Working Professional */}
-            <Link
-              href="/onboarding/cv?seg=worker&new=1"
-              onMouseEnter={prewarm}
-              data-testid="card-market-worker"
-              className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
-              style={{ animationDelay: "60ms" }}
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Briefcase className="h-5 w-5" />
-                  </span>
-                  <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Professional</span>
-                </div>
-                <h3 className="mt-4 font-bold text-sm sm:text-base text-foreground">{t("landing.worker")}</h3>
-                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{t("landing.workerSub")}</p>
-              </div>
-              <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-primary">
-                <span>Analyze Reskilling</span>
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </Link>
-
-            {/* 3. Employer / Enterprise HR */}
-            <Link
-              href="/login?role=hr"
-              data-testid="card-market-hr"
-              className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
-              style={{ animationDelay: "120ms" }}
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
-                    <Building2 className="h-5 w-5" />
-                  </span>
-                  <span className="text-[11px] font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">Enterprise</span>
-                </div>
-                <h3 className="mt-4 font-bold text-sm sm:text-base text-foreground">{t("portal.hr")}</h3>
-                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{t("landing.hrSub")}</p>
-              </div>
-              <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-accent">
-                <span>HR Portal</span>
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </Link>
-
-            {/* 4. Educator / TVET Institution */}
-            <Link
-              href="/login?role=tvet"
-              data-testid="card-market-tvet"
-              className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
-              style={{ animationDelay: "180ms" }}
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
-                    <School className="h-5 w-5" />
-                  </span>
-                  <span className="text-[11px] font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">Institutions</span>
-                </div>
-                <h3 className="mt-4 font-bold text-sm sm:text-base text-foreground">{t("portal.tvet")}</h3>
-                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{t("landing.tvetSub")}</p>
-              </div>
-              <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-accent">
-                <span>TVET Portal</span>
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-              </div>
-            </Link>
-          </div>
-        </section>
-
-        {/* 3. HOW IT WORKS SECTION (3 STEPS WITH CONNECTING ARROWS) */}
-        <section className="mt-14 sm:mt-18">
-          <div className="mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("landing.howTitle")}</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
-            {/* Step 1: Intake */}
-            <div className="rise relative flex flex-col justify-between rounded-2xl border border-card-border bg-card p-6 shadow-xs">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                    <FileText className="h-5 w-5" />
-                  </span>
-                  <span className="text-xs font-extrabold text-accent bg-accent/10 px-2.5 py-1 rounded-full">01</span>
-                </div>
-                <h3 className="mt-4 font-bold text-base text-foreground">{t("landing.stepIntake")}</h3>
-                <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">{t("landing.stepIntakeDesc")}</p>
-              </div>
-              {/* Desktop arrow right indicator */}
-              <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-6 w-6 items-center justify-center rounded-full bg-background border border-border shadow-xs text-muted-foreground">
-                <ArrowRight className="h-3.5 w-3.5" />
-              </div>
-              {/* Mobile arrow down indicator */}
-              <div className="flex md:hidden mx-auto mt-4 h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <ArrowDown className="h-3.5 w-3.5" />
-              </div>
+        <main className="relative z-[1] mx-auto max-w-6xl px-4 py-10 md:px-8 md:py-14">
+          {/* 2. TARGET MARKET HORIZONTAL CARDS (2x2 ON MOBILE, 4 IN A ROW ON DESKTOP) */}
+          <section className="mb-14 sm:mb-18" aria-label={t("landing.marketTitle")}>
+            <div className="mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("landing.marketTitle")}</h2>
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t("landing.marketSub")}</p>
             </div>
-
-            {/* Step 2: Matcher */}
-            <div className="rise relative flex flex-col justify-between rounded-2xl border border-card-border bg-card p-6 shadow-xs" style={{ animationDelay: "70ms" }}>
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                    <Briefcase className="h-5 w-5" />
-                  </span>
-                  <span className="text-xs font-extrabold text-accent bg-accent/10 px-2.5 py-1 rounded-full">02</span>
-                </div>
-                <h3 className="mt-4 font-bold text-base text-foreground">{t("landing.stepMatcher")}</h3>
-                <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">{t("landing.stepMatcherDesc")}</p>
-              </div>
-              {/* Desktop arrow right indicator */}
-              <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-6 w-6 items-center justify-center rounded-full bg-background border border-border shadow-xs text-muted-foreground">
-                <ArrowRight className="h-3.5 w-3.5" />
-              </div>
-              {/* Mobile arrow down indicator */}
-              <div className="flex md:hidden mx-auto mt-4 h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                <ArrowDown className="h-3.5 w-3.5" />
-              </div>
-            </div>
-
-            {/* Step 3: Pathway */}
-            <div className="rise relative flex flex-col justify-between rounded-2xl border border-card-border bg-card p-6 shadow-xs" style={{ animationDelay: "140ms" }}>
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                    <Map className="h-5 w-5" />
-                  </span>
-                  <span className="text-xs font-extrabold text-accent bg-accent/10 px-2.5 py-1 rounded-full">03</span>
-                </div>
-                <h3 className="mt-4 font-bold text-base text-foreground">{t("landing.stepPathway")}</h3>
-                <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">{t("landing.stepPathwayDesc")}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 4. UN SUSTAINABLE DEVELOPMENT GOALS (SDG) SHOWCASE */}
-        <section className="mt-14 sm:mt-18 rounded-3xl bg-gradient-to-br from-primary via-[#65101c] to-[#450a12] p-6 text-primary-foreground sm:p-8 md:p-10 shadow-xl border border-primary/40">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-accent backdrop-blur-xs mb-3">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>United Nations Sustainable Development Goals</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{t("landing.sdgTitle")}</h2>
-            <p className="mt-2 text-xs sm:text-sm text-primary-foreground/85 leading-relaxed">{t("landing.sdgSub")}</p>
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* SDG 4.4 */}
-            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <img src="/sdg/4.png" alt="SDG 4" className="h-12 w-12 rounded-xl object-contain shadow-sm shrink-0" />
-                  <div>
-                    <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-accent text-accent-foreground">SDG 4.4</span>
-                    <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg4Title")}</h3>
-                  </div>
-                </div>
-                <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg4Desc")}</p>
-              </div>
-            </div>
-
-            {/* SDG 8.5 */}
-            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <img src="/sdg/8.png" alt="SDG 8" className="h-12 w-12 rounded-xl object-contain shadow-sm shrink-0" />
-                  <div>
-                    <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-accent text-accent-foreground">SDG 8.5</span>
-                    <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg8Title")}</h3>
-                  </div>
-                </div>
-                <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg8Desc")}</p>
-              </div>
-            </div>
-
-            {/* SDG 9.5 */}
-            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
-              <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <img src="/sdg/9.png" alt="SDG 9" className="h-12 w-12 rounded-xl object-contain shadow-sm shrink-0" />
-                  <div>
-                    <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-accent text-accent-foreground">SDG 9.5</span>
-                    <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg9Title")}</h3>
-                  </div>
-                </div>
-                <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg9Desc")}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 5. MODAL: FIRST TIME USER (CHOICE OF WORKER OR GRADUATE) */}
-        <Dialog open={userModalOpen} onOpenChange={setUserModalOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-bold">{t("landing.modalUserTitle")}</DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
-                {t("landing.modalUserSub")}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-2 space-y-3">
-              <Link
-                href="/onboarding/cv?seg=worker&new=1"
-                onClick={() => setUserModalOpen(false)}
-                onMouseEnter={prewarm}
-                className="group flex items-center gap-4 rounded-2xl border border-card-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md cursor-pointer"
-                data-testid="modal-start-worker"
-              >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                  <Briefcase className="h-6 w-6" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-bold text-sm sm:text-base text-foreground">{t("landing.worker")}</span>
-                  <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.workerSub")}</span>
-                </span>
-                <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
-              </Link>
-
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4.5">
+              {/* 1. Student / Fresh Graduate */}
               <Link
                 href="/onboarding/cv?seg=graduate&new=1"
-                onClick={() => setUserModalOpen(false)}
                 onMouseEnter={prewarm}
-                className="group flex items-center gap-4 rounded-2xl border border-card-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md cursor-pointer"
-                data-testid="modal-start-graduate"
+                data-testid="card-market-graduate"
+                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-3.5 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
               >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                  <GraduationCap className="h-6 w-6" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-bold text-sm sm:text-base text-foreground">{t("landing.grad")}</span>
-                  <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.gradSub")}</span>
-                </span>
-                <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </span>
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-primary bg-primary/10 px-1.5 sm:px-2 py-0.5 rounded-full">Talent</span>
+                  </div>
+                  <h3 className="mt-3 sm:mt-4 font-bold text-xs sm:text-base text-foreground leading-snug line-clamp-1 sm:line-clamp-none">{t("landing.grad")}</h3>
+                  <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-none">{t("landing.gradSub")}</p>
+                </div>
+                <div className="mt-3 sm:mt-5 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-primary">
+                  <span>Start Assessment</span>
+                  <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                </div>
               </Link>
-            </div>
-          </DialogContent>
-        </Dialog>
 
-        {/* 6. MODAL: EMPLOYERS & EDUCATORS (PARTNER PORTALS) */}
-        <Dialog open={partnerModalOpen} onOpenChange={setPartnerModalOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-bold">{t("landing.modalPartnerTitle")}</DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
-                {t("landing.modalPartnerSub")}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-2 space-y-3">
+              {/* 2. Jobseeker / Working Professional */}
+              <Link
+                href="/onboarding/cv?seg=worker&new=1"
+                onMouseEnter={prewarm}
+                data-testid="card-market-worker"
+                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-3.5 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
+                style={{ animationDelay: "60ms" }}
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </span>
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-primary bg-primary/10 px-1.5 sm:px-2 py-0.5 rounded-full">Pro</span>
+                  </div>
+                  <h3 className="mt-3 sm:mt-4 font-bold text-xs sm:text-base text-foreground leading-snug line-clamp-1 sm:line-clamp-none">{t("landing.worker")}</h3>
+                  <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-none">{t("landing.workerSub")}</p>
+                </div>
+                <div className="mt-3 sm:mt-5 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-primary">
+                  <span>Analyze Reskilling</span>
+                  <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                </div>
+              </Link>
+
+              {/* 3. Employer / Enterprise HR */}
               <Link
                 href="/login?role=hr"
-                onClick={() => setPartnerModalOpen(false)}
-                className="group flex items-center gap-4 rounded-2xl border-2 border-accent/60 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-md cursor-pointer"
-                data-testid="modal-portal-hr"
+                data-testid="card-market-hr"
+                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-3.5 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
+                style={{ animationDelay: "120ms" }}
               >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
-                  <Building2 className="h-6 w-6" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-bold text-sm sm:text-base text-foreground">{t("portal.hr")} ({t("landing.ctaEmployer")})</span>
-                  <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.hrSub")}</span>
-                </span>
-                <ArrowRight className="h-5 w-5 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
+                      <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </span>
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-accent bg-accent/10 px-1.5 sm:px-2 py-0.5 rounded-full">HR</span>
+                  </div>
+                  <h3 className="mt-3 sm:mt-4 font-bold text-xs sm:text-base text-foreground leading-snug line-clamp-1 sm:line-clamp-none">{t("portal.hr")}</h3>
+                  <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-none">{t("landing.hrSub")}</p>
+                </div>
+                <div className="mt-3 sm:mt-5 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-accent">
+                  <span>HR Portal</span>
+                  <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                </div>
               </Link>
 
+              {/* 4. Educator / TVET Institution */}
               <Link
                 href="/login?role=tvet"
-                onClick={() => setPartnerModalOpen(false)}
-                className="group flex items-center gap-4 rounded-2xl border-2 border-accent/60 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-md cursor-pointer"
-                data-testid="modal-portal-tvet"
+                data-testid="card-market-tvet"
+                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-3.5 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
+                style={{ animationDelay: "180ms" }}
               >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
-                  <School className="h-6 w-6" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-bold text-sm sm:text-base text-foreground">{t("portal.tvet")} ({t("landing.ctaEducator")})</span>
-                  <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.tvetSub")}</span>
-                </span>
-                <ArrowRight className="h-5 w-5 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
+                      <School className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </span>
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-accent bg-accent/10 px-1.5 sm:px-2 py-0.5 rounded-full">TVET</span>
+                  </div>
+                  <h3 className="mt-3 sm:mt-4 font-bold text-xs sm:text-base text-foreground leading-snug line-clamp-1 sm:line-clamp-none">{t("portal.tvet")}</h3>
+                  <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-none">{t("landing.tvetSub")}</p>
+                </div>
+                <div className="mt-3 sm:mt-5 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-accent">
+                  <span>TVET Portal</span>
+                  <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                </div>
               </Link>
             </div>
-          </DialogContent>
-        </Dialog>
+          </section>
 
-        <footer className="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-2"><BrandMark className="h-6 w-6 text-[9px]" /><span>{t("landing.footer")}</span></div>
-          <div className="flex gap-4"><Link href="/market" className="min-h-11 py-3 hover:text-primary">{t("nav.market")}</Link><Link href="/sources" className="min-h-11 py-3 hover:text-primary">{t("nav.sources")}</Link></div>
-        </footer>
-      </main>
+          {/* 3. HOW IT WORKS SECTION (MOVING IN LOOP CAROUSEL) */}
+          <section className="mb-14 sm:mb-18" aria-label={t("landing.howTitle")}>
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("landing.howTitle")}</h2>
+                <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t("landing.howSub")}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline-flex text-[11px] text-muted-foreground font-medium">
+                  {isPaused ? "Dijeda" : "Bergerak (Looping)"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsPaused((prev) => !prev)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer shadow-xs"
+                  title={isPaused ? "Play carousel" : "Pause carousel"}
+                >
+                  {isPaused ? <Play className="h-3.5 w-3.5 text-primary fill-primary" /> : <Pause className="h-3.5 w-3.5 text-primary fill-primary" />}
+                  <span>{isPaused ? "Play" : "Pause"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Carousel container with edge fade masks */}
+            <div
+              className="relative -mx-4 sm:-mx-8 overflow-hidden py-3 px-4 sm:px-8 select-none"
+              style={{
+                maskImage: "linear-gradient(to right, transparent, black 4%, black 96%, transparent)",
+                WebkitMaskImage: "linear-gradient(to right, transparent, black 4%, black 96%, transparent)",
+              }}
+            >
+              <motion.div
+                className="flex items-center gap-4 sm:gap-6 w-max cursor-grab active:cursor-grabbing will-change-transform"
+                animate={isPaused ? { x: undefined } : { x: ["0%", "-33.333%"] }}
+                transition={{
+                  repeat: Infinity,
+                  ease: "linear",
+                  duration: 22,
+                }}
+                onMouseEnter={() => setIsPaused(true)}
+                onMouseLeave={() => setIsPaused(false)}
+                onTouchStart={() => setIsPaused(true)}
+                onTouchEnd={() => setIsPaused(false)}
+              >
+                {carouselItems.map((item, idx) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <div key={`${item.step}-${idx}`} className="flex items-center gap-4 sm:gap-6 shrink-0">
+                      <div className="w-[260px] sm:w-[310px] md:w-[340px] shrink-0 rounded-2xl border border-card-border bg-card p-5 sm:p-6 shadow-xs hover:border-primary/50 transition-all hover:shadow-md">
+                        <div className="flex items-center justify-between">
+                          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+                            <IconComponent className="h-5 w-5" />
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-semibold text-muted-foreground">{item.badge}</span>
+                            <span className="text-xs font-extrabold text-accent bg-accent/10 px-2.5 py-0.5 rounded-full">{item.step}</span>
+                          </div>
+                        </div>
+                        <h3 className="mt-4 font-bold text-base text-foreground">{t(item.titleKey)}</h3>
+                        <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-3">{t(item.descKey)}</p>
+                      </div>
+
+                      {/* Arrow to next step */}
+                      <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 shadow-xs">
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </motion.div>
+            </div>
+          </section>
+
+          {/* 4. UN SUSTAINABLE DEVELOPMENT GOALS (SDG) SHOWCASE */}
+          <section className="rounded-3xl bg-gradient-to-br from-primary via-[#65101c] to-[#450a12] p-6 text-primary-foreground sm:p-8 md:p-10 shadow-xl border border-primary/40">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-accent backdrop-blur-xs mb-3">
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>United Nations Sustainable Development Goals</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{t("landing.sdgTitle")}</h2>
+              <p className="mt-2 text-xs sm:text-sm text-primary-foreground/85 leading-relaxed">{t("landing.sdgSub")}</p>
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* SDG 4.4 */}
+              <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <img src="/sdg/4.png" alt="SDG 4" className="h-14 w-14 rounded-none object-contain shadow-md shrink-0 border border-white/20 bg-black/10" />
+                    <div>
+                      <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-none bg-accent text-accent-foreground">SDG 4.4</span>
+                      <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg4Title")}</h3>
+                    </div>
+                  </div>
+                  <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg4Desc")}</p>
+                </div>
+              </div>
+
+              {/* SDG 8.5 */}
+              <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <img src="/sdg/8.png" alt="SDG 8" className="h-14 w-14 rounded-none object-contain shadow-md shrink-0 border border-white/20 bg-black/10" />
+                    <div>
+                      <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-none bg-accent text-accent-foreground">SDG 8.5</span>
+                      <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg8Title")}</h3>
+                    </div>
+                  </div>
+                  <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg8Desc")}</p>
+                </div>
+              </div>
+
+              {/* SDG 9.5 */}
+              <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <img src="/sdg/9.png" alt="SDG 9" className="h-14 w-14 rounded-none object-contain shadow-md shrink-0 border border-white/20 bg-black/10" />
+                    <div>
+                      <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-none bg-accent text-accent-foreground">SDG 9.5</span>
+                      <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg9Title")}</h3>
+                    </div>
+                  </div>
+                  <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg9Desc")}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <footer className="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2"><BrandMark className="h-6 w-6 text-[9px]" /><span>{t("landing.footer")}</span></div>
+            <div className="flex gap-4"><Link href="/market" className="min-h-11 py-3 hover:text-primary">{t("nav.market")}</Link><Link href="/sources" className="min-h-11 py-3 hover:text-primary">{t("nav.sources")}</Link></div>
+          </footer>
+        </main>
+      </div>
+
+      {/* 5. MODAL: FIRST TIME USER (CHOICE OF WORKER OR GRADUATE) */}
+      <Dialog open={userModalOpen} onOpenChange={setUserModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">{t("landing.modalUserTitle")}</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
+              {t("landing.modalUserSub")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 space-y-3">
+            <Link
+              href="/onboarding/cv?seg=worker&new=1"
+              onClick={() => setUserModalOpen(false)}
+              onMouseEnter={prewarm}
+              className="group flex items-center gap-4 rounded-2xl border border-card-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md cursor-pointer"
+              data-testid="modal-start-worker"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <Briefcase className="h-6 w-6" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold text-sm sm:text-base text-foreground">{t("landing.worker")}</span>
+                <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.workerSub")}</span>
+              </span>
+              <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
+            </Link>
+
+            <Link
+              href="/onboarding/cv?seg=graduate&new=1"
+              onClick={() => setUserModalOpen(false)}
+              onMouseEnter={prewarm}
+              className="group flex items-center gap-4 rounded-2xl border border-card-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md cursor-pointer"
+              data-testid="modal-start-graduate"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <GraduationCap className="h-6 w-6" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold text-sm sm:text-base text-foreground">{t("landing.grad")}</span>
+                <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.gradSub")}</span>
+              </span>
+              <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 6. MODAL: EMPLOYERS & EDUCATORS (PARTNER PORTALS) */}
+      <Dialog open={partnerModalOpen} onOpenChange={setPartnerModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">{t("landing.modalPartnerTitle")}</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
+              {t("landing.modalPartnerSub")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 space-y-3">
+            <Link
+              href="/login?role=hr"
+              onClick={() => setPartnerModalOpen(false)}
+              className="group flex items-center gap-4 rounded-2xl border-2 border-accent/60 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-md cursor-pointer"
+              data-testid="modal-portal-hr"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
+                <Building2 className="h-6 w-6" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold text-sm sm:text-base text-foreground">{t("portal.hr")} ({t("landing.ctaEmployer")})</span>
+                <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.hrSub")}</span>
+              </span>
+              <ArrowRight className="h-5 w-5 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
+            </Link>
+
+            <Link
+              href="/login?role=tvet"
+              onClick={() => setPartnerModalOpen(false)}
+              className="group flex items-center gap-4 rounded-2xl border-2 border-accent/60 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-md cursor-pointer"
+              data-testid="modal-portal-tvet"
+            >
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
+                <School className="h-6 w-6" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold text-sm sm:text-base text-foreground">{t("portal.tvet")} ({t("landing.ctaEducator")})</span>
+                <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.tvetSub")}</span>
+              </span>
+              <ArrowRight className="h-5 w-5 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

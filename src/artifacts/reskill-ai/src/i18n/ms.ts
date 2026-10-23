@@ -133,6 +133,7 @@ export const ms: Record<DictKey, string> = {
   "landing.grad": "Saya pelajar/graduan",
   "landing.honesty": "Data buruh: {dosm}. Data penggunaan AI: {aei}. Disemak setiap 6 jam.",
   "landing.howTitle": "Cara ia berfungsi",
+  "landing.howSub": "Proses pintar AI daripada kemasukan profil kemahiran hingga laluan pensijilan kerjaya.",
   "landing.sub": "Memperkasakan belia, pencari kerja, dan organisasi dengan analisis kemahiran berkuasa AI, data pasaran buruh langsung, serta laluan pembelajaran diperibadikan.",
   "landing.title": "Find Your Fit. Fuel Your Future.",
   "landing.trustBody": "Setiap angka menunjukkan sumber dan tempohnya. Tiada angka rekaan.",
