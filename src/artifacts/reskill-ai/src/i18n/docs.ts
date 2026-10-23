@@ -2,7 +2,7 @@
 // English titles are reference identifiers and are intentionally kept verbatim.
 export const docsEn = {
   "docs.openlearn.name": "OpenLearn · reviewed public courses",
-  "docs.openlearn.method": "Six public Open University course pages reviewed on 23 October 2026. This is a manually maintained metadata selection, not a live API. Subject links are application-authored from course descriptions/outcomes and restricted to relevant role titles. Unknown duration stays unknown. Introductory resources do not establish full skill mastery, professional registration or qualifications. Check current details with the provider.",
+  "docs.openlearn.method": "Seven public Open University course pages reviewed on 23 October 2026. This is a manually maintained metadata selection, not a live API. Subject links are application-authored from course descriptions/outcomes and restricted to relevant role titles. Unknown duration stays unknown. These resources do not establish full skill mastery, professional registration or qualifications. Check current details with the provider.",
   "docs.category.market": "Labour market and AI research",
   "docs.category.career": "Career and interest assessment",
   "docs.category.learning": "Learning catalogue and SDG references",
@@ -47,7 +47,7 @@ export const docsEn = {
   "docs.onet.version": "31.0 (August 2026), pinned. Moving to a new version needs a reviewed upgrade.",
   "docs.onet.coverage": "United States occupations only.",
   "docs.onet.method": "Each app role has an explicit six-digit SOC that must match an O*NET .00 occupation exactly. There is no MASCO or MyCOL equivalence. Unmatched roles show as unavailable, with no seed fallback.",
-  "docs.onet.skills": "O*NET Software Skills supplies occupation-specific tool examples mapped through explicit aliases to our glossary, scoped to each app role’s editorial skill list. In Demand tools receive app weight 3; others 2, not official O*NET ratings. Core task statements also map explicit skill aliases within that role scope (app weight 3). Knowledge adds the top five non-suppressed IM ≥ 3 subject areas; essential/transferable skills retain the top 12. Alias and course title/summary matches are application crosswalks, not course coverage certification. Matcher checks current catalogue skill IDs and links actual courses; requirements without courses remain visible separately and the planner reports uncovered gaps.",
+  "docs.onet.skills": "O*NET Software Skills supplies occupation-specific tool examples mapped through explicit aliases to our glossary, scoped to each app role’s editorial skill list. In Demand tools receive app weight 3; others 2, not official O*NET ratings. Core task statements also map explicit skill aliases within that role scope (app weight 3). Knowledge adds the top five non-suppressed IM ≥ 3 subject areas; essential/transferable skills retain the top 12. Alias and course title/summary matches are application crosswalks, not course coverage certification. General work skills also need a matching course title, and office/Excel links exclude incidental mentions in technical examples. Matcher checks current catalogue skill IDs and links actual courses; requirements without courses remain visible separately and the planner reports uncovered gaps.",
   "docs.onet.riasec": "Role RIASEC code: the top three official interest (OI) scores on the 1-7 scale. Matched records only.",
   "docs.onet.provenance": "Every role stores its fetched timestamp, sourceUrl, sourceVersion and officialTitle. The official English title is a reference name.",
   "docs.onet.license": "CC BY 4.0 with attribution. This app's changes (selection and rescaling above) are disclosed here.",
@@ -93,7 +93,7 @@ export type DocsKey = keyof typeof docsEn;
 
 export const docsMs: Record<DocsKey, string> = {
   "docs.openlearn.name": "OpenLearn · kursus awam disemak",
-  "docs.openlearn.method": "Enam halaman kursus awam Open University disemak pada 23 Oktober 2026. Pilihan metadata ini diselenggara secara manual, bukan API live. Kaitan bidang dipetakan oleh aplikasi berdasarkan penerangan/hasil pembelajaran kursus dan dihadkan kepada peranan berkaitan. Tempoh tidak diketahui tidak direka. Kursus pengenalan tidak membuktikan penguasaan kemahiran penuh, pendaftaran profesional atau kelayakan. Semak maklumat terkini dengan penyedia.",
+  "docs.openlearn.method": "Tujuh halaman kursus awam Open University disemak pada 23 Oktober 2026. Pilihan metadata ini diselenggara secara manual, bukan API live. Kaitan bidang dipetakan oleh aplikasi berdasarkan penerangan/hasil pembelajaran kursus dan dihadkan kepada peranan berkaitan. Tempoh tidak diketahui tidak direka. Kursus ini tidak membuktikan penguasaan kemahiran penuh, pendaftaran profesional atau kelayakan. Semak maklumat terkini dengan penyedia.",
   "docs.category.market": "Pasaran buruh dan penyelidikan AI",
   "docs.category.career": "Kerjaya dan penilaian minat",
   "docs.category.learning": "Katalog pembelajaran dan rujukan SDG",
@@ -138,7 +138,7 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.onet.version": "31.0 (Ogos 2026), dikunci. Bertukar ke versi baharu memerlukan naik taraf yang disemak.",
   "docs.onet.coverage": "Pekerjaan Amerika Syarikat sahaja.",
   "docs.onet.method": "Setiap peranan aplikasi mempunyai SOC enam digit yang jelas dan mesti sepadan tepat dengan pekerjaan O*NET .00. Tiada kesetaraan MASCO atau MyCOL. Peranan yang tidak sepadan ditunjukkan sebagai tidak tersedia, tanpa sandaran data benih.",
-  "docs.onet.skills": "O*NET Software Skills menyediakan contoh alat khusus pekerjaan, dipadankan melalui alias jelas kepada glosari aplikasi serta skop kemahiran editorial setiap peranan. Alat In Demand diberi wajaran aplikasi 3; yang lain 2, bukan skor rasmi O*NET. Pernyataan tugasan teras turut dipadankan melalui alias dalam skop peranan (wajaran aplikasi 3). Knowledge menambah lima bidang teratas dengan IM ≥ 3 yang tidak disekat; kemahiran asas/boleh pindah mengekalkan 12 teratas. Padanan alias dan tajuk/ringkasan kursus ialah pemetaan aplikasi, bukan pengesahan liputan kursus. Matcher menyemak ID kemahiran katalog semasa dan memaut kursus sebenar; keperluan tanpa kursus diasingkan dan perancang melaporkan jurang belum diliputi.",
+  "docs.onet.skills": "O*NET Software Skills menyediakan contoh alat khusus pekerjaan, dipadankan melalui alias jelas kepada glosari aplikasi serta skop kemahiran editorial setiap peranan. Alat In Demand diberi wajaran aplikasi 3; yang lain 2, bukan skor rasmi O*NET. Pernyataan tugasan teras turut dipadankan melalui alias dalam skop peranan (wajaran aplikasi 3). Knowledge menambah lima bidang teratas dengan IM ≥ 3 yang tidak disekat; kemahiran asas/boleh pindah mengekalkan 12 teratas. Padanan alias dan tajuk/ringkasan kursus ialah pemetaan aplikasi, bukan pengesahan liputan kursus. Kemahiran kerja umum turut memerlukan padanan tajuk kursus; pautan pejabat/Excel menolak sebutan sampingan dalam contoh teknikal. Matcher menyemak ID kemahiran katalog semasa dan memaut kursus sebenar; keperluan tanpa kursus diasingkan dan perancang melaporkan jurang belum diliputi.",
   "docs.onet.riasec": "Kod RIASEC peranan: tiga skor minat (OI) rasmi tertinggi pada skala 1-7. Rekod yang sepadan sahaja.",
   "docs.onet.provenance": "Setiap peranan menyimpan cap masa pengambilan, sourceUrl, sourceVersion dan officialTitle. Tajuk rasmi bahasa Inggeris ialah nama rujukan.",
   "docs.onet.license": "CC BY 4.0 dengan atribusi. Perubahan aplikasi ini (pemilihan dan penskalaan semula di atas) didedahkan di sini.",
@@ -182,7 +182,7 @@ export const docsMs: Record<DocsKey, string> = {
 
 export const docsZh: Record<DocsKey, string> = {
   "docs.openlearn.name": "OpenLearn · 已审核公开课程",
-  "docs.openlearn.method": "六个 Open University 公开课程页面于 2026 年 10 月 23 日审核。此为人工维护的元数据选集，并非实时 API。主题关联由应用根据课程介绍及学习成果编制，并限定至相关职位。未知时长保留为未知。入门资源不代表全面掌握技能、专业注册或取得执业资格。最新详情请向机构确认。",
+  "docs.openlearn.method": "七个 Open University 公开课程页面于 2026 年 10 月 23 日审核。此为人工维护的元数据选集，并非实时 API。主题关联由应用根据课程介绍及学习成果编制，并限定至相关职位。未知时长保留为未知。这些课程不代表全面掌握技能、专业注册或取得执业资格。最新详情请向机构确认。",
   "docs.category.market": "劳动力市场与 AI 研究",
   "docs.category.career": "职业与兴趣评估",
   "docs.category.learning": "学习目录与 SDG 参考",
@@ -227,7 +227,7 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.onet.version": "31.0（2026 年 8 月），已固定。升级到新版本需要经过审核。",
   "docs.onet.coverage": "仅限美国职业。",
   "docs.onet.method": "每个应用职位都有明确的六位 SOC，必须与 O*NET .00 职业完全匹配。不存在与 MASCO 或 MyCOL 的对等关系。未匹配的职位显示为不可用，不使用种子数据替代。",
-  "docs.onet.skills": "O*NET Software Skills 提供各职业的工具示例，通过明确别名映射到技能词表，并按应用职位的编辑技能清单限定范围。In Demand 工具的应用权重为 3，其他为 2，并非 O*NET 评分。核心任务也在该职位范围内通过别名映射（应用权重 3）。Knowledge 补充未被抑制且 IM ≥ 3 的前五项专业知识；基础及可迁移技能保留前十二项。别名及课程名称/简介匹配属于应用映射，并非课程覆盖认证。Matcher 检查当前目录技能 ID 并链接真实课程；尚无课程的要求单列，规划器报告未覆盖的差距。",
+  "docs.onet.skills": "O*NET Software Skills 提供各职业的工具示例，通过明确别名映射到技能词表，并按应用职位的编辑技能清单限定范围。In Demand 工具的应用权重为 3，其他为 2，并非 O*NET 评分。核心任务也在该职位范围内通过别名映射（应用权重 3）。Knowledge 补充未被抑制且 IM ≥ 3 的前五项专业知识；基础及可迁移技能保留前十二项。别名及课程名称/简介匹配属于应用映射，并非课程覆盖认证。一般工作技能还须匹配课程名称；办公室/Excel 关联排除技术示例中的偶然提及。Matcher 检查当前目录技能 ID 并链接真实课程；尚无课程的要求单列，规划器报告未覆盖的差距。",
   "docs.onet.riasec": "职位 RIASEC 代码：官方兴趣（OI）1-7 分中最高的三项。仅限已匹配记录。",
   "docs.onet.provenance": "每个职位都保存获取时间戳、sourceUrl、sourceVersion 与 officialTitle。英文官方职称是参考名称。",
   "docs.onet.license": "CC BY 4.0，需署名。本应用的改动（上述筛选与重新标度）在此披露。",

@@ -1,6 +1,7 @@
 import type { SkillRow, StoredProfileSkill, StoredRiasec } from "@workspace/db";
 import type { CourseView, RoleSkillView, RoleView } from "./catalog";
 import { hasCurrentRiasec } from "./riasec-scoring";
+import { courseFitsRole } from "./course-relevance";
 
 // Deterministic, explainable match score (0-100). No GPU involved.
 // Weights: skills 40, transferable 15, interest 20, preferences 10, feasibility 15.
@@ -40,7 +41,7 @@ export function cheapestCourseHours(skillId: number, courses: CourseView[], budg
 }
 
 export function scoreRole(profile: ProfileForScoring, role: RoleView, skills: SkillRow[], courses: CourseView[]) {
-  courses = courses.filter(c => !c.roleScope || c.roleScope.includes(role.title));
+  courses = courses.filter(c => courseFitsRole(c,role.title));
   const have = new Map(profile.skills.map((s) => [s.skillId, STATUS_CREDIT[s.status] ?? 0.6]));
   const category = new Map(skills.map((s) => [s.id, s.category]));
   const haveCategories = new Set(profile.skills.map((s) => category.get(s.skillId)));

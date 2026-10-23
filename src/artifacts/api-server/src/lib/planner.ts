@@ -1,5 +1,6 @@
 import type { PlanItemStored } from "@workspace/db";
 import type { CourseView, RoleSkillView } from "./catalog";
+import { courseFitsRole } from "./course-relevance";
 
 // Greedy constraint planner: covers gap skills with the fewest, cheapest,
 // shortest courses inside the user's budget and weekly hours. Only verified
@@ -23,8 +24,7 @@ export function buildPlan(opts: {
 
   while (remaining.size > 0 && chosen.length < maxCourses) {
     let best: { c: CourseView; value: number } | null = null;
-    const officeRole = /administrative assistant|secretar|office clerk/i.test(opts.roleTitle ?? "");
-    const eligible = courses.filter((c) => (!c.roleScope || c.roleScope.includes(opts.roleTitle ?? "")) && !chosen.includes(c) && personalCost(c) <= budget && c.skills.some((s) => remaining.has(s.id)) && (!officeRole || /office|microsoft 365|excel|spreadsheet|\bword\b|outlook|business communication|time management|customer|bookkeep|administrative|document management/i.test(c.title)));
+    const eligible = courses.filter(c => courseFitsRole(c, opts.roleTitle ?? "") && !chosen.includes(c) && personalCost(c) <= budget && c.skills.some(s => remaining.has(s.id)));
     // Prioritize role-specific gaps before courses matching only a basic skill.
     const specific = eligible.filter(c => c.skills.some(s => remaining.has(s.id) && remaining.get(s.id)?.category !== "Human"));
     const candidates = specific.length ? specific : eligible;

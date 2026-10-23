@@ -1,6 +1,7 @@
 import { ROLE_TITLE_ZH } from "../data/roles-zh";
 import { liveCourses } from "./live-courses";
 import { openLearnCourses } from "../data/openlearn";
+import { courseFitsRole } from "./course-relevance";
 import {
   db,
   skillsTable,
@@ -124,7 +125,7 @@ export function roleToApi(r: RoleView, courses?: CourseView[]) {
     riasecCode: r.riasecCode,
     skills: r.skills.map(s => {
       if (!courses) return s;
-      const matching = courses.filter(c => (!c.roleScope || c.roleScope.includes(r.title)) && c.skills.some(k => k.id === s.skillId));
+      const matching = courses.filter(c => courseFitsRole(c,r.title) && c.skills.some(k => k.id === s.skillId));
       return { ...s, courseCount: matching.length, ...(matching[0] ? {courseUrl: matching[0].url} : {}) };
     }),
     aiExposure: r.aiExposure,

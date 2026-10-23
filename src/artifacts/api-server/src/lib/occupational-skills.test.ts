@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { softwareSkills, taskSkills } from "./occupational-skills";
 import { openLearnCourses } from "../data/openlearn";
 import { buildPlan } from "./planner";
+import { teachesSkill } from "./course-relevance";
 
 test("software crosswalk respects both occupation and narrower app role scope", () => {
   const rows = [
@@ -57,7 +58,7 @@ test("only explicit core occupational tasks contribute scoped task skills", () =
   );
 });
 
-test("reviewed public courses link to the provider and preserve unknown durations", () => {
+test("reviewed public courses link to the provider and keep publisher durations", () => {
   const courses = openLearnCourses([
     { id: 1, name: "Medicine and Dentistry", category: "Domain" },
     { id: 2, name: "Solar PV Systems", category: "Green" },
@@ -67,7 +68,7 @@ test("reviewed public courses link to the provider and preserve unknown duration
     courses.every(
       (c) =>
         new URL(c.url).hostname === "www.open.edu" &&
-        c.durationHours === null &&
+        (c.durationHours === 2 || c.durationHours === 6) &&
         c.costMyr === 0,
     ),
   );
@@ -100,5 +101,60 @@ test("a shared language requirement cannot send another profession to fiction wr
   assert.equal(
     buildPlan({ ...options, roleTitle: "Content Writer" }).items.length,
     1,
+  );
+});
+
+test("incidental business words in technical courses do not become workplace training", () => {
+  assert.equal(
+    teachesSkill("Manage Microsoft Fabric", {
+      name: "Office Administration",
+      category: "Business",
+    }),
+    false,
+  );
+  assert.equal(
+    teachesSkill("Introduction to AI skills for nonprofits", {
+      name: "Microsoft Excel",
+      category: "Digital",
+    }),
+    false,
+  );
+  assert.equal(
+    teachesSkill("Deploy and operate Security Copilot", {
+      name: "Speaking",
+      category: "Human",
+    }),
+    false,
+  );
+  assert.equal(
+    teachesSkill("Data analysis: visualisations in Excel", {
+      name: "Microsoft Excel",
+      category: "Digital",
+    }),
+    true,
+  );
+});
+
+test("industrial automation is distinct from automating a software workflow", () => {
+  assert.equal(
+    teachesSkill("Automate GitHub workflows", {
+      name: "PLC and Industrial Automation",
+      category: "Engineering",
+    }),
+    false,
+  );
+  assert.equal(
+    teachesSkill("Industrial automation with PLC", {
+      name: "PLC and Industrial Automation",
+      category: "Engineering",
+    }),
+    true,
+  );
+  assert.equal(
+    teachesSkill("Clinical data in Microsoft Fabric", {
+      name: "Patient Care",
+      category: "Health",
+    }),
+    false,
   );
 });

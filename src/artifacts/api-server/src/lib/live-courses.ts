@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { CourseView } from "./catalog";
 import { SKILLS } from "../data/skills";
+import { teachesSkill } from "./course-relevance";
 
 export const LEARN_CATALOG_URL = "https://learn.microsoft.com/api/catalog/?locale=en-us&type=learningPaths";
 export const FCC_STRUCTURE_URL = "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/main/curriculum/structure/curriculum.json";
@@ -412,6 +413,9 @@ export async function liveCourses(skills: Skill[]): Promise<CourseView[]> {
   return providers.flatMap((provider) => {
     const snapshot = snapshots.get(provider);
     // Re-evaluate thematic tags for persisted snapshots after mapping changes.
-    return snapshot ? snapshot.courses.map((course) => ({ ...course, sdgCodes: courseSdg(course.title, course.skills), catalogStale: Date.now() - snapshot.at >= TTL })) : [];
+    return snapshot ? snapshot.courses.flatMap((course) => {
+      const mapped = course.skills.filter(s => teachesSkill(course.title,s));
+      return mapped.length ? [{ ...course, skills: mapped, sdgCodes: courseSdg(course.title, mapped), catalogStale: Date.now() - snapshot.at >= TTL }] : [];
+    }) : [];
   });
 }
