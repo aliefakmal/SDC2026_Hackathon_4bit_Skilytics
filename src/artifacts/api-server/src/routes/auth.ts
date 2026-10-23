@@ -1,3 +1,4 @@
+import {individualProfile} from "../lib/individual-profile";
 import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
@@ -34,8 +35,8 @@ router.post("/auth/login", async (req, res) => {
     res.status(403).json({ error: "wrong_role", role: u.role });
     return;
   }
-  const claimed = u.role === "individual" ? await claimGuestData(u.id, req.guestToken) : 0;
-  res.json({ token: issueToken(u.id), user: userToApi(u), claimedProfiles: claimed });
+  const claimed = u.role === "individual" ? await claimGuestData(u.id, req.guestToken, Number(req.get("x-claim-profile-id")) || undefined) : 0;
+  res.json({ token: issueToken(u.id), user: userToApi(u), claimedProfiles: claimed, profileId: u.role === "individual" ? (await individualProfile(u.id))?.id : null });
 });
 
 router.post("/auth/register", async (req, res) => {
@@ -52,9 +53,9 @@ router.post("/auth/register", async (req, res) => {
     .onConflictDoNothing({ target: usersTable.email })
     .returning();
   if (!u) { res.status(409).json({ error: "email_taken" }); return; }
-  const claimed = await claimGuestData(u.id, req.guestToken);
+  const claimed = await claimGuestData(u.id, req.guestToken, Number(req.get("x-claim-profile-id")) || undefined);
   req.log.info({ userId: u.id, claimed }, "Individual registered");
-  res.status(201).json({ token: issueToken(u.id), user: userToApi(u), claimedProfiles: claimed });
+  res.status(201).json({ token: issueToken(u.id), user: userToApi(u), claimedProfiles: claimed, profileId: u.role === "individual" ? (await individualProfile(u.id))?.id : null });
 });
 
 // Tokens are stateless; the client discards its copy.

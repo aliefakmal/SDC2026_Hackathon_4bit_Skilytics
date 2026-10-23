@@ -14,6 +14,12 @@ type Row = { label: DictKey; k?: DictKey[]; ref?: string; url?: string };
 type Doc = { id: string; types: DocType[]; name: DictKey; sourceIds?: string[]; ai?: boolean; rows: Row[] };
 
 const DOCS: Doc[] = [
+  {id:"bls",types:["external","static","derived"],name:"src.bls_projections.name",sourceIds:["bls_projections"],rows:[
+    {label:"docs.f.publisher",ref:"U.S. Bureau of Labor Statistics"},
+    {label:"docs.f.dataset",url:"https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm"},
+    {label:"docs.f.coverage",k:["docs.bls.coverage"]},
+    {label:"docs.f.method",k:["docs.bls.method"]},
+  ]},
   { id: "dosm", types: ["external"], name: "src.dosm_lfs_month.name", sourceIds: ["dosm_lfs_month"], rows: [
     { label: "docs.f.publisher", ref: "Department of Statistics Malaysia (DOSM) / OpenDOSM" },
     { label: "docs.f.dataset", url: "https://data.gov.my/data-catalogue/lfs_month" },
@@ -121,14 +127,14 @@ const DOCS: Doc[] = [
     { label: "docs.f.limits", k: ["docs.sdg.limits"] },
   ] },
   { id: "demo", types: ["demo", "user"], name: "docs.name.demo", rows: [
-    { label: "docs.f.method", k: ["docs.demo.org", "docs.demo.individual"] },
+    { label: "docs.f.method", k: ["docs.demo.org", "docs.demo.individual", "docs.demo.cv", "docs.account.profile"] },
     { label: "docs.f.privacy", k: ["docs.demo.private"] },
   ] },
 ];
 
 const TYPES: DocType[] = ["external", "static", "derived", "service", "demo", "user"];
 const CATEGORIES = [
-  { key: "market", ids: ["dosm", "aei_usage", "aei_exposure"] },
+  { key: "market", ids: ["dosm", "aei_usage", "aei_exposure", "bls"] },
   { key: "career", ids: ["onet", "riasec", "match"] },
   { key: "learning", ids: ["courses", "freecodecamp", "githubskills", "huggingface", "openlearn", "sdg"] },
   { key: "aiService", ids: ["runpod"] },

@@ -1,3 +1,4 @@
+import { individualProfile, primaryProfileId } from "./individual-profile";
 import { db, profilesTable, plansTable, usersTable, type SkillRow } from "@workspace/db";
 import { and, eq, desc, isNull, sql, type SQL } from "drizzle-orm";
 import type { Request } from "express";
@@ -89,8 +90,9 @@ export function profileScope(req: Request): SQL {
   if (u && (u.role === "hr" || u.role === "tvet")) {
     return u.organization ? sql`${profilesTable.organization} = ${u.organization} AND ${profilesTable.ownerUserId} IN (SELECT id FROM users WHERE role = ${u.role} AND organization = ${u.organization})` : sql`false`;
   }
-  const own = u ? eq(profilesTable.ownerUserId, u.id) : undefined;
+  const own = u ? and(eq(profilesTable.ownerUserId, u.id),eq(profilesTable.id,primaryProfileId(u.id))) : undefined;
   const guest = req.guestToken ? and(isNull(profilesTable.ownerUserId), eq(profilesTable.guestToken, req.guestToken)) : undefined;
+  if (u?.role === "individual") return own!;
   if (own && guest) return sql`(${own} OR ${guest})`;
   return own ?? guest ?? sql`false`;
 }
@@ -102,6 +104,7 @@ export async function canAccessProfile(req: Request, p: ProfileRow): Promise<boo
     const [owner] = await db.select({ role: usersTable.role, organization: usersTable.organization }).from(usersTable).where(eq(usersTable.id, p.ownerUserId));
     return owner?.role === u.role && owner.organization === u.organization;
   }
+  if (u?.role === "individual") return p.ownerUserId === u.id && (await individualProfile(u.id))?.id === p.id;
   if (u && p.ownerUserId === u.id) return true;
   return !!req.guestToken && p.ownerUserId === null && p.guestToken === req.guestToken;
 }

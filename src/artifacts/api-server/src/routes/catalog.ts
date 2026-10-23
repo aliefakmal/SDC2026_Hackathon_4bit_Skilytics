@@ -7,8 +7,8 @@ const router: IRouter = Router();
 
 router.get("/roles", async (req, res) => {
   const q = ListRolesQueryParams.parse(req.query);
-  const roles = await loadRoles();
-  res.json(roles.filter((r) => !q.sector || r.sector === q.sector).map(r => roleToApi(r)));
+  const [roles,courses] = await Promise.all([loadRoles(),loadCourses()]);
+  res.json(roles.filter((r) => !q.sector || r.sector === q.sector).map(r => roleToApi(r,courses)));
 });
 
 router.get("/roles/:id", async (req, res) => {
@@ -18,7 +18,7 @@ router.get("/roles/:id", async (req, res) => {
     res.status(404).json({ error: "Peranan tidak dijumpai" });
     return;
   }
-  res.json(roleToApi(role));
+  res.json(roleToApi(role,await loadCourses()));
 });
 
 router.get("/courses", async (req, res) => {

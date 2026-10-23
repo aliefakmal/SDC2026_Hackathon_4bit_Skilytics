@@ -6,7 +6,7 @@ import {
   AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, BarChart2, Check, CheckCircle2, Compass, Copy, FileCheck, FileImage, FileText, FileUp, GraduationCap, HelpCircle, Lightbulb, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
 } from "lucide-react";
 import {
-  createProfile, runProfileAgent, useGetProfile, useListProfileInsights, useListRiasecQuestions, useListRoles, useListCourses, useSubmitRiasec, useUpdateProfile, useUploadCv,
+  customFetch, createProfile, runProfileAgent, useGetProfile, useListProfileInsights, useListRiasecQuestions, useListRoles, useListCourses, useSubmitRiasec, useUpdateProfile, useUploadCv,
   getGetProfileQueryKey, getListProfileInsightsQueryKey,
   type AgentInsight, type CvEvidence, type Profile, type ProfileUpdate, type Segment,
 } from "@workspace/api-client-react";
@@ -467,6 +467,7 @@ function CvStep({
   const ref = useRef<HTMLInputElement>(null);
   const consentRef = useRef<HTMLLabelElement>(null);
   const [consent, setConsent] = useState(false);
+  const [demoBusy,setDemoBusy]=useState(false);
   const [highlightConsent, setHighlightConsent] = useState(false);
   const [local, setLocal] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
@@ -489,23 +490,14 @@ function CvStep({
     }
   };
 
-  const loadDemoCv = async (demoPath: string, fileName: string) => {
-    setConsent(true);
-    setHighlightConsent(false);
-    setLocal(null);
+  const loadDemoCv = async (demoId: number) => {
+    setLocal(null);setDemoBusy(true);
     try {
-      setSince(Date.now());
-      const res = await fetch(demoPath);
-      if (!res.ok) throw new Error("demo_fetch_failed");
-      const blob = await res.blob();
-      const file = new File([blob], fileName, {
-        type: blob.type || (fileName.endsWith(".pdf") ? "application/pdf" : "image/jpeg"),
-      });
-      await send(file, undefined, true);
-    } catch (err) {
-      setSince(null);
-      setLocal(et(err));
-    }
+      const profile=p.id>0?p:await ensureProfile?.();
+      if(!profile?.id)throw new Error("profile_not_ready");
+      const np=await customFetch<Profile>(`/api/profiles/${profile.id}/demo-cv`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({demoId})});
+      qc.setQueryData(getGetProfileQueryKey(np.id),np);setObProfile(scope,np.id);onProfileReady?.(np);writeDraft(scope,np.id,{form:undefined});nav(`/onboarding/review?pid=${np.id}`);
+    } catch(err) {setLocal(et(err));} finally {setDemoBusy(false);}
   };
 
   const handleAtsCancel = () => {
@@ -690,7 +682,7 @@ function CvStep({
       </label>
       <button
         type="button"
-        disabled={up.isPending}
+        disabled={up.isPending || demoBusy}
         onClick={() => {
           setPendingFile(null);
           setShowAtsNotice(true);
@@ -723,16 +715,16 @@ function CvStep({
         </div>
         <p className="text-[11px] text-muted-foreground mb-3">
           {lang === "ms"
-            ? "Pilih satu contoh untuk melihat cara CV anda dibaca."
-            : lang === "zh" ? "选一个示例，看看系统如何读取简历。" : "Pick a sample to see how your CV is read."}
+            ? "Terus isi data contoh tanpa AI. Upload CV sendiri masih dibaca AI."
+            : lang === "zh" ? "直接填写示例资料，不调用 AI。上传自己的简历仍由 AI 读取。" : "Fill sample details instantly, without AI. Your own CV upload still uses AI."}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            disabled={up.isPending}
-            onClick={() => loadDemoCv("/demo/demo-cv-1.pdf", "demo cv 1.pdf")}
+            disabled={up.isPending || demoBusy}
+            onClick={() => loadDemoCv(1)}
             className="h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left bg-background/90 hover:bg-background border-border/80 hover:border-primary transition-all shadow-xs"
             data-testid="button-demo-cv-1"
           >
@@ -748,8 +740,8 @@ function CvStep({
             type="button"
             variant="outline"
             size="sm"
-            disabled={up.isPending}
-            onClick={() => loadDemoCv("/demo/demo-cv-2.jpeg", "demo cv 2.jpeg")}
+            disabled={up.isPending || demoBusy}
+            onClick={() => loadDemoCv(2)}
             className="h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left bg-background/90 hover:bg-background border-border/80 hover:border-primary transition-all shadow-xs"
             data-testid="button-demo-cv-2"
           >
@@ -765,8 +757,8 @@ function CvStep({
             type="button"
             variant="outline"
             size="sm"
-            disabled={up.isPending}
-            onClick={() => loadDemoCv("/demo/demo-cv-3.pdf", "demo cv 3.pdf")}
+            disabled={up.isPending || demoBusy}
+            onClick={() => loadDemoCv(3)}
             className="h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left bg-background/90 hover:bg-background border-border/80 hover:border-primary transition-all shadow-xs"
             data-testid="button-demo-cv-3"
           >

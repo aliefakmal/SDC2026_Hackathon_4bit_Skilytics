@@ -1,8 +1,9 @@
+import {individualProfile} from "./individual-profile";
 import { createHmac, randomBytes, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 import { db, usersTable, profilesTable, predictionsTable, type UserRow } from "@workspace/db";
-import { and, eq, isNull, isNotNull, lt } from "drizzle-orm";
+import { and, eq, isNull, isNotNull, lt, desc, sql } from "drizzle-orm";
 import { logger } from "./logger";
 
 const scrypt = promisify(scryptCb) as (pw: string, salt: Buffer, len: number) => Promise<Buffer>;
@@ -106,19 +107,20 @@ export function requireRole(...roles: Role[]): RequestHandler {
 }
 
 /** Moves guest-owned profiles and predictions to a registered individual. */
-export async function claimGuestData(userId: number, guestToken: string | undefined): Promise<number> {
-  if (!guestToken) return 0;
-  return db.transaction(async (tx) => {
-  const moved = await tx
-    .update(profilesTable)
-    .set({ ownerUserId: userId, guestToken: null })
-    .where(and(eq(profilesTable.guestToken, guestToken), isNull(profilesTable.ownerUserId)))
-    .returning({ id: profilesTable.id });
-  await tx
-    .update(predictionsTable)
-    .set({ ownerUserId: userId, guestToken: null })
-    .where(and(eq(predictionsTable.guestToken, guestToken), isNull(predictionsTable.ownerUserId)));
-  return moved.length;
+export async function claimGuestData(userId:number,guestToken:string|undefined,preferredId?:number):Promise<number> {
+  if(!guestToken)return 0;
+  preferredId=Number.isSafeInteger(preferredId)&&preferredId!>0&&preferredId!<=2147483647?preferredId:undefined;
+  return db.transaction(async tx=>{
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${"individual-profile:"+userId},0))`);
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${"guest-claim:"+guestToken},0))`);
+    const existing=await individualProfile(userId,tx);
+    let moved=0;
+    if(!existing) {
+      const [candidate]=await tx.select().from(profilesTable).where(and(eq(profilesTable.guestToken,guestToken),isNull(profilesTable.ownerUserId),preferredId?eq(profilesTable.id,preferredId):undefined)).orderBy(sql`CASE WHEN ${profilesTable.id}=${preferredId??0} THEN 0 WHEN ${profilesTable.onboardingStep}='complete' THEN 1 ELSE 2 END`,desc(profilesTable.id)).limit(1);
+      if(candidate) {await tx.update(profilesTable).set({ownerUserId:userId,guestToken:null}).where(eq(profilesTable.id,candidate.id));moved=1;}
+    }
+    await tx.update(predictionsTable).set({ownerUserId:userId,guestToken:null}).where(and(eq(predictionsTable.guestToken,guestToken),isNull(predictionsTable.ownerUserId)));
+    return moved;
   });
 }
 

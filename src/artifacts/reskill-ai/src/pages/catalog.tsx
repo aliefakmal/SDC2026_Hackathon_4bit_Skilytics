@@ -3,7 +3,7 @@ import { Link, useParams } from "wouter";
 import { ArrowLeft, Award, ExternalLink } from "lucide-react";
 import {
   useGetMarketOverview, useGetRole, useListCourses, useListRoles,
-  getGetMarketOverviewQueryKey, getGetRoleQueryKey, getListCoursesQueryKey, type CostType, type Role,
+  getGetMarketOverviewQueryKey, getGetRoleQueryKey, getListRolesQueryKey, getListCoursesQueryKey, type CostType, type Role,
 } from "@workspace/api-client-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import { RoleGoals } from "@/components/matcher-skill-map";
 export function Roles() {
   const { t, tk, lang } = useT();
   const f = useFmt();
-  const q = useListRoles();
+  const q = useListRoles(undefined,{query:{queryKey:getListRolesQueryKey(),refetchInterval:300000,staleTime:60000}});
   const [search,setSearch]=useState("");
   const [sector, setSector] = useState("all");
   const sectors = useMemo(() => Array.from(new Set((q.data ?? []).map((r) => r.sector))).sort(), [q.data]);

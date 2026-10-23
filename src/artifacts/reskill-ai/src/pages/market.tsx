@@ -14,6 +14,8 @@ import { roleTitle, useFmt } from "@/lib/fmt";
 import { useErrText, useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { SourceDocumentation, TechDiagnostics } from "./source-documentation";
+import {useAuth} from "@/lib/auth";
+import {MarketOutlook} from "@/components/market-outlook";
 
 const MAROON = "#7A1523";
 const GOLD = "#C69214";
@@ -59,6 +61,12 @@ function PairBars({ items }: { items: { key: string; label: string; a: number | 
 }
 
 export function Market() {
+  const {user}=useAuth();
+  if(!user||user.role==="individual") return <MarketOutlook/>;
+  return <ObservedMarket/>;
+}
+
+function ObservedMarket() {
   const { t } = useT();
   const f = useFmt();
   const ov = useGetMarketOverview({ query: { queryKey: getGetMarketOverviewQueryKey() } });

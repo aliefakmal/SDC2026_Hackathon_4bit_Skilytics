@@ -1,6 +1,14 @@
 // Data Sources documentation strings. URLs, dataset field names, file names and official
 // English titles are reference identifiers and are intentionally kept verbatim.
 export const docsEn = {
+  "docs.demo.cv": "Demo CV buttons apply versioned fictional data from the three local fixtures. No file, OCR or model call is made. Real uploaded CVs still use AI extraction.",
+  "docs.account.profile": "Guests can try and clear multiple profiles. A registered individual has one profile. Signup claims only the selected guest profile; login keeps an existing account profile. Legacy records remain stored but only the primary profile is accessible.",
+  "src.bls_projections.name": "BLS · US career growth reference",
+  "src.bls_projections.desc": "Public 2025–2035 projections and annual job openings, reviewed 23 October 2026. A US reference snapshot for Market, not Malaysian vacancies.",
+  "cadence.reviewed_snapshot": "Manually reviewed public snapshot",
+  "docs.bls.coverage": "32 exact SOC occupation rows from BLS Table 1.2, 2025–2035. Employment and annual openings are converted from thousands to people. Reviewed 23 October 2026.",
+  "docs.bls.method": "The Analyst RAG agent retrieves BLS growth/openings, current O*NET role skills, observed Anthropic AI exposure/usage and aggregate DOSM labour context. AI produces qualitative 3/5-year outlooks, with low/medium confidence and all three languages in one cached response. BLS figures remain US 2025–2035 projections; no shorter-period or Malaysian counts are invented. Cache lasts 24 hours and changes when source facts change. Model output IDs and source eligibility are validated. If AI fails, the page shows observed AI data and official US projections, clearly labelled.",
+  "err.profile_locked": "Your account already has its profile. You can edit its details in your workspace.",
   "docs.learning.name": "Learning records and completion",
   "docs.learning.method": "Your confirmed intake unlocks career matching, then a selected role unlocks the timeline. Holland answers are locked after onboarding. Start date, estimated durations and self-reported course completions are saved per profile in learning_journeys with ownership checks. Badges and the branded SVG certificate record self-reported pathway completion, not provider qualifications. Calendar files contain all dated course events, provider links and a one-day reminder; users confirm their own Google/Apple import. New course suggestions use the public catalogue, not guaranteed future technology forecasts.",
   "docs.learning.ai": "Individual plans add three public workplace-AI courses after role preparation, even when there are no skill gaps. Course links, durations and SDGs come from the current catalogue. Free learning content does not include paid practice-tool licences. Calendar colours show suggested study dates, not booked sessions.",
@@ -95,6 +103,14 @@ export const docsEn = {
 export type DocsKey = keyof typeof docsEn;
 
 export const docsMs: Record<DocsKey, string> = {
+  "docs.demo.cv": "Butang demo CV mengisi data rekaan berversi daripada tiga fail contoh setempat. Tiada fail, OCR atau panggilan model digunakan. CV sebenar yang dimuat naik masih dibaca AI.",
+  "docs.account.profile": "Tetamu boleh mencuba dan memadam beberapa profil. Individu berdaftar mempunyai satu profil. Pendaftaran mengambil hanya profil tetamu dipilih; login mengekalkan profil akaun sedia ada. Rekod lama kekal disimpan tetapi hanya profil utama boleh diakses.",
+  "src.bls_projections.name": "BLS · rujukan pertumbuhan kerjaya AS",
+  "src.bls_projections.desc": "Unjuran awam 2025–2035 dan peluang kerja tahunan, disemak 23 Oktober 2026. Snapshot rujukan AS untuk Market, bukan kekosongan Malaysia.",
+  "cadence.reviewed_snapshot": "Snapshot awam disemak secara manual",
+  "docs.bls.coverage": "32 rekod SOC tepat daripada Jadual 1.2 BLS, 2025–2035. Pekerjaan dan peluang tahunan ditukar daripada ribuan kepada bilangan orang. Disemak 23 Oktober 2026.",
+  "docs.bls.method": "Ejen Analyst RAG mengambil pertumbuhan/peluang BLS, kemahiran O*NET, pendedahan/penggunaan AI Anthropic dan konteks agregat DOSM. AI memberi jangkaan kualitatif 3/5 tahun dengan keyakinan rendah/sederhana dan tiga bahasa dalam satu respons cache. Angka BLS kekal sebagai unjuran AS 2025–2035; tiada bilangan tempoh lebih pendek atau Malaysia direka. Cache bertahan 24 jam dan berubah jika fakta sumber berubah. ID peranan dan bukti sumber disahkan. Jika AI gagal, halaman memaparkan data AI diperhatikan dan unjuran rasmi AS dengan label jelas.",
+  "err.profile_locked": "Akaun anda sudah mempunyai profil. Edit maklumatnya dalam ruang kerja anda.",
   "docs.learning.name": "Rekod pembelajaran dan penyempurnaan",
   "docs.learning.method": "Pengesahan intake membuka padanan kerjaya, kemudian pilihan peranan membuka garis masa. Jawapan Holland dikunci selepas onboarding. Tarikh mula, anggaran tempoh dan tanda selesai kursus disimpan bagi setiap profil dalam learning_journeys dengan semakan pemilikan. Lencana dan sijil SVG berjenama merekod penyempurnaan laluan yang dilaporkan sendiri, bukan kelayakan penyedia. Fail kalendar mengandungi semua acara kursus bertarikh, pautan penyedia dan peringatan sehari; pengguna mengesahkan import Google/Apple sendiri. Cadangan kursus seterusnya menggunakan katalog awam, bukan ramalan teknologi masa depan yang dijamin.",
   "docs.learning.ai": "Pelan individu menambah tiga kursus AI untuk kerja daripada katalog awam selepas persediaan peranan, walaupun tiada jurang kemahiran. Pautan, tempoh dan SDG kursus datang daripada katalog semasa. Kandungan pembelajaran percuma tidak termasuk lesen alat latihan berbayar. Warna kalendar menunjukkan cadangan tarikh belajar, bukan sesi yang ditempah.",
@@ -187,6 +203,14 @@ export const docsMs: Record<DocsKey, string> = {
 };
 
 export const docsZh: Record<DocsKey, string> = {
+  "docs.demo.cv": "演示简历按钮直接填写三个本地示例的版本化虚构资料，不上传文件、不运行 OCR，也不调用模型。真实上传仍使用 AI 读取。",
+  "docs.account.profile": "访客可试用和清除多个资料。注册个人账户仅使用一个资料。注册仅认领选定的访客资料，登录保留已有账户资料。历史记录保留，但仅主资料可访问。",
+  "src.bls_projections.name": "BLS · 美国职业增长参考",
+  "src.bls_projections.desc": "2025–2035 年公开预测及年度职位空缺，2026 年 10 月 23 日审核。用于市场页面的美国参考快照，并非马来西亚招聘空缺。",
+  "cadence.reviewed_snapshot": "人工审核的公开快照",
+  "docs.bls.coverage": "BLS 表 1.2 的 32 条精确 SOC 职业记录，覆盖 2025–2035 年。就业及年度空缺从千人转换为人数。审核日期为 2026 年 10 月 23 日。",
+  "docs.bls.method": "Analyst RAG 检索 BLS 增长与空缺、O*NET 技能、Anthropic 实际 AI 使用及 DOSM 马来西亚总体数据。AI 生成未来 3/5 年的定性展望，可信程度仅为较低或中等，三种语言一次生成并缓存 24 小时。来源事实改变时更新缓存。BLS 数值保持为美国 2025–2035 年预测，不编造更短时期或马来西亚的数量。校验职业 ID 及来源资格。AI 不可用时显示已观察数据与美国官方预测，并明确标注。",
+  "err.profile_locked": "你的账户已有个人资料，可在工作区编辑。",
   "docs.learning.name": "学习记录与完成",
   "docs.learning.method": "确认录入后解锁职业匹配，选择职位后解锁时间线。入职引导结束后 Holland 答案锁定。每份资料的开始日期、估计时长及自行确认的课程完成记录保存至 learning_journeys，并检查所有权。徽章与品牌 SVG 证书记录自行报告的路径完成情况，并非机构资格认证。日历文件包含所有已排期课程、机构链接及提前一天提醒；由用户自行确认 Google/Apple 导入。后续建议来自公开目录，不保证预测未来技术。",
   "docs.learning.ai": "个人计划在职业技能准备之后加入三门公开的职场 AI 课程，即使没有技能差距。链接、时长及 SDG 来自当前目录。免费学习内容不包括付费练习工具许可。日历颜色表示建议学习日期，并非已预约的课程。",

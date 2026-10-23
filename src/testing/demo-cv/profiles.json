@@ -1,0 +1,45 @@
+{
+  "reviewedAt": "2026-10-23",
+  "note": "Fictional demo fixtures transcribed from the accompanying local CVs. No contact details are used. Selecting a demo does not call OCR or AI.",
+  "profiles": [
+    {
+      "id": 1,
+      "file": "demo-cv-1.pdf",
+      "name": "Ungku Babas bin Ungku Samad",
+      "currentRole": "Business Operation Intern",
+      "organization": "SINE DORBY",
+      "education": "Universiti Teknologi Malaysia · Bachelor of Real Estate · July 2019 – October 2024\nKolej Ungku Samad · SPM: 8A 1B · February 2015 – January 2019",
+      "experience": "SINE DORBY · Business Operation Intern · October 2023 – March 2024\nManaged daily operations, coordinated tasks, analysed business processes and improved workflow efficiency.",
+      "skills": "Microsoft Excel; Data Analysis; Data Visualization; Real-Time Coordination; Crowd Control; Entrepreneurship; Leadership; Administration; Malay; English",
+      "extra": "Champion in Inter-Uni Debate Competition (IN-UDEC 2023). Best Speaker Award in International-Level Public Speaking Competition (2023). Gold Medallist in Pertandingan Silat Olahraga (2015–2018). Active Committee in Youth Leadership Programme (2019–2023).",
+      "sha256": "8e11a775952d8c8e09ba67c64e486c86148595c49c9aed395b940b81023bca97",
+      "cvText": "Ungku Babas bin Ungku Samad\nBusiness Operation Intern\nSINE DORBY\nUniversiti Teknologi Malaysia · Bachelor of Real Estate · July 2019 – October 2024\nKolej Ungku Samad · SPM: 8A 1B · February 2015 – January 2019\nSINE DORBY · Business Operation Intern · October 2023 – March 2024\nManaged daily operations, coordinated tasks, analysed business processes and improved workflow efficiency.\nSkills: Microsoft Excel; Data Analysis; Data Visualization; Real-Time Coordination; Crowd Control; Entrepreneurship; Leadership; Administration; Malay; English\nChampion in Inter-Uni Debate Competition (IN-UDEC 2023). Best Speaker Award in International-Level Public Speaking Competition (2023). Gold Medallist in Pertandingan Silat Olahraga (2015–2018). Active Committee in Youth Leadership Programme (2019–2023)."
+    },
+    {
+      "id": 2,
+      "file": "demo-cv-2.jpeg",
+      "name": "FOO WEI CHONG",
+      "currentRole": "Director & Editor",
+      "organization": "MMU Cyberjaya",
+      "education": "SMK Negeri Larana · Graduated 2019 · 9A\nMultimedia University Cyberjaya · Bachelor of Computer Science (Hons) in Software Engineering · Graduated 2025 · CGPA 3.89",
+      "experience": "Director & Editor · Crossroads short film · MMU Cyberjaya · 2024\nDirected and edited an eight-minute independent short film from pre-production through delivery. Developed the screenplay, storyboard, shot composition and visual direction. Coordinated cast, crew, schedules and equipment.\nSoftware Engineer · Nexa Digital Sdn. Bhd.\nCollaborated with multidisciplinary teams, managed multiple project responsibilities and solved technical challenges.",
+      "skills": "Cinematography; Camera Operation; Storyboarding; Scriptwriting; Video Editing; Color Grading; Lighting; Production Planning; DaVinci Resolve; Adobe Premiere Pro; Adobe After Effects; Photoshop; Project Management; Creative Problem Solving; Team Collaboration; Time Management",
+      "extra": "Best Cinematography Award – Film Festival MMU (2024). Best Cinematography Award – Pertandingan Video Pendek MMU (2024). Mandarin, English and Malay: fluent.",
+      "sha256": "2eedae993bacc9cc42f7f7318362bf63c135b8976c6c98ed2c59425ecd126fcb",
+      "cvText": "FOO WEI CHONG\nDirector & Editor\nMMU Cyberjaya\nSMK Negeri Larana · Graduated 2019 · 9A\nMultimedia University Cyberjaya · Bachelor of Computer Science (Hons) in Software Engineering · Graduated 2025 · CGPA 3.89\nDirector & Editor · Crossroads short film · MMU Cyberjaya · 2024\nDirected and edited an eight-minute independent short film from pre-production through delivery. Developed the screenplay, storyboard, shot composition and visual direction. Coordinated cast, crew, schedules and equipment.\nSoftware Engineer · Nexa Digital Sdn. Bhd.\nCollaborated with multidisciplinary teams, managed multiple project responsibilities and solved technical challenges.\nSkills: Cinematography; Camera Operation; Storyboarding; Scriptwriting; Video Editing; Color Grading; Lighting; Production Planning; DaVinci Resolve; Adobe Premiere Pro; Adobe After Effects; Photoshop; Project Management; Creative Problem Solving; Team Collaboration; Time Management\nBest Cinematography Award – Film Festival MMU (2024). Best Cinematography Award – Pertandingan Video Pendek MMU (2024). Mandarin, English and Malay: fluent."
+    },
+    {
+      "id": 3,
+      "file": "demo-cv-3.pdf",
+      "name": "Karthik A/L Subramaniam",
+      "currentRole": "Lead ML Engineer",
+      "organization": "Inari Amertron Berhad",
+      "education": "Monash University Malaysia · Master of Data Science · 2022–2024 · CGPA 3.85/4.00\nThesis: Optimizing Deep Learning Architectures for Resource-Constrained Edge Devices.\nMultimedia University (MMU) Cyberjaya · Bachelor of Computer Science (Hons) in Artificial Intelligence · 2018–2021 · CGPA 3.92/4.00\nDean’s List for six consecutive semesters.",
+      "experience": "Lead ML Engineer · Inari Amertron Berhad · 2023–Present\nBuilt an IoT predictive maintenance pipeline using Python, AWS SageMaker and Apache Kafka. Developed anomaly detection with Random Forest and XGBoost. Reduced unplanned downtime by 28% and saved an estimated RM 1.2M annually.\nData Scientist · Axiata Digital Labs Malaysia · 2021–2023\nBuilt an NLP pipeline with BERT embeddings and a Tableau churn dashboard. Increased customer retention by 15%.\nComputer Vision Lead · ViTrox Technologies Sdn. Bhd. · 2020–2021\nDeployed Docker and Kubernetes inference applications and trained YOLOv8 defect detection.",
+      "skills": "Python; R; SQL; NoSQL; MongoDB; TensorFlow; PyTorch; Scikit-Learn; Keras; HuggingFace; AWS; SageMaker; Docker; Kubernetes; MLflow; CI/CD; NLP; BERT; Tableau; IoT; Kafka; Project Leadership; Communication; Problem Solving",
+      "extra": "Senior Machine Learning Engineer with over four years of experience. Languages: English (fluent), Tamil (native), Malay (proficient).",
+      "sha256": "3e6dbde3c153ada8bb3c0d672c44e0086100e4a69b9965382d31196f615698df",
+      "cvText": "Karthik A/L Subramaniam\nLead ML Engineer\nInari Amertron Berhad\nMonash University Malaysia · Master of Data Science · 2022–2024 · CGPA 3.85/4.00\nThesis: Optimizing Deep Learning Architectures for Resource-Constrained Edge Devices.\nMultimedia University (MMU) Cyberjaya · Bachelor of Computer Science (Hons) in Artificial Intelligence · 2018–2021 · CGPA 3.92/4.00\nDean’s List for six consecutive semesters.\nLead ML Engineer · Inari Amertron Berhad · 2023–Present\nBuilt an IoT predictive maintenance pipeline using Python, AWS SageMaker and Apache Kafka. Developed anomaly detection with Random Forest and XGBoost. Reduced unplanned downtime by 28% and saved an estimated RM 1.2M annually.\nData Scientist · Axiata Digital Labs Malaysia · 2021–2023\nBuilt an NLP pipeline with BERT embeddings and a Tableau churn dashboard. Increased customer retention by 15%.\nComputer Vision Lead · ViTrox Technologies Sdn. Bhd. · 2020–2021\nDeployed Docker and Kubernetes inference applications and trained YOLOv8 defect detection.\nSkills: Python; R; SQL; NoSQL; MongoDB; TensorFlow; PyTorch; Scikit-Learn; Keras; HuggingFace; AWS; SageMaker; Docker; Kubernetes; MLflow; CI/CD; NLP; BERT; Tableau; IoT; Kafka; Project Leadership; Communication; Problem Solving\nSenior Machine Learning Engineer with over four years of experience. Languages: English (fluent), Tamil (native), Malay (proficient)."
+    }
+  ]
+}

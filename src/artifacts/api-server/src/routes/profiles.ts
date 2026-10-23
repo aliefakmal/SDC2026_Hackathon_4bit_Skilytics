@@ -1,3 +1,5 @@
+import demoFixtures from "../../../../testing/demo-cv/profiles.json";
+import { individualProfile } from "../lib/individual-profile";
 import { hollandSource } from "../lib/holland-source";
 import { Router, type IRouter } from "express";
 import { performance } from "node:perf_hooks";
@@ -81,6 +83,16 @@ router.post("/profiles", async (req, res) => {
       hrdcEligible: u?.role === "hr" && (body.hrdcEligible ?? false),
       onboardingStep: "cv",
   };
+  if(u?.role === "individual") {
+    const result=await db.transaction(async tx=>{
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${"individual-profile:"+u.id},0))`);
+      const current=await individualProfile(u.id,tx);
+      if(current) return {row:current,created:false};
+      const [row]=await tx.insert(profilesTable).values(values).returning();
+      return {row,created:true};
+    });
+    res.status(result.created?201:200).json(profileToApi(result.row,await loadSkills()));return;
+  }
   if (!u && req.guestToken) {
     const guestToken = req.guestToken;
     const outcome = await db.transaction(async (tx) => {
@@ -242,8 +254,21 @@ router.delete("/profiles/:id", async (req, res) => {
   const { id } = GetProfileParams.parse(req.params);
   const p = await requireProfile(id, req, res);
   if (!p) return;
+  if(req.user?.role === "individual") {res.status(409).json({error:"profile_locked"});return;}
   await db.delete(profilesTable).where(eq(profilesTable.id, id));
   res.status(204).end();
+});
+
+// Fixed fictional sample data. This route never calls file extraction, OCR, or an LLM.
+router.post("/profiles/:id/demo-cv",async(req,res)=>{
+  const p=await requireProfile(GetProfileParams.parse(req.params).id,req,res);if(!p)return;
+  if(p.onboardingStep==="complete") {res.status(409).json({error:"riasec_locked"});return;}
+  const {demoId}=z.object({demoId:z.number().int().min(1).max(3)}).parse(req.body);
+  const fixture=demoFixtures.profiles.find(f=>f.id===demoId)!;
+  const skills=await loadSkills();
+  const evidence=["name","currentRole","organization","education","experience"].map(field=>({field,value:String(fixture[field as keyof typeof fixture]),quote:String(fixture[field as keyof typeof fixture]),source:"user_cv"}));
+  const [row]=await db.update(profilesTable).set({name:fixture.name,currentRole:fixture.currentRole,organization:fixture.organization,education:fixture.education,experience:fixture.experience,cvText:fixture.cvText,cvFileName:fixture.file,cvExtractionKey:"demo-v1:"+fixture.sha256,cvEvidence:evidence,cvUploadedAt:new Date(),skills:extractSkills(fixture.cvText,skills),verified:false,onboardingStep:"review"}).where(eq(profilesTable.id,p.id)).returning();
+  res.json(profileToApi(row,skills));
 });
 
 router.post("/profiles/:id/cv", async (req, res) => {

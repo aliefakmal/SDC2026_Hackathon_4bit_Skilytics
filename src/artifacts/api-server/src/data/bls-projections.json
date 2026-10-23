@@ -1,0 +1,266 @@
+{
+  "source": "U.S. Bureau of Labor Statistics · Table 1.2",
+  "url": "https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm",
+  "period": "2025–2035",
+  "geography": "USA",
+  "reviewedAt": "2026-10-23",
+  "method": "Selected official table rows, matched by exact six-digit SOC. Employment and openings converted from thousands to people. A reviewed snapshot, not a live Malaysian forecast.",
+  "rows": [
+    {
+      "socCode": "15-2051",
+      "title": "Data scientists",
+      "employment2025": 275600,
+      "employment2035": 371000,
+      "growthPct": 34.6,
+      "annualOpenings": 24800
+    },
+    {
+      "socCode": "15-1212",
+      "title": "Information security analysts",
+      "employment2025": 192900,
+      "employment2035": 233400,
+      "growthPct": 21,
+      "annualOpenings": 14100
+    },
+    {
+      "socCode": "15-1221",
+      "title": "Computer and information research scientists",
+      "employment2025": 38600,
+      "employment2035": 47000,
+      "growthPct": 21.8,
+      "annualOpenings": 2900
+    },
+    {
+      "socCode": "15-1232",
+      "title": "Computer user support specialists",
+      "employment2025": 750600,
+      "employment2035": 724400,
+      "growthPct": -3.5,
+      "annualOpenings": 39700
+    },
+    {
+      "socCode": "15-1252",
+      "title": "Software developers",
+      "employment2025": 1717800,
+      "employment2035": 1892600,
+      "growthPct": 10.2,
+      "annualOpenings": 95300
+    },
+    {
+      "socCode": "15-1254",
+      "title": "Web developers",
+      "employment2025": 87400,
+      "employment2035": 90600,
+      "growthPct": 3.8,
+      "annualOpenings": 5300
+    },
+    {
+      "socCode": "15-1255",
+      "title": "Web and digital interface designers",
+      "employment2025": 132700,
+      "employment2035": 140800,
+      "growthPct": 6,
+      "annualOpenings": 8300
+    },
+    {
+      "socCode": "15-1244",
+      "title": "Network and computer systems administrators",
+      "employment2025": 323600,
+      "employment2035": 310400,
+      "growthPct": -4.1,
+      "annualOpenings": 13400
+    },
+    {
+      "socCode": "13-1151",
+      "title": "Training and development specialists",
+      "employment2025": 472500,
+      "employment2035": 523700.00000000006,
+      "growthPct": 10.8,
+      "annualOpenings": 46000
+    },
+    {
+      "socCode": "13-1161",
+      "title": "Market research analysts and marketing specialists",
+      "employment2025": 952700,
+      "employment2035": 1019000,
+      "growthPct": 7,
+      "annualOpenings": 82000
+    },
+    {
+      "socCode": "13-1199",
+      "title": "Business operations specialists, all other",
+      "employment2025": 1157600,
+      "employment2035": 1202300,
+      "growthPct": 3.9,
+      "annualOpenings": 98700
+    },
+    {
+      "socCode": "13-2011",
+      "title": "Accountants and auditors",
+      "employment2025": 1595200,
+      "employment2035": 1674600,
+      "growthPct": 5,
+      "annualOpenings": 115300
+    },
+    {
+      "socCode": "27-1024",
+      "title": "Graphic designers",
+      "employment2025": 253100,
+      "employment2035": 248800,
+      "growthPct": -1.7,
+      "annualOpenings": 16000
+    },
+    {
+      "socCode": "27-3043",
+      "title": "Writers and authors",
+      "employment2025": 140300,
+      "employment2035": 139900,
+      "growthPct": -0.3,
+      "annualOpenings": 11900
+    },
+    {
+      "socCode": "27-3091",
+      "title": "Interpreters and translators",
+      "employment2025": 73900,
+      "employment2035": 75400,
+      "growthPct": 2,
+      "annualOpenings": 6000
+    },
+    {
+      "socCode": "13-2051",
+      "title": "Financial and investment analysts",
+      "employment2025": 377200,
+      "employment2035": 404300,
+      "growthPct": 7.2,
+      "annualOpenings": 24700
+    },
+    {
+      "socCode": "43-3031",
+      "title": "Bookkeeping, accounting, and auditing clerks",
+      "employment2025": 1532400,
+      "employment2035": 1446800,
+      "growthPct": -5.6,
+      "annualOpenings": 144100
+    },
+    {
+      "socCode": "43-4051",
+      "title": "Customer service representatives",
+      "employment2025": 2666000,
+      "employment2035": 2524100,
+      "growthPct": -5.3,
+      "annualOpenings": 289500
+    },
+    {
+      "socCode": "43-6014",
+      "title": "Secretaries and administrative assistants, except legal, medical, and executive",
+      "employment2025": 1889800,
+      "employment2035": 1775700,
+      "growthPct": -6,
+      "annualOpenings": 163900
+    },
+    {
+      "socCode": "13-1071",
+      "title": "Human resources specialists",
+      "employment2025": 939700,
+      "employment2035": 999700,
+      "growthPct": 6.4,
+      "annualOpenings": 73700
+    },
+    {
+      "socCode": "13-1081",
+      "title": "Logisticians",
+      "employment2025": 255100,
+      "employment2035": 300000,
+      "growthPct": 17.6,
+      "annualOpenings": 26600
+    },
+    {
+      "socCode": "13-1082",
+      "title": "Project management specialists",
+      "employment2025": 1094300,
+      "employment2035": 1167400,
+      "growthPct": 6.7,
+      "annualOpenings": 76500
+    },
+    {
+      "socCode": "41-4012",
+      "title": "Sales representatives, wholesale and manufacturing, except technical and scientific products",
+      "employment2025": 1279400,
+      "employment2035": 1268200,
+      "growthPct": -0.9,
+      "annualOpenings": 99800
+    },
+    {
+      "socCode": "17-2071",
+      "title": "Electrical engineers",
+      "employment2025": 199700,
+      "employment2035": 219500,
+      "growthPct": 9.9,
+      "annualOpenings": 11400
+    },
+    {
+      "socCode": "17-2199",
+      "title": "Engineers, all other",
+      "employment2025": 166700,
+      "employment2035": 173000,
+      "growthPct": 3.7,
+      "annualOpenings": 8800
+    },
+    {
+      "socCode": "17-3023",
+      "title": "Electrical and electronic engineering technologists and technicians",
+      "employment2025": 96900,
+      "employment2035": 99200,
+      "growthPct": 2.4,
+      "annualOpenings": 8100
+    },
+    {
+      "socCode": "49-9041",
+      "title": "Industrial machinery mechanics",
+      "employment2025": 446900,
+      "employment2035": 526600,
+      "growthPct": 17.8,
+      "annualOpenings": 44400
+    },
+    {
+      "socCode": "51-2031",
+      "title": "Engine and other machine assemblers",
+      "employment2025": 33500,
+      "employment2035": 27800,
+      "growthPct": -17,
+      "annualOpenings": 2100
+    },
+    {
+      "socCode": "51-9061",
+      "title": "Inspectors, testers, sorters, samplers, and weighers",
+      "employment2025": 602000,
+      "employment2035": 617200,
+      "growthPct": 2.5,
+      "annualOpenings": 66700
+    },
+    {
+      "socCode": "47-2231",
+      "title": "Solar photovoltaic installers",
+      "employment2025": 31100,
+      "employment2035": 42400,
+      "growthPct": 36.5,
+      "annualOpenings": 4200
+    },
+    {
+      "socCode": "29-1141",
+      "title": "Registered nurses",
+      "employment2025": 3465400,
+      "employment2035": 3660100,
+      "growthPct": 5.6,
+      "annualOpenings": 180800
+    },
+    {
+      "socCode": "29-2072",
+      "title": "Medical records specialists",
+      "employment2025": 200700,
+      "employment2035": 216300,
+      "growthPct": 7.8,
+      "annualOpenings": 14000
+    }
+  ]
+}

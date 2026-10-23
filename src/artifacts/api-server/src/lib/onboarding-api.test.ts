@@ -94,7 +94,7 @@ test("guest can create more than ten profiles while retries remain idempotent", 
   assert.equal((await request("/profiles", "POST", input, { "x-idempotency-key": key, "x-guest-token": stranger })).status, 409);
 });
 
-test("register then existing login claims guest profiles and dependent evidence/answers once", async () => {
+test("registration claims one chosen guest profile and login preserves the account profile", async () => {
   const id = await draft("graduate"); await extractedFixture(id);
   await db.insert(insightsTable).values({ profileId: id, agent: "cv", lang: "en", inputHash: "test-only", content: "TEST ONLY insight", sources: [], model: "test-fixture" });
   const email = `walkthrough-${randomUUID()}@example.invalid`, password = "Test-only-password123";
@@ -115,10 +115,11 @@ test("register then existing login claims guest profiles and dependent evidence/
   const more = await draft("worker"); await extractedFixture(more);
   const logged = await request("/auth/login", "POST", { email: email.toUpperCase(), password, role: "individual" });
   assert.equal(logged.status, 200);
-  assert.equal(logged.body.claimedProfiles, 1);
+  assert.equal(logged.body.claimedProfiles, 0);
   assert.equal((await request("/auth/login", "POST", { email, password, role: "individual" })).body.claimedProfiles, 0);
   const [row] = await db.select().from(profilesTable).where(eq(profilesTable.id, more));
-  assert.equal(row.ownerUserId, owner); assert.equal(row.guestToken, null); assert.ok(row.cvEvidence.length);
+  assert.equal(row.ownerUserId, null); assert.equal(row.guestToken, guest); assert.ok(row.cvEvidence.length);
+  assert.equal(logged.body.profileId,id);
 });
 
 test("Employee and Educators cannot see each other or individual CV organisation names", async () => {
@@ -394,4 +395,34 @@ test("Holland summaries only expose the current CV, goals and interest answers",
   await seed();
   await db.update(profilesTable).set({cvUploadedAt:new Date(),cvExtractionKey:"NEW TEST CV"}).where(eq(profilesTable.id,id));
   assert.equal(await count(),0,"new CV also hides in-flight old-source results");
+});
+
+
+test("demo buttons apply fixture data without AI and preserve access boundaries",async()=>{
+ const names=["Ungku Babas bin Ungku Samad","FOO WEI CHONG","Karthik A/L Subramaniam"];
+ const id=await draft("graduate");
+ for(const demoId of [1,2,3]){
+  const result=await request(`/profiles/${id}/demo-cv`,"POST",{demoId});assert.equal(result.status,200);assert.equal(result.body.name,names[demoId-1]);assert.equal(result.body.onboardingStep,"review");assert.equal(result.body.verified,false);assert.ok(result.body.skills.length>0);assert.match(result.body.cvExtractionKey,/^demo-v1:/);
+ }
+ assert.equal((await request(`/profiles/${id}/insights`)).body.length,0,"sample loading must not create an AI insight");
+ assert.equal((await request(`/profiles/${id}/demo-cv`,"POST",{demoId:3},{"x-guest-token":stranger})).status,404);
+ assert.equal((await request(`/profiles/${id}/demo-cv`,"POST",{demoId:4})).status,400);
+ await request(`/profiles/${id}`,"PATCH",{verified:true});
+ await request(`/profiles/${id}/riasec`,"POST",{answers});
+ await request(`/profiles/${id}`,"PATCH",{onboardingStep:"complete"});
+ assert.equal((await request(`/profiles/${id}/demo-cv`,"POST",{demoId:1})).status,409);
+});
+
+test("registered individuals keep one profile across parallel creation and later guest logins",async()=>{
+ const selected=await draft("graduate"),other=await draft("worker");
+ const email=`single-${randomUUID()}@example.invalid`,password="Test-only-password123";
+ const reg=await request("/auth/register","POST",{email,password},{"x-claim-profile-id":String(selected)});assert.equal(reg.status,201);userIds.push(reg.body.user.id);assert.equal(reg.body.claimedProfiles,1);assert.equal(reg.body.profileId,selected);
+ const auth={authorization:`Bearer ${reg.body.token}`};
+ assert.deepEqual((await request("/profiles","GET",undefined,auth)).body.map((p:any)=>p.id),[selected]);
+ assert.equal((await request(`/profiles/${other}`,"GET",undefined,auth)).status,404);
+ const parallel=await Promise.all(Array.from({length:4},()=>request("/profiles","POST",{name:"TEST ONLY Extra",segment:"worker",weeklyHours:2,budgetMyr:0},{...auth,"x-idempotency-key":randomUUID()})));
+ assert.ok(parallel.every(r=>r.status===200&&r.body.id===selected));
+ assert.equal((await request(`/profiles/${selected}`,"DELETE",undefined,auth)).status,409);
+ const login=await request("/auth/login","POST",{email,password,role:"individual"},{"x-claim-profile-id":String(other)});assert.equal(login.body.claimedProfiles,0);assert.equal(login.body.profileId,selected);
+ assert.equal((await request(`/profiles/${other}`)).status,200,"unclaimed guest test profiles remain guest-owned");
 });

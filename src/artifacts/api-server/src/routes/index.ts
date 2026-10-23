@@ -6,6 +6,7 @@ import marketRouter from "./market";
 import aiRouter from "./ai";
 import cohortRouter from "./cohort";
 import authRouter from "./auth";
+import outlookRouter from "./market-outlook";
 
 const router: IRouter = Router();
 
@@ -14,6 +15,7 @@ router.use(authRouter);
 router.use(profilesRouter);
 router.use(catalogRouter);
 router.use(marketRouter);
+router.use(outlookRouter);
 router.use(aiRouter);
 router.use(cohortRouter);
 

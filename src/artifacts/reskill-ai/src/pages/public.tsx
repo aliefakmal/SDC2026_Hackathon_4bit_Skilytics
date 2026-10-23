@@ -707,7 +707,8 @@ export function Register() {
         const pid=(s as typeof s & {profileId?:number}).profileId;
         if(pid)setObProfile(obScope(s.user.id),pid);
         toast({ title: t("auth.welcome", { name: s.user.name }), description: s.claimedProfiles > 0 ? t("auth.claimed", { n: s.claimedProfiles }) : undefined });
-        nav(next ?? "/me");
+        const requested=Number(new URLSearchParams(next?.split("?")[1]??"").get("pid"));
+        nav(next && (!requested||requested===pid) ? next : "/me");
       },
       onError: (e) => setErr(errCode(e) === "email_taken" ? t("auth.emailTaken") : errCode(e) === "invalid_input" ? t("err.invalid_input") : t("err.generic")),
     });

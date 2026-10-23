@@ -37,7 +37,7 @@ export function LearningDashboard({ p }: { p: Profile }) {
           href={
             p.onboardingStep === "complete"
               ? `/me/profiles/${p.id}/${j.stage}`
-              : `/onboarding/review?pid=${p.id}`
+              : `/onboarding/${!p.cvExtractionKey?"cv":!p.verified?"review":!p.riasecScores?"holland":p.onboardingStep==="save"?"save":"results"}?pid=${p.id}`
           }
         >
           {w.resume} →

@@ -1,3 +1,4 @@
+import blsSnapshot from "../data/bls-projections.json";
 import {
   db,
   marketSourcesTable,
@@ -27,6 +28,7 @@ const HF_DATASET = "Anthropic/EconomicIndex";
 
 // Consumer keys are translated in the frontend.
 export const SOURCES: SourceDef[] = [
+  {id:"bls_projections",name:"BLS occupational projections · reviewed public snapshot",kind:"dataset",url:blsSnapshot.url,description:"US 2025–2035 employment growth and annual openings matched by SOC. Reviewed 23 October 2026; not a live feed or Malaysian demand forecast.",refreshCadence:"reviewed_snapshot",consumers:["market","predictions"]},
   { id: "onet", name: "O*NET occupation references", kind: "catalogue", url: "https://www.onetcenter.org/database.html", description: "Official US occupation, skill and interest reference data; explicit SOC .00 crosswalk, not Malaysian vacancies.", refreshCadence: "release_6h", consumers: ["role_matcher", "agent_cv", "agent_holland"] },
   {
     id: "dosm_lfs_month",
@@ -332,11 +334,11 @@ export async function listSources() {
   const rows = await db.select().from(marketSourcesTable);
   const byId = new Map(rows.map((r) => [r.id, r]));
   return SOURCES.map((s) => {
-    const r = byId.get(s.id);
+    const r = s.id === "bls_projections" ? {version:blsSnapshot.period,lastFetchedAt:new Date(blsSnapshot.reviewedAt+"T00:00:00Z"),status:"ok",detail:blsSnapshot.method,dataDate:blsSnapshot.period,recordCount:blsSnapshot.rows.length,error:null} : byId.get(s.id);
     return {
       ...s,
       version: r?.version ?? null,
-      stale: !!r?.lastFetchedAt && Date.now() - r.lastFetchedAt.getTime() > 12 * 3600000,
+      stale: s.id !== "bls_projections" && !!r?.lastFetchedAt && Date.now() - r.lastFetchedAt.getTime() > 12 * 3600000,
       status: (r?.status ?? "pending") as "ok" | "error" | "pending" | "not_configured",
       detail: r?.detail ?? null,
       lastFetchedAt: r?.lastFetchedAt ? r.lastFetchedAt.toISOString() : null,
@@ -362,7 +364,7 @@ export function startMarketScheduler(): void {
       .select({ count: sql<number>`count(*)::int` })
       .from(marketSourcesTable)
       .where(eq(marketSourcesTable.status, "ok"));
-    if (count < SOURCES.length) await refreshAll();
+    if (count < SOURCES.filter(s=>s.id!=="bls_projections").length) await refreshAll();
     else logger.info("Market data present; next check in 6 hours");
   })().catch((err) => logger.error({ err }, "Initial market refresh failed"));
   setInterval(() => {

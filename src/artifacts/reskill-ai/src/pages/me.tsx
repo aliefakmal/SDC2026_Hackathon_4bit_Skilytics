@@ -1,3 +1,4 @@
+import {ClearGuestProfile} from "@/components/clear-guest-profile";
 import { WorkspaceWelcome } from "@/components/journey-welcome";
 import { LearningDashboard } from "@/components/learning-dashboard";
 import { useState, type FormEvent } from "react";
@@ -20,7 +21,7 @@ import { roleTitle, useFmt } from "@/lib/fmt";
 import { LANG_SHORT, errCode, useErrText, useT, type Lang } from "@/i18n";
 
 export function Workspace() {
-  const { t, tk } = useT();
+  const { t, tk, lang } = useT();
   const f = useFmt();
   const { user } = useAuth();
   const search = useSearch();
@@ -43,8 +44,8 @@ export function Workspace() {
   return (
     <>
       <WorkspaceWelcome />
-      <PageHeader eyebrow={t(user ? "portal.individual" : "portal.guest")} title={user ? t("me.hello", { name: user.name }) : t("me.title")} sub={t("me.sub")}
-        actions={<Button className="min-h-11" onClick={() => start("worker")} data-testid="button-new-profile"><Plus className="mr-1.5 h-4 w-4" />{t("me.newProfile")}</Button>} />
+      <PageHeader eyebrow={t(user ? "portal.individual" : "portal.guest")} title={user ? t("me.hello", { name: user.name }) : t("me.title")} sub={user ? (lang==="ms"?"Kursus, tarikh akhir dan kemajuan anda di satu tempat.":lang==="zh"?"你的课程、截止日期及进度都在这里。":"Your courses, deadlines and progress in one place.") : t("me.sub")}
+        actions={!user ? <Button className="min-h-11" onClick={() => start("worker")} data-testid="button-new-profile"><Plus className="mr-1.5 h-4 w-4" />{t("me.newProfile")}</Button> : undefined} />
       {!user && <div className="mb-5"><GuestBanner /></div>}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label={t("me.statProfiles")} value={s ? f.num(s.profileCount) : "-"} tone="maroon" testid="text-stat-profiles" />
@@ -54,7 +55,7 @@ export function Workspace() {
       </div>
       <div className="mt-5 space-y-4">{visibleProfiles.map(p=><LearningDashboard key={p.id} p={p}/>)}</div>
       <div className="mt-5 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <Panel title={t("me.profiles")}>
+        <Panel title={user ? (lang==="ms"?"Profil saya":lang==="zh"?"我的资料":"My profile") : t("me.profiles")}>
           {profiles.isLoading ? <Rows n={3} h="h-20" /> : profiles.isError ? <ErrorBox error={profiles.error} retry={() => profiles.refetch()} /> : !visibleProfiles.length ? (
             <Empty title={t("me.emptyTitle")} icon={<UserRound className="h-5 w-5" />} action={
               <div className="flex flex-wrap justify-center gap-2">
@@ -64,8 +65,8 @@ export function Workspace() {
           ) : (
             <div className="space-y-3"><ul className="space-y-2">
               {visibleProfiles.map((p, i) => (
-                <li key={p.id} className="rise" style={{ animationDelay: `${i * 40}ms` }}>
-                  <Link href={`/me/profiles/${p.id}/intake`} className="group flex min-h-16 items-center gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-primary" data-testid={`link-profile-${p.id}`}>
+                <li key={p.id} className="rise flex items-center gap-2" style={{ animationDelay: `${i * 40}ms` }}>
+                  <Link href={`/me/profiles/${p.id}/intake`} className="group flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-primary" data-testid={`link-profile-${p.id}`}>
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--maroon-soft))] text-sm font-bold text-primary">{p.name.slice(0, 2).toUpperCase()}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate whitespace-nowrap font-semibold" title={p.name}>{p.name}</span>
@@ -77,6 +78,7 @@ export function Workspace() {
                     </span>
                     <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
                   </Link>
+                  {!user && <ClearGuestProfile id={p.id} name={p.name} />}
                 </li>
               ))}
             </ul>{profiles.hasNextPage && <Button variant="outline" className="w-full" onClick={() => profiles.fetchNextPage()} disabled={profiles.isFetchingNextPage}>{profiles.isFetchingNextPage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}{t("me.loadMore")}</Button>}</div>
