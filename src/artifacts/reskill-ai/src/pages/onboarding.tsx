@@ -29,6 +29,7 @@ import { en } from "@/i18n/en";
 import { ms } from "@/i18n/ms";
 import { zh } from "@/i18n/zh";
 import { cn } from "@/lib/utils";
+import { HollandLoadingStory, HollandStoryCard, HollandTranslationNote } from "@/components/holland-story";
 
 const RIASEC = ["R", "I", "A", "S", "E", "C"] as const;
 /** Temporary server-side name marker until the CV/review supplies the real name. */
@@ -1512,14 +1513,13 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
 
   // Cache insights by language so switching is seamless
   const [byLang, setByLang] = useState<Record<string, AgentInsight>>({});
-  const [since, setSince] = useState<number | null>(null);
   const [selectedLetter, setSelectedLetter] = useState(0);
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [activeTranslatingLang, setActiveTranslatingLang] = useState<string | null>(null);
-  const translationRequests = useRef(new Set<string>());
-  const [explainError, setExplainError] = useState<string | null>(null);
-
+  const requests = useRef(new Map<string, Promise<void>>());
+  const completed = useRef(new Set<string>());
+  const [pending, setPending] = useState<Record<string, number>>({});
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
   // Sync existing insights from database on load
   useEffect(() => {
     if (insList.data && insList.data.length > 0) {
@@ -1540,74 +1540,48 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
     }
   }, [insList.data]);
 
-  const hasGeneratedInsight = Object.values(byLang).some((it) => it.agent === "holland" && Boolean(it.content));
-  const insight = byLang[lang] ?? null;
+  const hasGeneratedInsight = Object.values(byLang).some((it) => Boolean(it.content));
+  // Keep the original readable while translations complete independently of the UI language.
+  const original = Object.values(byLang).sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt))[0];
+  const insight = byLang[lang] ?? original ?? null;
+  const since = pending[lang] ?? Object.values(pending)[0] ?? null;
+  const explainError = errors[lang] || (!hasGeneratedInsight && Object.values(errors).some(Boolean));
 
-  const explain = async () => {
-    setExplainError(null);
-    setSince(Date.now());
-    setActiveTranslatingLang(lang);
-    try {
-      const res = await runProfileAgent(p.id, { agent: "holland", lang });
-      setByLang((prev) => ({ ...prev, [res.lang]: res }));
-      qc.invalidateQueries({ queryKey: getListProfileInsightsQueryKey(p.id) });
-    } catch (err: any) {
-      console.error("Holland explain error:", err);
-      setExplainError(err?.message || "Failed to generate explanation");
-    } finally {
-      setActiveTranslatingLang(null);
-      setSince(null);
-    }
-  };
+  const requestExplanation = useCallback((target: Lang) => {
+    const existing = requests.current.get(target);
+    if (existing) return existing;
+    if (completed.current.has(target)) return Promise.resolve();
+    setPending((prev) => ({ ...prev, [target]: Date.now() }));
+    setErrors((prev) => ({ ...prev, [target]: false }));
+    const job = runProfileAgent(p.id, { agent: "holland", lang: target })
+      .then((result) => {
+        completed.current.add(target);
+        setByLang((prev) => ({ ...prev, [target]: result }));
+        qc.invalidateQueries({ queryKey: getListProfileInsightsQueryKey(p.id) });
+      })
+      .catch(() => setErrors((prev) => ({ ...prev, [target]: true })))
+      .finally(() => {
+        requests.current.delete(target);
+        setPending((prev) => { const next = { ...prev }; delete next[target]; return next; });
+      });
+    requests.current.set(target, job);
+    return job;
+  }, [p.id, qc]);
+  const explain = () => requestExplanation(lang);
 
-  // Robust auto-translation watcher: whenever lang changes or byLang updates,
-  // if an insight was generated in another language, but not yet for the current language,
-  // automatically trigger translation. Even if the user switches languages rapidly,
-  // each language is requested and cached independently!
-  const currentLangRef = useRef<string>(lang);
-  currentLangRef.current = lang;
-
+  // Start the other translations once; language switching never cancels or restarts them.
   useEffect(() => {
     if (!hasGeneratedInsight) return;
-
-    if (byLang[lang]) {
-      setActiveTranslatingLang(null);
-      setExplainError(null);
-      return;
+    for (const target of ["en", "ms", "zh"] as const) {
+      if (byLang[target]) completed.current.add(target);
+      else if (!errors[target]) void requestExplanation(target);
     }
-    if (translationRequests.current.has(lang)) return;
-    translationRequests.current.add(lang);
+  }, [hasGeneratedInsight, byLang, errors, requestExplanation]);
 
-    setActiveTranslatingLang(lang);
-    setSince(Date.now());
-    setExplainError(null);
-
-    let isSubscribed = true;
-
-    runProfileAgent(p.id, { agent: "holland", lang })
-      .then((res) => {
-        setByLang((prev) => ({ ...prev, [res.lang]: res }));
-        qc.invalidateQueries({ queryKey: getListProfileInsightsQueryKey(p.id) });
-        if (isSubscribed && currentLangRef.current === res.lang) {
-          setActiveTranslatingLang(null);
-          setSince(null);
-        }
-      })
-      .catch((err: any) => {
-        translationRequests.current.delete(lang);
-        if (isSubscribed && currentLangRef.current === lang) {
-          console.error("Auto-translation error for", lang, err);
-          setExplainError(err?.message || "Translation error");
-          setActiveTranslatingLang(null);
-          setSince(null);
-        }
-      });
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [lang, hasGeneratedInsight, byLang, p.id, qc]);
-
+  useEffect(() => {
+    window.speechSynthesis?.cancel();
+    setIsSpeaking(false);
+  }, [lang]);
   const selectedType = code[selectedLetter] ?? code[0];
 
   useEffect(() => {
@@ -1627,7 +1601,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
       window.speechSynthesis.cancel();
       const cleanText = text.replace(/[#*`_\[\]()]/g, " ").replace(/\s+/g, " ").trim();
       const utter = new SpeechSynthesisUtterance(cleanText);
-      utter.lang = lang === "ms" ? "ms-MY" : lang === "zh" ? "zh-CN" : "en-US";
+      utter.lang = insight?.lang === "ms" ? "ms-MY" : insight?.lang === "zh" ? "zh-CN" : "en-US";
       utter.rate = 0.95;
       utter.onend = () => setIsSpeaking(false);
       utter.onerror = () => setIsSpeaking(false);
@@ -1738,42 +1712,16 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
 
         <div className="mt-4">
           {insight ? (
-            <div data-testid="text-holland-insight" aria-live="polite" className="space-y-4">
-              {parseHollandSections(insight.content, lang).map((sec, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.05 + idx * 0.08 }}
-                  className={cn(
-                    "relative overflow-hidden rounded-2xl border p-4 md:p-5 transition-all duration-200 hover:shadow-xs",
-                    sec.icon === "compass" && "border-primary/20 bg-card/70",
-                    sec.icon === "cv" && "border-blue-500/25 bg-blue-500/5",
-                    sec.icon === "action" && "border-amber-500/25 bg-amber-500/5"
-                  )}
-                >
-                  <div className="flex items-center gap-2.5 pb-2.5 border-b border-border/40">
-                    <div className={cn(
-                      "flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold shadow-2xs",
-                      sec.icon === "compass" && "bg-primary/10 text-primary",
-                      sec.icon === "cv" && "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-                      sec.icon === "action" && "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                    )}>
-                      {sec.icon === "compass" && <Compass className="h-4 w-4" />}
-                      {sec.icon === "cv" && <GraduationCap className="h-4 w-4" />}
-                      {sec.icon === "action" && <Lightbulb className="h-4 w-4" />}
-                    </div>
-                    <h3 className="font-bold text-sm md:text-base tracking-tight text-foreground">{sec.title}</h3>
-                  </div>
-                  <div className="mt-3 text-sm leading-relaxed text-muted-foreground prose-sk">
-                    <Markdown>{sec.body}</Markdown>
-                  </div>
-                </motion.div>
+            <div data-testid="text-holland-insight" className="space-y-4">
+              {!byLang[lang] && <HollandTranslationNote failed={!!errors[lang]} retry={() => { void requestExplanation(lang); }} />}
+              {parseHollandSections(insight.content, insight.lang).map((section, index) => (
+                <div key={`${insight.id}-${index}`} lang={insight.lang}><HollandStoryCard title={section.title} body={section.body} kind={section.icon} index={index} /></div>
               ))}
             </div>
-          ) : activeTranslatingLang && since ? (
+          ) : since ? (
             <div>
-              <AiWait since={since} note={hasGeneratedInsight ? t("ob.results.translating", { lang: LANG_NAME[lang] ?? lang }) : t("ob.results.generating")} />
+              <HollandLoadingStory />
+              <div className="mt-3"><AiWait since={since} note={t("ob.results.generating")} /></div>
               <p className="mt-2 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">{t("ob.results.eli5Loading")}</p>
             </div>
           ) : explainError ? (
