@@ -5,6 +5,10 @@ import { openLearnCourses } from "../data/openlearn";
 import { buildPlan } from "./planner";
 import { teachesSkill, courseSkillFit } from "./course-relevance";
 
+test("technical server monitoring does not teach general workplace monitoring", () => {
+  assert.equal(teachesSkill("Implement Windows Server hybrid cloud management, monitoring, and security", {name:"Monitoring",category:"Human"}),false);
+});
+
 test("software crosswalk respects both occupation and narrower app role scope", () => {
   const rows = [
     {

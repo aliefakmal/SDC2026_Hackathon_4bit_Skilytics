@@ -35,7 +35,7 @@ export function teachesSkill(
   if (skill.category === "Human")
     return (
       mentions(title, skill.name) &&
-      !/azure|fabric|copilot|deploy|multi-agent|kubernetes/i.test(title)
+      !/azure|fabric|copilot|deploy|multi-agent|kubernetes|windows server|hybrid cloud|cloud management/i.test(title)
     );
   if (skill.category !== "Digital") {
     const aliases = SKILLS.find((s) => s.name === skill.name)?.aliases ?? [];
