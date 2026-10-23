@@ -1,3 +1,9 @@
+import { StudyCalendar } from "./study-calendar";
+import {
+  isAiWorkplaceCourse,
+  studyColors,
+  studyWords,
+} from "@/lib/study-calendar";
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
@@ -6,6 +12,7 @@ import {
   useGetProfilePlan,
   useCreateProfilePlan,
   useUpdateProfile,
+  useListRoles,
   runProfileAgent,
   getGetProfileQueryKey,
   getGetProfileMatchesQueryKey,
@@ -175,11 +182,11 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
         <p className="mt-1 text-sm text-muted-foreground">{w.note}</p>
       </header>
       <h3 className="font-bold">{w.top}</h3>
-      <div className="grid items-end gap-3 md:grid-cols-3">
+      <div className="grid items-stretch gap-3 md:grid-cols-3">
         {roles.slice(0, 3).map((x, i) => (
           <article
             key={x.role.id}
-            className={`relative rounded-2xl border p-5 motion-safe:transition-all motion-safe:duration-300 hover:shadow-lg ${chosen?.role.id === x.role.id ? "ring-2 ring-primary ring-offset-2 shadow-md" : ""} ${i === 0 ? "border-accent bg-[hsl(var(--gold-soft))] md:pb-10 md:order-2" : i === 1 ? "border-border bg-card md:order-1" : "border-border bg-card md:order-3"}`}
+            className={`relative flex flex-col rounded-2xl border p-5 motion-safe:transition-all motion-safe:duration-300 hover:shadow-lg ${chosen?.role.id === x.role.id ? "ring-2 ring-primary ring-offset-2 shadow-md" : ""} ${i === 0 ? "border-accent bg-[hsl(var(--gold-soft))] md:order-2" : i === 1 ? "border-border bg-card md:mt-8 md:order-1" : "border-border bg-card md:mt-14 md:order-3"}`}
           >
             <span className="text-3xl font-black text-accent">#{i + 1}</span>
             <h3 className="mt-2 text-lg font-bold">
@@ -219,7 +226,7 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
               )}
             </button>
             <Button
-              className="w-full"
+              className="mt-auto min-h-11 w-full"
               disabled={update.isPending || createPlan.isPending}
               onClick={() => choose(x.role.id)}
             >
@@ -335,22 +342,12 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
 function day(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
-function dateAt(start: string, offset: number) {
-  const date = new Date(`${start || day(new Date())}T12:00:00`);
-  date.setDate(date.getDate() + offset);
-  return day(date);
-}
-function escapeIcs(s: string) {
-  return s
-    .replace(/\\/g, "\\\\")
-    .replace(/\r\n|\r|\n/g, "\\n")
-    .replace(/,/g, "\\,")
-    .replace(/;/g, "\\;");
-}
-
 export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
   const { lang } = useT();
   const lw = learningWords[lang];
+  const sw = studyWords[lang];
+  const roleList = useListRoles();
+  const [selectedCourse, setSelectedCourse] = useState<number | null>(null);
   const [, navigate] = useLocation();
   const activate = useLearningAction(p.id);
   const [estimates, setEstimates] = useState<Record<string, number>>({});
@@ -413,14 +410,21 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
       !plan.isLoading &&
       p.targetRoleId &&
       !attempted.current &&
-      (!plan.data || plan.data.roleId !== p.targetRoleId)
+      (!plan.data ||
+        plan.data.roleId !== p.targetRoleId ||
+        plan.data.items.filter(isAiWorkplaceCourse).length < 3)
     ) {
       attempted.current = true;
       void rebuild();
     }
   }, [plan.isLoading, p.targetRoleId, plan.data]);
   useEffect(() => {
-    if (!plan.data || plan.data.roleId !== p.targetRoleId) return;
+    if (
+      !plan.data ||
+      plan.data.roleId !== p.targetRoleId ||
+      plan.data.items.filter(isAiWorkplaceCourse).length < 3
+    )
+      return;
     const key = `${plan.data.id}:${lang}`;
     if (aiKey.current === key) return;
     aiKey.current = key;
@@ -439,34 +443,6 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
   const busy = create.isPending || update.isPending;
   const items = pl && pl.roleId === p.targetRoleId ? pl.items : [];
   const dated = datedLearning(items, start, estimates);
-  const calendar = (courseId?: number) => {
-    const events = items
-      .filter((item) => courseId === undefined || item.courseId === courseId)
-      .filter((i) => i.startWeek != null && i.durationWeeks != null)
-      .map(
-        (i) =>
-          `BEGIN:VEVENT\r\nUID:skilytics-${p.id}-${i.courseId}-${start}@skilytics\r\nDTSTAMP:${new Date()
-            .toISOString()
-            .replace(/[-:]/g, "")
-            .replace(
-              /\.\d+Z/,
-              "Z",
-            )}\r\nDTSTART;VALUE=DATE:${dateAt(start, (i.startWeek! - 1) * 7).replaceAll("-", "")}\r\nDTEND;VALUE=DATE:${dateAt(start, (i.startWeek! - 1 + i.durationWeeks!) * 7).replaceAll("-", "")}\r\nSUMMARY:${escapeIcs(i.title)}\r\nDESCRIPTION:${escapeIcs(i.url)}\r\nEND:VEVENT`,
-      );
-    const url = URL.createObjectURL(
-      new Blob(
-        [
-          `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Skilytics//Learning Path//EN\r\n${events.join("\r\n")}\r\nEND:VCALENDAR\r\n`,
-        ],
-        { type: "text/calendar;charset=utf-8" },
-      ),
-    );
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = "skilytics-pathway.ics";
-    anchor.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
   return (
     <div className="space-y-5">
       <form
@@ -517,13 +493,33 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
       {pl && pl.roleId === p.targetRoleId && (
         <>
           <div className="flex flex-wrap justify-between gap-3">
-            <h2 className="text-xl font-bold">{pl.roleTitle}</h2>
+            <h2 className="text-xl font-bold">
+              {roleTitle(
+                roleList.data?.find((r) => r.id === pl.roleId) ?? {
+                  title: pl.roleTitle,
+                },
+                lang,
+              )}
+            </h2>
             <span>
               {pl.totalWeeks ?? "—"}{" "}
               {lang === "ms" ? "minggu" : lang === "zh" ? "周" : "weeks"} · RM{" "}
               {pl.totalCostMyr ?? "—"}
             </span>
           </div>
+          <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+            <h3 className="font-bold">
+              {sw.ai} · {items.filter(isAiWorkplaceCourse).length} {sw.courses}
+            </h3>
+            <p className="mt-1 text-sm">{sw.aiNote}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{sw.tools}</p>
+          </div>
+          <StudyCalendar
+            courses={dated}
+            start={start}
+            selected={selectedCourse}
+            onSelect={setSelectedCourse}
+          />
           <div className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-4">
             <label className="text-sm font-semibold">
               {lw.calendar}
@@ -557,32 +553,22 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
           </div>
           <ol className="space-y-4 border-l-2 border-primary/25 pl-5">
             {items.map((item, index) => {
-              const dated =
-                item.startWeek != null && item.durationWeeks != null;
-              const begin = dated
-                ? dateAt(start, (item.startWeek! - 1) * 7)
-                : null;
-              const end = dated
-                ? dateAt(start, (item.startWeek! - 1 + item.durationWeeks!) * 7)
-                : null;
-              const google = new URL(
-                "https://calendar.google.com/calendar/render",
-              );
-              google.searchParams.set("action", "TEMPLATE");
-              google.searchParams.set("text", item.title);
-              google.searchParams.set("details", item.url);
-              if (begin && end)
-                google.searchParams.set(
-                  "dates",
-                  `${begin.replaceAll("-", "")}/${end.replaceAll("-", "")}`,
-                );
-              const apple = /iPad|iPhone|Macintosh/.test(navigator.userAgent);
+              const dates = dated[index];
+              const color = studyColors[index % studyColors.length];
+              const advancing = isAiWorkplaceCourse(item);
               return (
                 <li
                   key={`${item.courseId}-${index}`}
-                  className="rounded-2xl border bg-card p-4"
+                  id={`course-${item.courseId}`}
+                  className={`scroll-mt-40 rounded-2xl border border-l-4 bg-card p-4 transition-shadow ${selectedCourse === item.courseId ? "ring-2 ring-primary ring-offset-2" : ""}`}
+                  style={{ borderLeftColor: color }}
                 >
-                  <span className="text-xs font-bold text-accent">
+                  {advancing && (
+                    <p className="mb-2 text-xs font-bold text-primary">
+                      {sw.ai}
+                    </p>
+                  )}
+                  <span className="text-xs font-bold" style={{ color }}>
                     {index + 1}
                   </span>
                   <a
@@ -596,14 +582,40 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
                   <p className="mt-2 text-sm">
                     {item.provider} · RM {item.costMyr}
                   </p>
-                  <p className="mt-3 rounded-lg border border-accent/40 bg-[hsl(var(--gold-soft))] p-3 text-sm font-bold">
-                    {lw.dates}:{" "}
-                    {datedLearning(items, start, estimates)[index]?.startDate ??
-                      "—"}{" "}
-                    →{" "}
-                    {datedLearning(items, start, estimates)[index]?.deadline ??
-                      "—"}
-                  </p>
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-lg bg-muted p-3">
+                      <p className="text-muted-foreground">{sw.starts}</p>
+                      <p className="mt-1 font-bold">
+                        {dates?.startDate
+                          ? new Intl.DateTimeFormat(
+                              { en: "en-GB", ms: "ms-MY", zh: "zh-CN" }[lang],
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                                timeZone: "UTC",
+                              },
+                            ).format(new Date(dates.startDate + "T12:00:00Z"))
+                          : "—"}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-[hsl(var(--gold-soft))] p-3">
+                      <p className="text-muted-foreground">{sw.ends}</p>
+                      <p className="mt-1 font-bold">
+                        {dates?.deadline
+                          ? new Intl.DateTimeFormat(
+                              { en: "en-GB", ms: "ms-MY", zh: "zh-CN" }[lang],
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                                timeZone: "UTC",
+                              },
+                            ).format(new Date(dates.deadline + "T12:00:00Z"))
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
                   {item.durationWeeks == null && (
                     <label className="mt-3 block text-sm">
                       {lw.estimate}
@@ -638,37 +650,21 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
                           key={s.code}
                           code={s.code}
                           primary={i === 0}
-                          title={s.title}
                         />
                       ))}
                   </div>
-                  {dated &&
-                    (apple ? (
-                      <Button
-                        variant="outline"
-                        onClick={() => calendar(item.courseId)}
-                      >
-                        {w.calendar} · Apple
-                      </Button>
-                    ) : (
-                      <a
-                        className="inline-flex min-h-11 items-center rounded-xl border px-3 text-sm font-semibold"
-                        href={google.href}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {w.calendar} · Google
-                      </a>
-                    ))}
                 </li>
               );
             })}
           </ol>
           {!items.length && <p>{w.noCourses}</p>}
           {pl.uncoveredSkills.length > 0 && (
-            <p className="text-sm">
-              {w.uncovered}: {pl.uncoveredSkills.join(", ")}
-            </p>
+            <details className="rounded-xl border p-3 text-xs text-muted-foreground">
+              <summary className="min-h-11 cursor-pointer font-semibold">
+                {w.uncovered} · {pl.uncoveredSkills.length}
+              </summary>
+              <p>{pl.uncoveredSkills.join(", ")}</p>
+            </details>
           )}
           {summary && (
             <details className="rounded-xl border p-4">
@@ -684,7 +680,7 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
           <div className="rounded-2xl border bg-card p-5">
             <p className="mb-3 text-sm">{lw.activateNote}</p>
             <Button
-              className="min-h-12 w-full text-base"
+              className="h-auto min-h-12 w-full whitespace-normal py-3 text-sm sm:text-base"
               disabled={
                 activate.isPending ||
                 busy ||

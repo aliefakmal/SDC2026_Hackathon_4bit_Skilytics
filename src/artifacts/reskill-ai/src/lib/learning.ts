@@ -50,7 +50,10 @@ export function datedLearning(
   start: string,
   estimates: Record<string, number>,
 ) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(start))
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(start) ||
+    !Number.isFinite(Date.parse(`${start}T12:00:00Z`))
+  )
     return items.map((i) => ({ ...i, startDate: null, deadline: null }));
   let next = Math.max(
     1,
@@ -62,8 +65,14 @@ export function datedLearning(
     return d.toISOString().slice(0, 10);
   };
   return items.map((i) => {
-    const weeks = i.durationWeeks ?? estimates[String(i.courseId)],
-      week = i.startWeek ?? next;
+    const proposed = i.durationWeeks ?? estimates[String(i.courseId)];
+    const weeks =
+      Number.isInteger(proposed) &&
+      proposed > 0 &&
+      (i.durationWeeks != null || proposed <= 520)
+        ? proposed
+        : null;
+    const week = i.startWeek ?? next;
     if (weeks && i.startWeek == null) next += weeks;
     return {
       ...i,

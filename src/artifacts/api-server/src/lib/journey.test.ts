@@ -56,5 +56,119 @@ test("timeline respects long course hours and the training budget", () => {
     buildPlan({ ...opts, weeklyHours: 10 }).items[0].durationWeeks,
     60,
   );
-  assert.equal(buildPlan({ ...opts, roleTitle: "Administrative Assistant", courses: [{ ...course, title: "Monitor AI workloads on Azure" }] }).items.length, 0);
+  assert.equal(
+    buildPlan({
+      ...opts,
+      roleTitle: "Administrative Assistant",
+      courses: [{ ...course, title: "Monitor AI workloads on Azure" }],
+    }).items.length,
+    0,
+  );
+});
+
+test("a fully skilled learner still gets three free workplace AI courses in learning order", () => {
+  const base: CourseView = {
+    id: 1,
+    title: "Build foundational generative AI skills",
+    provider: "Microsoft Learn",
+    url: "https://learn.microsoft.com/en-us/training/paths/explore-microsoft-365-copilot-business-chat/",
+    costMyr: 0,
+    costType: "free",
+    hrdcStatus: "not_claimable",
+    durationHours: 2.33,
+    level: "Beginner",
+    language: "en",
+    certificate: false,
+    skills: [{ id: 2, name: "Generative AI Tools", category: "Digital" }],
+    lastVerified: "2026-10-23",
+    sdgCodes: ["8.2"],
+  };
+  const courses = [
+    base,
+    {
+      ...base,
+      id: 2,
+      title: "Draft, analyze, and present with Microsoft Copilot",
+      url: "https://learn.microsoft.com/en-us/training/paths/draft-analyze-present-microsoft-365-copilot/",
+      durationHours: 4.3,
+    },
+    {
+      ...base,
+      id: 3,
+      title:
+        "Enhance your productivity with prebuilt Microsoft 365 Copilot agents",
+      url: "https://learn.microsoft.com/en-us/training/paths/enhance-productivity-prebuilt-agents/",
+      durationHours: 0.95,
+    },
+  ];
+  const opts = {
+    gaps: [],
+    courses,
+    budgetMyr: 0,
+    weeklyHours: 8,
+    hrdcEligible: false,
+    aiAdvancement: true,
+    roleTitle: "Administrative Assistant",
+  };
+  const plan = buildPlan(opts);
+  assert.deepEqual(
+    plan.items.map((i) => i.courseId),
+    [1, 2, 3],
+  );
+  assert.deepEqual(
+    plan.items.map((i) => i.startWeek),
+    [1, 2, 3],
+  );
+  assert.equal(plan.totalCostMyr, 0);
+  assert.ok(plan.items.every((i) => i.skills.includes("Generative AI Tools")));
+  const withGap = buildPlan({
+    ...opts,
+    gaps: [{ skillId: 4, name: "SQL", category: "Digital", importance: 3 }],
+    roleTitle: "Data Analyst",
+    courses: [
+      ...courses,
+      {
+        ...base,
+        id: 4,
+        title: "SQL fundamentals",
+        url: "https://example.invalid/sql",
+        durationHours: 80,
+        skills: [{ id: 4, name: "SQL", category: "Digital" }],
+      },
+    ],
+  });
+  assert.equal(withGap.items[0].courseId, 4);
+  assert.ok(
+    withGap.items[1].startWeek! >=
+      withGap.items[0].startWeek! + withGap.items[0].durationWeeks!,
+  );
+  assert.equal(
+    new Set(withGap.items.map((i) => i.courseId)).size,
+    withGap.items.length,
+  );
+  assert.equal(
+    buildPlan({
+      ...opts,
+      gaps: [
+        {
+          skillId: 2,
+          name: "Generative AI Tools",
+          category: "Digital",
+          importance: 3,
+        },
+      ],
+    }).items.length,
+    3,
+  );
+  const unsafe = {
+    ...base,
+    id: 5,
+    title: "Deploy Security Copilot for Azure administrators",
+    url: "https://example.invalid/security",
+  };
+  assert.equal(
+    buildPlan({ ...opts, courses: [unsafe] }).items.length,
+    0,
+    "do not replace business-user courses with specialist administration",
+  );
 });

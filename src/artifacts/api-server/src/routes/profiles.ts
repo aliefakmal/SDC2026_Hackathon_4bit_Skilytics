@@ -25,6 +25,7 @@ import { profileSkills } from "../lib/profile-skills";
 import { agentRoutes } from "../lib/agent-routing";
 import { scoreRole } from "../lib/scoring";
 import { buildPlan } from "../lib/planner";
+import { workplaceAiCourses } from "../lib/workplace-ai";
 import { canAccessProfile, getLatestPlan, getProfileRow, planToApi, profileScope, profileToApi, type ProfileRow } from "../lib/profiles";
 import { agentPrompt, agentTier, generateHollandFallback, hashInput, translateHollandInsight, SOURCE_AEI, type AgentName, type Lang } from "../lib/agents";
 import { chat, AiNotConnectedError, AiTimeoutError, AiVisionUnsupportedError } from "../lib/llm";
@@ -447,13 +448,14 @@ router.post("/profiles/:id/plan", async (req, res) => {
   if(journey && !["matcher","pathway"].includes(journey.stage)) {res.status(409).json({error:"journey_step_required"});return;}
   const [roles, skills, courses] = await Promise.all([loadRoles(), loadSkills(), loadCourses()]);
   if (!courses.length) { res.status(503).json({ error: "course_catalogue_unavailable" }); return; }
+  if (journey && workplaceAiCourses(courses).length < 3) { res.status(503).json({ error: "course_catalogue_unavailable" }); return; }
   const role = roles.find((r) => r.id === roleId);
   if (!role) {
     res.status(404).json({ error: "role_not_found" });
     return;
   }
   const { gapSkills } = scoreRole({ ...p, skills: profileSkills(p, skills) }, role, skills, courses);
-  const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: req.user?.role === "hr" && p.hrdcEligible, roleTitle: role.title });
+  const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: req.user?.role === "hr" && p.hrdcEligible, roleTitle: role.title, aiAdvancement: !req.user || req.user.role === "individual" });
   const [row] = await db
     .insert(plansTable)
     .values({ profileId: id, roleId, roleTitle: role.title, ...plan })

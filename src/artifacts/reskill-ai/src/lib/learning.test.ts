@@ -46,4 +46,5 @@ test("unknown durations require an explicit estimate and invalid empty start dat
     "2026-11-21",
   );
   assert.equal(datedLearning(items, "", {})[0].deadline, null);
+  assert.equal(datedLearning(items, "2026-11-01", {"2":1.5})[1].deadline, null);
 });

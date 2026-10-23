@@ -89,7 +89,7 @@ const DOCS: Doc[] = [
     {label: "docs.f.method", k: ["docs.openlearn.method"]},
   ]},
   { id: "learningRecords", types: ["user", "derived"], name: "docs.learning.name", rows: [
-    {label:"docs.f.method",k:["docs.learning.method"]},
+    {label:"docs.f.method",k:["docs.learning.method", "docs.learning.ai"]},
     {label:"docs.f.dataset",url:"https://support.google.com/calendar/answer/37118"},
     {label:"docs.f.dataset",url:"https://support.apple.com/guide/calendar/icl1023/mac"},
   ]},
