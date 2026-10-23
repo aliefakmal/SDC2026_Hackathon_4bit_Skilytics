@@ -127,6 +127,7 @@ export function MarketOutlook() {
     top = list.slice(0, 3);
   const locale = { en: "en-GB", ms: "ms-MY", zh: "zh-CN" }[lang];
   const year = (data?.baseYear ?? new Date().getFullYear()) + horizon;
+  const yearWord = (n: number) => (lang === "en" && n === 1 ? "year" : w.year);
   const pct = (value: number | null, signed = false) =>
     value == null
       ? "—"
@@ -140,13 +141,13 @@ export function MarketOutlook() {
     ),
   }));
   const label = mode === "ai" ? w.aiMetric : w.demandMetric;
-  const details = (r: Candidate) => (
+  const details = (r: Candidate, includeGoals = true) => (
     <>
       <p className="text-sm leading-relaxed text-muted-foreground">
         {r.reason?.[lang] ?? (mode === "ai" ? w.aiLimit : w.limit)}
       </p>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <Goals role={r} />
+        {includeGoals && <Goals role={r} />}
         <Link
           className="inline-flex min-h-11 items-center gap-2 text-xs font-bold text-primary"
           href={`/roles/${r.roleId}`}
@@ -159,6 +160,9 @@ export function MarketOutlook() {
         <p className="mt-2 text-[10px] text-muted-foreground">
           {w.confidence}: {w[r.confidence]}
         </p>
+      )}
+      {!r.reason && (
+        <p className="mt-2 text-[10px] text-muted-foreground">{w.observed}</p>
       )}
     </>
   );
@@ -207,7 +211,7 @@ export function MarketOutlook() {
               htmlFor="market-years"
               className="rounded-lg bg-primary px-3 py-1 text-primary-foreground"
             >
-              +{horizon} {w.year} · {year}
+              +{horizon} {yearWord(horizon)} · {year}
             </output>
           </label>
           <input
@@ -218,12 +222,12 @@ export function MarketOutlook() {
             max={10}
             step={1}
             value={horizon}
-            aria-valuetext={`${horizon} ${w.year}, ${year}`}
+            aria-valuetext={`${horizon} ${yearWord(horizon)}, ${year}`}
             onChange={(e) => setHorizon(Number(e.target.value))}
             className="mt-3 h-8 w-full cursor-pointer accent-primary"
           />
           <div className="flex justify-between text-[10px] text-muted-foreground">
-            <span>1 {w.year}</span>
+            <span>1 {yearWord(1)}</span>
             <span>10 {w.year}</span>
           </div>
         </div>
@@ -460,7 +464,9 @@ export function MarketOutlook() {
                         <Goals role={r} />
                       </span>
                     </summary>
-                    <div className="border-t px-4 py-3">{details(r)}</div>
+                    <div className="border-t px-4 py-3">
+                      {details(r, false)}
+                    </div>
                   </details>
                 ))}
               </div>
