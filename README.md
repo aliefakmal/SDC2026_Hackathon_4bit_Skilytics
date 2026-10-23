@@ -36,11 +36,11 @@
 
 ### Problem
 
-AI is transforming industries faster than traditional training programmes and educational curricula can adapt. While over 56% of professionals in Malaysia already use AI tools at work, only 26% have received formal training, leaving more than 600,000 workers in need of reskilling within the next three to five years. Workers are unsure which skills to learn, employers struggle to identify which roles to train their teams for, and static learning lists quickly become obsolete.
+Driven by the rapid advancement of AI, industry skill demands now shift within months while academic and TVET syllabuses take years to adapt. This "curriculum lag" restricts access to market-aligned education (**SDG 4.3**) and leaves graduates and job seekers entering the workforce with outdated qualifications rather than the relevant technical and professional skills required by current employers (**SDG 4.4**). The resulting disconnect affects the entire job ecosystem: working individuals face job displacement without flexible reskilling pathways, career centers lack real-time labor market data to mentor students effectively, and high-growth industries suffer from severe talent shortages alongside rising graduate unemployment and job fragility. Left unaddressed, these persistent skill gaps undermine full and productive employment (**SDG 8.5**) and stifle workforce productivity and technological innovation (**SDG 8.2**)—forcing learners to navigate between static curricula and an AI-driven economy without a real-time bridge to live industry expectations.
 
 ### Solution
 
-**Skilytics** is a human-centred, AI-powered career analytics and workforce reskilling platform created for the **Aiversecity Future-Ready Workforce Domain (Domain 1)**. Positioning AI as a collaborative partner rather than a replacement for human judgement, Skilytics continuously tracks AI advancements and labour market signals to predict emerging and declining skills, match individuals to future-proof roles, and generate actionable, personalised reskilling pathways tied directly to the **17 UN Sustainable Development Goals (SDGs)**.
+**Skilytics** is a human-in-the-loop, AI-powered career navigation and workforce intelligence ecosystem built to bridge the gap between rapid technological disruption and human potential. Rather than replacing human decision-making, Skilytics acts as an empathetic career co-pilot and institutional analytics engine. It fuses multi-modal CV parsing, psychometric vocational profiling (**Holland Code / RIASEC**), practical lifestyle constraints (budget and time commitments), and live macroeconomic data to deliver actionable, step-by-step reskilling pathways—communicated through transparent, jargon-free **ELI5 ("Explain Like I'm 5")** AI reasoning. Simultaneously, Skilytics empowers HR leaders, L&D managers, and TVET/university career centres with an enterprise-grade portal to diagnose organizational AI exposure, map skill gaps, track talent mobility, and adapt academic curricula directly to the future of work and the **UN Sustainable Development Goals—focusing primarily on SDG 4 (Targets 4.3 & 4.4) and SDG 8 (Targets 8.2 & 8.5)**.
 
 #### **Who Skilytics Is Built For**
 1. **👩‍💻 Working Adults & Career Switchers:** Individuals at risk of job displacement or seeking a career pivot with transparent, step-by-step guidance and skill-gap breakdowns.
@@ -431,7 +431,7 @@ curl -X POST https://api.runpod.ai/v2/bs50a57qmoqrpp/run \
 -  We learned how to write structured, accurate prompts to guide LLMs into producing consistent career analytics, skill-gap mappings, and jargon-free ELI5 explanations.
 -  We explored new ways to use GitHub to manage a multi-package repository, track changes, and organize project documentation.
 -  We strengthened our design skills by learning how to design, edit, and polish project visuals and presentation assets using Canva.
--  During our mentoring sessions, we gained invaluable experience and practical advice from professional panel mentors, whose feedback directly helped us refine and improve our web application.
+-  During our mentoring sessions, we gained invaluable experience and practical advice from professional panel mentor, whose feedback directly helped us refine and improve our web application.
 
 ## Future Improvements
 
