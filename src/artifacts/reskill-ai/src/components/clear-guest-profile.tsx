@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { customFetch } from "@workspace/api-client-react";
+import { setActiveProfile } from "@/lib/fmt";
 import { useT } from "@/i18n";
 import { getObProfile, setObProfile, clearDraft } from "@/lib/onboarding";
 import { Button } from "./ui/button";
@@ -22,24 +23,25 @@ export function ClearGuestProfile({ id, name }: { id: number; name: string }) {
       ? {
           clear: "Padam profil",
           title: "Padam profil tetamu ini?",
-          body: "Profil, pelan dan kemajuan ini akan dipadam. Profil tetamu lain kekal.",
+          body: "Profil, pelan dan kemajuan yang disimpan pada peranti ini akan dipadam.",
         }
       : lang === "zh"
         ? {
             clear: "清除资料",
             title: "清除此访客资料？",
-            body: "此资料、计划及进度将被删除，其他访客资料不受影响。",
+            body: "将删除此设备保存的资料、计划及学习进度。",
           }
         : {
             clear: "Clear profile",
             title: "Clear this guest profile?",
-            body: "This profile, plan and progress will be removed. Your other guest profiles stay.",
+            body: "This device’s saved profile, plan and progress will be removed.",
           };
   const mutation = useMutation({
     mutationFn: () => customFetch(`/api/profiles/${id}`, { method: "DELETE" }),
     onSuccess: async () => {
       if (getObProfile("guest") === id) setObProfile("guest", null);
       clearDraft("guest", id);
+      setActiveProfile(null);
       await qc.invalidateQueries();
       setOpen(false);
     },

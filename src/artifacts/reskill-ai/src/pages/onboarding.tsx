@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { AiWait, Brand, ErrorBox, LangToggle, Markdown, Meter, Rows, StepLoadingSkeleton, StatusTag } from "@/components/kit";
 import { useToast } from "@/hooks/use-toast";
+import { setActiveProfile } from "@/lib/fmt";
 import { useAuth, portalHome } from "@/lib/auth";
 import {
   CV_MAX_BYTES, CV_OK, OB_STEPS, clearDraft, clearObCreateKey, getObCreateKey, getObProfile, obScope, readDraft, setObProfile, writeDraft, type ObStep,
@@ -77,6 +78,9 @@ export default function Onboarding() {
   const [pid, setPid] = useState<number | null>(() => {
     if (validUrlPid) return validUrlPid;
     if (isNew) {
+      const previous = getObProfile(scope);
+      if (previous) clearDraft(scope, previous);
+      setActiveProfile(null);
       setObProfile(scope, null);
       clearObCreateKey(scope);
       return null;
@@ -117,6 +121,9 @@ export default function Onboarding() {
   const createPromiseRef = useRef<Promise<Profile> | null>(null);
 
   const handleProfileReady = useCallback((np: Profile) => {
+    const previous = getObProfile(scope);
+    if (previous && previous !== np.id) { clearDraft(scope, previous); qc.removeQueries({queryKey:getGetProfileQueryKey(previous)}); }
+    setActiveProfile(np.id);
     setObProfile(scope, np.id);
     setPid(np.id);
     qc.setQueryData(getGetProfileQueryKey(np.id), np);
@@ -133,6 +140,7 @@ export default function Onboarding() {
     }, { headers: { "X-Idempotency-Key": getObCreateKey(scope) }, signal: AbortSignal.timeout(15_000) }).then((np) => {
       handleProfileReady(np);
       qc.invalidateQueries({ queryKey: ["/api/profiles"] });
+      qc.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
       createPromiseRef.current = null;
       return np;
     }).catch((err) => {

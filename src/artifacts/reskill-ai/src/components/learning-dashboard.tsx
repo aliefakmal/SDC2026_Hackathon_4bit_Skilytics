@@ -1,9 +1,7 @@
 import type { Profile } from "@workspace/api-client-react";
-import { customFetch } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Award, Medal, CalendarCheck, CheckCircle2 } from "lucide-react";
 import { roleTitle } from "@/lib/fmt";
-import { useState } from "react";
 import { useT } from "@/i18n";
 import { learningWords } from "@/i18n/learning";
 import {
@@ -19,7 +17,6 @@ export function LearningDashboard({ p }: { p: Profile }) {
     w = learningWords[lang];
   const q = useLearning(p.id),
     action = useLearningAction(p.id);
-  const [error, setError] = useState(false);
   const j = q.data;
   if (q.isError) return <ErrorBox error={q.error} retry={() => q.refetch()} />;
   if (!j) return null;
@@ -46,23 +43,6 @@ export function LearningDashboard({ p }: { p: Profile }) {
     );
   const done = j.items.filter((i) => !!j.completed[String(i.courseId)]).length;
   const total = j.items.length;
-  const download = async () => {
-    setError(false);
-    try {
-      const blob = await customFetch<Blob>(
-        `/api/profiles/${p.id}/journey/certificate?lang=${lang}`,
-        { responseType: "blob" },
-      );
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${j.certificateId}.svg`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch {
-      setError(true);
-    }
-  };
   return (
     <section className="rounded-2xl border bg-card p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -204,10 +184,10 @@ export function LearningDashboard({ p }: { p: Profile }) {
       {j.complete && (
         <div className="mt-5 space-y-3 rounded-2xl border-2 border-accent p-4">
           <h3 className="text-xl font-bold">{w.finish} 🎉</h3>
-          <Button onClick={download}>
+          <Button asChild><Link href={`/me/certificates/${p.id}`}>
             <Award className="mr-2 h-4 w-4" />
             {w.certificate}
-          </Button>
+          </Link></Button>
           <p className="text-xs">{j.certificateId}</p>
           <h3 className="pt-4 font-bold">{w.nextSkills}</h3>
           <p className="text-sm text-muted-foreground">{w.nextNote}</p>
@@ -233,7 +213,7 @@ export function LearningDashboard({ p }: { p: Profile }) {
           ))}
         </div>
       )}
-      {(action.isError || error) && <ErrorBox message={w.error} />}
+      {action.isError && <ErrorBox message={w.error} />}
     </section>
   );
 }

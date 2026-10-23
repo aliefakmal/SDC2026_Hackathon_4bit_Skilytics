@@ -16,19 +16,13 @@ import {
   LogIn,
   LogOut,
   Map,
-  Menu,
   School,
   Sparkles,
   Target,
   Users,
   type LucideIcon,
 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+
 import { Brand, DataNotice, LangToggle } from "@/components/kit";
 import { useAuth } from "@/lib/auth";
 import { getActiveProfile } from "@/lib/fmt";
@@ -270,10 +264,11 @@ function SideNav({ onNav }: { onNav?: () => void }) {
 }
 
 export function Shell({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
   const [tourHref, setTourHref] = useState<string | null>(null);
   const [loc] = useLocation();
   const nav = useNav();
+  const {user,signOut} = useAuth();
+  const mobileItems=[...nav.primary,...nav.more.filter(item=>!nav.primary.some(p=>p.href === item.href))];
   const { t, lang } = useT();
   const mobileLabels: Record<string, string> =
     lang === "ms"
@@ -330,40 +325,11 @@ export function Shell({ children }: { children: ReactNode }) {
           <Brand small />
           <div className="flex shrink-0 items-center gap-1.5">
             <LangToggle />
-            <button
-              onClick={() => setOpen(true)}
-              aria-label={t("common.more")}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card"
-              data-testid="button-more"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+            {user && user.role !== "individual" && <button className="inline-flex h-11 w-11 items-center justify-center rounded-full border" aria-label={t("common.logout")} onClick={()=>void signOut()}><LogOut className="h-4 w-4" /></button>}
           </div>
         </div>
 
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent
-            side="right"
-            className="w-[86vw] max-w-sm overflow-y-auto bg-card p-0"
-          >
-            <SheetHeader className="px-5 pt-5 text-left">
-              <SheetTitle>{t("common.more")}</SheetTitle>
-            </SheetHeader>
-            <div className="space-y-0.5 px-3 py-3">
-              {nav.more.map((it) => (
-                <NavLink
-                  key={it.label}
-                  it={it}
-                  loc={loc}
-                  onNav={() => setOpen(false)}
-                />
-              ))}
-            </div>
-            <div className="p-3">
-              <UserCard onNav={() => setOpen(false)} />
-            </div>
-          </SheetContent>
-        </Sheet>
+
 
         <main className="relative z-[1] pb-28 lg:pb-10 lg:pl-64">
           <motion.div
@@ -385,10 +351,10 @@ export function Shell({ children }: { children: ReactNode }) {
           )}
           aria-label={t("nav.primary")}
           style={{
-            gridTemplateColumns: `repeat(${nav.primary.length},minmax(0,1fr))`,
+            gridTemplateColumns: `repeat(${mobileItems.length},minmax(0,1fr))`,
           }}
         >
-          {nav.primary.map((it) => {
+          {mobileItems.map((it) => {
             const active = isActive(it, loc);
             const label = t(it.label);
             return (

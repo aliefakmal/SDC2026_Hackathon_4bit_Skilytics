@@ -1,3 +1,4 @@
+import { guestProfileScope, keepOneGuestProfile } from "../lib/guest-profile";
 import demoFixtures from "../../../../testing/demo-cv/profiles.json";
 import { individualProfile } from "../lib/individual-profile";
 import { hollandSource } from "../lib/holland-source";
@@ -40,6 +41,7 @@ const router: IRouter = Router();
 const cvRequests = new Map<number, Promise<unknown>>();
 
 router.get("/profiles", async (req, res) => {
+  if (!req.user && req.guestToken) await keepOneGuestProfile(req.guestToken);
   const q = ListProfilesQueryParams.parse(req.query);
   const conds = [profileScope(req)];
   if (q.segment) conds.push(eq(profilesTable.segment, q.segment));
@@ -63,7 +65,7 @@ router.post("/profiles", async (req, res) => {
   if (requestKey !== undefined && (typeof requestKey !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestKey))) {
     res.status(400).json({ error: "invalid_input" }); return;
   }
-  if (requestKey) {
+  if (requestKey && u) {
     const [existing] = await db.select().from(profilesTable).where(eq(profilesTable.createRequestKey, requestKey));
     if (existing) {
       if (!await canAccessProfile(req, existing)) { res.status(409).json({ error: "profile_not_found" }); return; }
@@ -104,6 +106,7 @@ router.post("/profiles", async (req, res) => {
         if (existing) return { kind: existing.guestToken === guestToken && !existing.ownerUserId ? "existing" : "conflict", row: existing } as const;
       }
       const [row] = await tx.insert(profilesTable).values(values).onConflictDoNothing().returning();
+      if (row) await tx.delete(profilesTable).where(and(guestProfileScope(guestToken),ne(profilesTable.id,row.id)));
       return { kind: row ? "created" : "conflict", row: row ?? null } as const;
     });
     if (outcome.kind === "conflict" || !outcome.row) { res.status(409).json({ error: "profile_creation_conflict" }); return; }
@@ -189,11 +192,8 @@ router.get("/profiles/:id/journey/certificate",async(req,res)=>{
   const state=await learningState(p.id);
   const [plan]=state.planId ? await db.select().from(plansTable).where(and(eq(plansTable.id,state.planId),eq(plansTable.profileId,p.id))) : [];
   if(!plan || !state.finishedAt || !allComplete(plan.items,state.completed)) {res.status(409).json({error:"pathway_incomplete"});return;}
-  const lang=req.query.lang;
-  const labels=lang==="ms" ? ["SIJIL PENYEMPURNAAN", "Telah menyelesaikan laluan pembelajaran", "Penyempurnaan dilaporkan sendiri. Bukan kelayakan rasmi penyedia kursus."] : lang==="zh" ? ["学习路径完成证书", "已完成学习路径", "完成情况由学习者自行确认，并非课程机构的正式资格证书。"] : ["CERTIFICATE OF COMPLETION", "Completed the learning pathway", "Completion is self-reported. This is not a provider qualification."];
-  const esc=(s:string)=>s.replace(/[<>&"']/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&apos;"})[c]!);
-  res.setHeader("Content-Type","image/svg+xml; charset=utf-8");res.setHeader("Content-Disposition",'attachment; filename="skilytics-completion.svg"');res.setHeader("Cache-Control","no-store");
-  res.send(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820"><rect width="1200" height="820" fill="#fffaf2"/><rect x="25" y="25" width="1150" height="770" fill="none" stroke="#7a1523" stroke-width="8"/><g text-anchor="middle" font-family="Arial,sans-serif" fill="#2b2020"><text x="600" y="125" font-size="48" font-weight="bold" fill="#7a1523">Skilytics</text><text x="600" y="235" font-size="34">${esc(labels[0])}</text><text x="600" y="355" font-size="44" textLength="950" lengthAdjust="spacingAndGlyphs">${esc(p.name)}</text><text x="600" y="430" font-size="26">${esc(labels[1])}</text><text x="600" y="495" font-size="32" textLength="950" lengthAdjust="spacingAndGlyphs">${esc(lang==="ms" ? ROLES.find(r=>r.title===plan.roleTitle)?.titleMs??plan.roleTitle : lang==="zh" ? ROLE_TITLE_ZH[plan.roleTitle]??plan.roleTitle : plan.roleTitle)}</text><text x="600" y="585" font-size="22">${state.finishedAt.slice(0,10)} · SK-${p.id}-${plan.id}</text><text x="600" y="710" font-size="17">${esc(labels[2])}</text></g></svg>`);
+  res.setHeader("Cache-Control","no-store");
+  res.json({id:`SK-${p.id}-${plan.id}`,name:p.name,roleTitle:plan.roleTitle,roleTitleMs:ROLES.find(r=>r.title===plan.roleTitle)?.titleMs??plan.roleTitle,roleTitleZh:ROLE_TITLE_ZH[plan.roleTitle]??plan.roleTitle,finishedAt:state.finishedAt,courseCount:plan.items.length});
 });
 
 router.patch("/profiles/:id", async (req, res) => {

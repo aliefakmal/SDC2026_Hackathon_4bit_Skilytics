@@ -24,11 +24,11 @@ export function newsUrl(provider: "gdelt" | "rss", region: "my" | "global") {
   if (provider === "gdelt") {
     const u = new URL("https://api.gdeltproject.org/api/v2/doc/doc");
     u.search = new URLSearchParams({
-      query: TOPIC + (region === "my" ? " sourcecountry:MY" : ""),
+      query: TOPIC + (region === "my" ? " Malaysia" : ""),
       mode: "artlist",
       format: "json",
       maxrecords: "40",
-      timespan: "1month",
+      timespan: "30d",
       sort: "datedesc",
     }).toString();
     return u.href;
@@ -186,25 +186,101 @@ export function parseCareerGdelt(
     return a ? [a] : [];
   });
 }
+export class NewsFeedError extends Error {
+  constructor(
+    public code: string,
+    public retryAfterMs = 0,
+  ) {
+    super(code);
+  }
+}
+export async function fetchCareerFeed(
+  provider: "gdelt" | "rss",
+  region: "my" | "global",
+  request: typeof fetch = fetch,
+) {
+  let res: Response;
+  try {
+    res = await request(newsUrl(provider, region), {
+      signal: AbortSignal.timeout(provider === "gdelt" ? 22000 : 8000),
+      headers: {
+        "User-Agent": "Skilytics/1.0 career research",
+        Accept:
+          provider === "gdelt"
+            ? "application/json"
+            : "application/rss+xml, application/xml",
+      },
+    });
+  } catch (error) {
+    throw new NewsFeedError(
+      error instanceof Error &&
+        /timeout|abort/i.test(error.name + error.message)
+        ? "news_timeout"
+        : "news_network_error",
+    );
+  }
+  if (res.status === 429) {
+    const raw = res.headers.get("retry-after"),
+      seconds = raw ? Number(raw) : NaN;
+    const retry = Number.isFinite(seconds)
+      ? seconds * 1000
+      : raw
+        ? Date.parse(raw) - Date.now()
+        : 0;
+    throw new NewsFeedError(
+      "news_rate_limited",
+      Math.max(15 * 60000, Number.isFinite(retry) ? retry : 0),
+    );
+  }
+  if (!res.ok)
+    throw new NewsFeedError(
+      res.status === 401 || res.status === 403
+        ? "news_access_denied"
+        : `news_http_${res.status}`,
+    );
+  let body: string;
+  try {
+    body = await res.text();
+  } catch {
+    throw new NewsFeedError("news_timeout");
+  }
+  if (body.length > 2000000) throw new NewsFeedError("news_response_too_large");
+  try {
+    return provider === "gdelt"
+      ? parseCareerGdelt(JSON.parse(body), region)
+      : parseCareerRss(body, region);
+  } catch {
+    throw new NewsFeedError("news_invalid_response");
+  }
+}
+let gdeltLastRequest = 0,
+  gdeltRetryAt = 0;
+const NEWS_VERSION = "career-news-v2";
 let memory: CareerNews | undefined,
   nextCheck = 0,
   running: Promise<CareerNews> | undefined;
-async function status(id: string, ok: boolean, count: number, detail: string) {
+async function status(
+  id: string,
+  ok: boolean,
+  count: number,
+  detail: string,
+  error?: string,
+) {
   const patch = {
     status: ok ? "ok" : "error",
     lastFetchedAt: new Date(),
     recordCount: count,
-    version: "career-news-v1",
+    version: NEWS_VERSION,
     dataDate: new Date().toISOString().slice(0, 10),
     detail,
-    error: ok ? null : detail,
+    error: ok ? null : (error ?? detail),
   };
   await db
     .insert(marketSourcesTable)
     .values({ id, ...patch })
     .onConflictDoUpdate({ target: marketSourcesTable.id, set: patch });
 }
-async function refresh(): Promise<CareerNews> {
+async function refresh(force = false): Promise<CareerNews> {
   const [saved] = await db
     .select()
     .from(predictionsTable)
@@ -213,42 +289,67 @@ async function refresh(): Promise<CareerNews> {
     .limit(1);
   if (saved) {
     try {
-      const old = JSON.parse(saved.content) as CareerNews;
+      const old = JSON.parse(saved.content) as CareerNews & {
+        version?: string;
+      };
       if (Array.isArray(old.articles))
         memory = {
           ...old,
-          stale: Date.now() - saved.createdAt.getTime() >= TTL,
+          articles: old.articles
+            .map((a) => cleanArticle(a, Date.now()))
+            .filter((a): a is CareerArticle => !!a),
+          stale:
+            old.version !== NEWS_VERSION ||
+            Date.now() - saved.createdAt.getTime() >= TTL,
         };
-      if (memory && !memory.stale) {
+      if (memory && !memory.stale && !force) {
         nextCheck = saved.createdAt.getTime() + TTL;
         return memory;
       }
     } catch {}
   }
+  const [previousGdelt] = await db
+    .select()
+    .from(marketSourcesTable)
+    .where(eq(marketSourcesTable.id, "gdelt_career_news"));
+  if (
+    previousGdelt?.error === "news_rate_limited" &&
+    previousGdelt.lastFetchedAt
+  )
+    gdeltRetryAt = Math.max(
+      gdeltRetryAt,
+      previousGdelt.lastFetchedAt.getTime() + 15 * 60000,
+      Number(previousGdelt.detail?.match(/nextRetryAt=(\d+)/)?.[1]) || 0,
+    );
   const found: CareerArticle[] = [],
     providers = new Set<string>();
   // Query each provider sequentially and back off on failure; never retry per slider movement.
   for (const provider of ["gdelt", "rss"] as const) {
     let failed = false,
-      count = 0;
+      count = 0,
+      reason = "";
+    if (provider === "gdelt" && Date.now() < gdeltRetryAt) continue;
     for (const region of ["my", "global"] as const) {
       try {
-        const res = await fetch(newsUrl(provider, region), {
-          signal: AbortSignal.timeout(provider === "gdelt" ? 6000 : 8000),
-          headers: { "User-Agent": "Skilytics/1.0 career research" },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const body = await res.text();
-        if (body.length > 2000000) throw new Error("news_response_too_large");
-        const rows =
-          provider === "gdelt"
-            ? parseCareerGdelt(JSON.parse(body), region)
-            : parseCareerRss(body, region);
+        if (provider === "gdelt") {
+          const wait = Math.max(0, 6500 - (Date.now() - gdeltLastRequest));
+          if (wait) await new Promise((resolve) => setTimeout(resolve, wait));
+          gdeltLastRequest = Date.now();
+        }
+        const rows = await fetchCareerFeed(provider, region);
         found.push(...rows.slice(0, 8));
         count += rows.length;
-      } catch {
+      } catch (error) {
         failed = true;
-        if (provider === "gdelt") break;
+        reason =
+          error instanceof NewsFeedError ? error.code : "news_unknown_error";
+        if (provider === "gdelt") {
+          gdeltRetryAt =
+            Date.now() +
+            ((error instanceof NewsFeedError && error.retryAfterMs) ||
+              15 * 60000);
+          break;
+        }
       }
     }
     await status(
@@ -256,8 +357,9 @@ async function refresh(): Promise<CareerNews> {
       !failed,
       count,
       failed
-        ? "Provider unavailable; retained snapshot or alternate public feed is used."
+        ? `Public endpoint requires no API key. ${reason}; retained snapshot or alternate public career feed is used.${provider === "gdelt" ? ` nextRetryAt=${gdeltRetryAt}` : ""}`
         : "Career-filtered public headline metadata; no article bodies or user data.",
+      reason,
     );
     if (count) providers.add(provider);
     if (
@@ -284,17 +386,15 @@ async function refresh(): Promise<CareerNews> {
       fetchedAt: new Date().toISOString(),
       stale: false,
     };
-    await db
-      .insert(predictionsTable)
-      .values({
-        question: QUESTION,
-        horizonYears: 1,
-        lang: "en",
-        inputHash: QUESTION,
-        content: JSON.stringify(memory),
-        sources: [],
-        model: "public-news-metadata",
-      });
+    await db.insert(predictionsTable).values({
+      question: QUESTION,
+      horizonYears: 1,
+      lang: "en",
+      inputHash: QUESTION,
+      content: JSON.stringify({ ...memory, version: NEWS_VERSION }),
+      sources: [],
+      model: "public-news-metadata",
+    });
     nextCheck = Date.now() + TTL;
   } else {
     memory = {
@@ -307,10 +407,11 @@ async function refresh(): Promise<CareerNews> {
   }
   return memory;
 }
-export function loadCareerNews() {
-  if (memory && Date.now() < nextCheck) return Promise.resolve(memory);
+export function loadCareerNews(force = false) {
+  if (!force && memory && Date.now() < nextCheck)
+    return Promise.resolve(memory);
   if (!running)
-    running = refresh().finally(() => {
+    running = refresh(force).finally(() => {
       running = undefined;
     });
   return running;

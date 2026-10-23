@@ -1,3 +1,7 @@
+import { RIASEC_QUESTIONS } from "../data/riasec";
+import { OPENLEARN, OPENLEARN_REVIEWED_AT } from "../data/openlearn";
+import { SDG_TARGETS } from "../data/courses";
+import { SKILL_REFERENCES } from "./cv-retrieval";
 import blsSnapshot from "../data/bls-projections.json";
 import {
   db,
@@ -29,6 +33,10 @@ const HF_DATASET = "Anthropic/EconomicIndex";
 
 // Consumer keys are translated in the frontend.
 export const SOURCES: SourceDef[] = [
+  {id:"onet_interest_profiler",name:"Holland / O*NET Interest Profiler",kind:"dataset",url:"https://www.onetcenter.org/dl_files/Mini-IP.pdf",description:"30 contextual RIASEC activities adapted and translated by Skilytics under the O*NET Tools Developer License; not the validated Mini-IP.",refreshCadence:"reviewed_snapshot",consumers:["role_matcher","agent_holland"]},
+  {id:"onet_content_model",name:"O*NET Content Model · CV skill references",kind:"dataset",url:"https://www.onetcenter.org/content.html",description:"Attributed local collection of O*NET skill definitions used for CV retrieval. App aliases are editorial crosswalks, not employment statistics.",refreshCadence:"reviewed_snapshot",consumers:["agent_cv","role_matcher"]},
+  {id:"openlearn_catalogue",name:"OpenLearn · reviewed public courses",kind:"catalogue",url:"https://www.open.edu/openlearn/",description:"Manually reviewed public course metadata selection; not a live catalogue API. Course bodies are not ingested.",refreshCadence:"reviewed_snapshot",consumers:["pathway","role_matcher"]},
+  {id:"sdg_framework",name:"United Nations · Sustainable Development Goals",kind:"dataset",url:"https://sdgs.un.org/goals",description:"Official SDG goals and target references; role and course associations are app thematic mappings, not measured impact or UN endorsement.",refreshCadence:"reviewed_snapshot",consumers:["pathway","role_matcher","agent_sdg"]},
   {id:"hubspot_catalogue",name:"HubSpot Academy · public course catalogue",kind:"catalogue",url:"https://academy.hubspot.com/courses",description:"Unauthenticated public website catalogue search, paginated full English courses only. Refreshed every six hours; free Academy account required for learning. Public metadata is not an open-content licence or a documented developer API.",refreshCadence:"links_6h",consumers:["pathway","role_matcher"]},
   { id: "gdelt_career_news", name: "GDELT · career news API", kind: "dataset", url: GDELT_DOCS, description: "Public keyless news metadata API, filtered to careers and workplace skills in Malaysia and globally. News is context, not a hiring forecast.", refreshCadence: "news_6h", consumers: ["market", "predictions"] },
   { id: "career_news_rss", name: "Google News · public career RSS", kind: "dataset", url: newsUrl("rss", "my"), description: "Public RSS metadata fallback for Malaysia and global career news. No private API key; original publisher rights still apply.", refreshCadence: "news_6h", consumers: ["market", "predictions"] },
@@ -309,7 +317,7 @@ let running: Promise<void> | null = null;
 export function refreshAll(force = false): Promise<void> {
   if (running) return running;
   const jobs: [string, () => Promise<void>][] = [
-    ["gdelt_career_news", async () => { await loadCareerNews(); }],
+    ["gdelt_career_news", async () => { await loadCareerNews(force); }],
     ["onet", ingestOnet],
     ["dosm_lfs_month", ingestLabour],
     ["aei_exposure", ingestExposure],
@@ -335,15 +343,23 @@ export function refreshAll(force = false): Promise<void> {
   return running;
 }
 
+const staticSources: Record<string,{version:string;lastFetchedAt:Date;status:"ok";detail:string;dataDate:string;recordCount:number;error:null}> = Object.fromEntries([
+  ["bls_projections",blsSnapshot.period,blsSnapshot.period,blsSnapshot.rows.length,blsSnapshot.method],
+  ["onet_interest_profiler","skilytics-contextual-riasec-201-230","2026-10-23",RIASEC_QUESTIONS.length,"Adapted 30-item questionnaire with English, Malay and Mandarin wording. All answers required. Independent psychometric validation remains outstanding."],
+  ["onet_content_model","content-model-reference-2026-10","2026-10",SKILL_REFERENCES.length,"O*NET Content Model definitions, locally attributed retrieval reference. Separate from the occupation database and the Interest Profiler."],
+  ["openlearn_catalogue","reviewed-2026-10-23","2026-10-23",OPENLEARN.length,"Reviewed selection, not a live endpoint. Metadata reviewed 23 October 2026."],
+  ["sdg_framework","sdg-editorial-target-map-v1","2026-10-23",SDG_TARGETS.length,"Curated target references and 17 official goal icons. Associations are thematic, not measured outcomes."],
+].map(([id,version,dataDate,recordCount,detail])=>[id,{version:String(version),lastFetchedAt:new Date(id === "bls_projections"?blsSnapshot.reviewedAt+"T00:00:00Z":OPENLEARN_REVIEWED_AT),status:"ok" as const,detail:String(detail),dataDate:String(dataDate),recordCount:Number(recordCount),error:null}]));
+
 export async function listSources() {
   const rows = await db.select().from(marketSourcesTable);
   const byId = new Map(rows.map((r) => [r.id, r]));
   return SOURCES.map((s) => {
-    const r = s.id === "bls_projections" ? {version:blsSnapshot.period,lastFetchedAt:new Date(blsSnapshot.reviewedAt+"T00:00:00Z"),status:"ok",detail:blsSnapshot.method,dataDate:blsSnapshot.period,recordCount:blsSnapshot.rows.length,error:null} : byId.get(s.id);
+    const r = staticSources[s.id] ?? byId.get(s.id);
     return {
       ...s,
       version: r?.version ?? null,
-      stale: !["bls_projections"].includes(s.id) && !!r?.lastFetchedAt && Date.now() - r.lastFetchedAt.getTime() > 12 * 3600000,
+      stale: !staticSources[s.id] && !!r?.lastFetchedAt && Date.now() - r.lastFetchedAt.getTime() > 12 * 3600000,
       status: (r?.status ?? "pending") as "ok" | "error" | "pending" | "not_configured",
       detail: r?.detail ?? null,
       lastFetchedAt: r?.lastFetchedAt ? r.lastFetchedAt.toISOString() : null,
@@ -369,7 +385,7 @@ export function startMarketScheduler(): void {
       .select({ count: sql<number>`count(*)::int` })
       .from(marketSourcesTable)
       .where(eq(marketSourcesTable.status, "ok"));
-    if (count < SOURCES.filter(s=>!["bls_projections", "gdelt_career_news", "career_news_rss"].includes(s.id)).length) await refreshAll();
+    if (count < SOURCES.filter(s=>!staticSources[s.id] && !["gdelt_career_news", "career_news_rss"].includes(s.id)).length) await refreshAll();
     else logger.info("Market data present; next check in 6 hours");
   })().catch((err) => logger.error({ err }, "Initial market refresh failed"));
   setInterval(() => {

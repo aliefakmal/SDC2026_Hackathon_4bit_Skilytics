@@ -102,7 +102,7 @@ const DOCS: Doc[] = [
     { label: "docs.f.method", k: ["docs.huggingface.method"] },
     { label: "docs.f.limits", k: ["docs.huggingface.limits"] },
   ] },
-  { id: "openlearn", types: ["external", "static", "derived"], name: "docs.openlearn.name", rows: [
+  { id: "openlearn", types: ["external", "static", "derived"], name: "docs.openlearn.name", sourceIds:["openlearn_catalogue"], rows: [
     {label: "docs.f.publisher", ref: "The Open University · OpenLearn"},
     {label: "docs.f.dataset", url: "https://www.open.edu/openlearn/free-courses/full-catalogue"},
     {label: "docs.f.files", ref: "src/artifacts/api-server/src/data/openlearn.ts"},
@@ -121,18 +121,25 @@ const DOCS: Doc[] = [
     { label: "docs.f.limits", k: ["docs.ai.ids", "docs.ai.retrieval"] },
     { label: "docs.f.privacy", k: ["docs.ai.privacy"] },
   ] },
-  { id: "riasec", types: ["static", "user"], name: "docs.name.riasec", rows: [
+  { id: "riasec", types: ["external", "static", "derived", "user"], name: "docs.name.riasec", sourceIds:["onet_interest_profiler"], rows: [
     { label: "docs.f.publisher", ref: "USDOL/ETA — O*NET Interest Profiler; contextual adaptation by Skilytics" },
     { label: "docs.f.dataset", url: "https://www.onetcenter.org/dl_files/Mini-IP.pdf" },
     { label: "docs.f.license", url: "https://www.onetcenter.org/license_tools.html" },
     { label: "docs.f.method", k: ["docs.riasec.items", "docs.riasec.scoring"] },
     { label: "docs.f.limits", k: ["docs.riasec.limits"] },
   ] },
+  {id:"skill_reference",types:["external","static","derived"],name:"src.onet_content_model.name",sourceIds:["onet_content_model"],rows:[
+    {label:"docs.f.publisher",ref:"USDOL/ETA, National Center for O*NET Development; app dictionary by Skilytics"},
+    {label:"docs.f.dataset",url:"https://www.onetcenter.org/content.html"},
+    {label:"docs.f.files",ref:"cv-retrieval.ts (SKILL_REFERENCES), data/skills.ts, occupational-skills.ts"},
+    {label:"docs.f.method",k:["docs.skills.method"]},
+    {label:"docs.f.license",url:"https://www.onetcenter.org/license_db.html"},
+  ]},
   { id: "match", types: ["derived"], name: "docs.name.match", rows: [
     { label: "docs.f.method", k: ["docs.match.weights"] },
     { label: "docs.f.limits", k: ["docs.match.demand", "docs.match.feasibility"] },
   ] },
-  { id: "sdg", types: ["static"], name: "docs.name.sdg", rows: [
+  { id: "sdg", types: ["external", "static", "derived"], name: "docs.name.sdg", sourceIds:["sdg_framework"], rows: [
     { label: "docs.f.publisher", ref: "United Nations, Sustainable Development Goals" },
     { label: "docs.f.dataset", url: "https://sdgs.un.org/goals" },
     { label: "docs.f.files", url: "https://www.un.org/sustainabledevelopment/news/communications-material/" },
@@ -149,7 +156,7 @@ const DOCS: Doc[] = [
 const TYPES: DocType[] = ["external", "static", "derived", "service", "demo", "user"];
 const CATEGORIES = [
   { key: "market", ids: ["dosm", "aei_usage", "aei_exposure", "bls", "career_news"] },
-  { key: "career", ids: ["onet", "riasec", "match"] },
+  { key: "career", ids: ["riasec", "onet", "skill_reference", "match"] },
   { key: "learning", ids: ["hubspot", "courses", "freecodecamp", "githubskills", "huggingface", "openlearn", "sdg"] },
   { key: "aiService", ids: ["runpod"] },
   { key: "privacy", ids: ["demo", "learningRecords"] },
@@ -195,12 +202,12 @@ function LiveSource({ s }: { s: MarketSource }) {
         <span className="font-semibold">{tk("src", `${s.id}.name`)}</span>
         <span className="rounded-full bg-card px-2 py-0.5 font-semibold">{tk("srcStatus", s.status)}</span>
         {s.stale ? <span className="rounded-full bg-destructive/10 px-2 py-0.5 font-semibold text-destructive">{t("docs.live.stale")}</span>
-          : ok && <span className="text-muted-foreground">{t("docs.live.fresh")}</span>}
+          : ok && s.refreshCadence !== "reviewed_snapshot" && <span className="text-muted-foreground">{t("docs.live.fresh")}</span>}
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 sm:grid-cols-4">
         <div><dt className="text-muted-foreground">{t("docs.f.version")}</dt><dd lang="en" className="break-all font-semibold">{s.version ?? t("docs.live.noVersion")}</dd></div>
         <div><dt className="text-muted-foreground">{t("docs.live.dataDate")}</dt><dd className="font-semibold">{s.dataDate ?? t("docs.live.unavailable")}</dd></div>
-        <div><dt className="text-muted-foreground">{t("docs.live.fetched")}</dt><dd className="font-semibold">{s.lastFetchedAt ? f.dateTime(s.lastFetchedAt) : t("docs.live.unavailable")}</dd></div>
+        <div><dt className="text-muted-foreground">{t(s.refreshCadence === "reviewed_snapshot" ? "docs.live.reviewed" : s.status === "error" ? "docs.live.checked" : "docs.live.fetched")}</dt><dd className="font-semibold">{s.lastFetchedAt ? (s.refreshCadence === "reviewed_snapshot" ? f.date(s.lastFetchedAt) : f.dateTime(s.lastFetchedAt)) : t("docs.live.unavailable")}</dd></div>
         <div><dt className="text-muted-foreground">{t("docs.live.records")}</dt><dd className="tnum font-semibold">{s.recordCount > 0 || ok ? f.num(s.recordCount) : t("docs.live.unavailable")}</dd></div>
       </dl>
       {s.error && <p className="mt-2 text-destructive">{t("docs.live.errorNote")}</p>}
@@ -228,9 +235,9 @@ function DocItem({ d, live, ai }: { d: Doc; live: MarketSource[]; ai?: AiStatus 
     <div className="space-y-3 border-t border-border px-4 pb-4 pt-3">
       {(mine.length > 0 || (d.ai && ai)) && (
         <section>
-          <h4 className="mb-1.5 text-xs font-bold">{t("docs.live.title")}</h4>
+          <h4 className="mb-1.5 text-xs font-bold">{t(!d.ai && mine.length > 0 && mine.every(s=>s.refreshCadence === "reviewed_snapshot") ? "docs.live.staticTitle" : "docs.live.title")}</h4>
           <div className="space-y-2">{d.ai && ai && <LiveAi a={ai} />}{mine.map((s) => <LiveSource key={s.id} s={s} />)}</div>
-          {d.types.includes("external") && <p className="mt-1.5 text-[11px] text-muted-foreground">{t("docs.live.notRealtime")}</p>}
+          {d.types.includes("external") && <p className="mt-1.5 text-[11px] text-muted-foreground">{t(mine.length > 0 && mine.every(s=>s.refreshCadence === "reviewed_snapshot") ? "docs.live.staticNote" : "docs.live.notRealtime")}</p>}
         </section>
       )}
       <dl className="grid gap-x-4 gap-y-2.5 text-sm md:grid-cols-[10rem_1fr]">

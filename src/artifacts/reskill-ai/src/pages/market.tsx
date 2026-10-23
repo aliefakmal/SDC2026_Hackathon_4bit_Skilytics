@@ -762,11 +762,11 @@ export function Sources() {
                           </div>
                           <div>
                             <dt className="text-muted-foreground">
-                              {t("sources.lastFetched")}
+                              {t(s.refreshCadence === "reviewed_snapshot" ? "docs.live.reviewed" : s.status === "error" ? "docs.live.checked" : "sources.lastFetched")}
                             </dt>
                             <dd className="font-semibold">
                               {s.lastFetchedAt
-                                ? f.dateTime(s.lastFetchedAt)
+                                ? s.refreshCadence === "reviewed_snapshot" ? f.date(s.lastFetchedAt) : f.dateTime(s.lastFetchedAt)
                                 : t("docs.live.unavailable")}
                             </dd>
                           </div>
@@ -810,7 +810,7 @@ export function Sources() {
                         )}
                         {s.error && (
                           <div className="mt-2 rounded-lg bg-destructive/5 p-2 text-[11px] text-destructive">
-                            {t("docs.live.errorNote")}
+                            {s.id === "gdelt_career_news" ? t("docs.news.unavailable") : t("docs.live.errorNote")}
                             <TechDiagnostics
                               text={s.error}
                               testId={`tech-source-${s.id}`}

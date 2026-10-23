@@ -1,7 +1,8 @@
+import { useLearning } from "@/lib/learning";
 import { ClearGuestProfile } from "@/components/clear-guest-profile";
 import { WorkspaceWelcome } from "@/components/journey-welcome";
 import { LearningDashboard } from "@/components/learning-dashboard";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Link, Redirect, useLocation, useSearch } from "wouter";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -10,7 +11,11 @@ import {
   ClipboardList,
   FileText,
   Loader2,
-  Plus,
+  LogOut,
+  CalendarDays,
+  Clock3,
+  Wallet,
+  CheckCircle2,
   Send,
   Sparkles,
   UserRound,
@@ -26,6 +31,7 @@ import {
   getGetDashboardSummaryQueryKey,
   getListProfilesQueryKey,
   type Segment,
+  type Profile,
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -59,260 +65,269 @@ import { LANG_SHORT, errCode, useErrText, useT, type Lang } from "@/i18n";
 export function Workspace() {
   const { t, tk, lang } = useT();
   const f = useFmt();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const search = useSearch();
+  const qc = useQueryClient();
+  useEffect(() => {
+    const changed = (event: StorageEvent) => {
+      if (
+        ["skilytics.activeProfile", "skilytics.onboarding.guest"].includes(
+          event.key ?? "",
+        )
+      ) {
+        void qc.invalidateQueries({ queryKey: getListProfilesQueryKey() });
+        void qc.invalidateQueries({
+          queryKey: getGetDashboardSummaryQueryKey(),
+        });
+      }
+    };
+    window.addEventListener("storage", changed);
+    return () => window.removeEventListener("storage", changed);
+  }, [qc]);
   const [, nav] = useLocation();
   const preset = new URLSearchParams(search).get("new");
-  const start = (seg: Segment) => nav(`/onboarding/cv?seg=${seg}&new=1`);
   const profiles = useInfiniteQuery({
     queryKey: getListProfilesQueryKey(),
     initialPageParam: undefined as number | undefined,
     retry: false,
-    queryFn: ({ pageParam, signal }) =>
+    queryFn: ({ signal }) =>
       listProfiles(
-        { limit: 21, ...(pageParam ? { beforeId: pageParam } : {}) },
-        { signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]) },
+        { limit: 1 },
+        { signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]) },
       ),
-    getNextPageParam: (lastPage) =>
-      lastPage.length > 20 ? lastPage[19].id : undefined,
+    getNextPageParam: () => undefined,
   });
-  const visibleProfiles =
-    profiles.data?.pages.flatMap((page) => page.slice(0, 20)) ?? [];
+  const p = profiles.data?.pages[0]?.[0];
   const sum = useGetDashboardSummary({
     query: {
       queryKey: getGetDashboardSummaryQueryKey(),
       retry: false,
       queryFn: ({ signal }) =>
         getDashboardSummary({
-          signal: AbortSignal.any([signal, AbortSignal.timeout(15_000)]),
+          signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
         }),
     },
   });
-  const s = sum.data;
   if (preset === "worker" || preset === "graduate")
     return <Redirect to={`/onboarding/cv?seg=${preset}&new=1`} replace />;
+  const w =
+    lang === "ms"
+      ? {
+          profile: "Profil saya",
+          device:
+            "Satu peranti, satu profil. Intake baharu akan menggantikan profil lama.",
+          ready: "Sedia untuk langkah seterusnya?",
+          sub: "Kursus, tarikh akhir dan kemajuan anda di satu tempat.",
+          details: "Lihat profil",
+        }
+      : lang === "zh"
+        ? {
+            profile: "我的资料",
+            device: "每台设备仅保留一份资料。新的录入将替换旧资料。",
+            ready: "准备好下一步了吗？",
+            sub: "课程、截止日期及进度都在这里。",
+            details: "查看资料",
+          }
+        : {
+            profile: "My profile",
+            device:
+              "One device, one profile. A new intake replaces the previous one.",
+            ready: "Ready for your next step?",
+            sub: "Your courses, deadlines and progress in one place.",
+            details: "View profile",
+          };
   return (
     <>
       <PageHeader
         help={<WorkspaceWelcome />}
-        eyebrow={t(user ? "portal.individual" : "portal.guest")}
         title={user ? t("me.hello", { name: user.name }) : t("me.title")}
-        sub={
-          user
-            ? lang === "ms"
-              ? "Kursus, tarikh akhir dan kemajuan anda di satu tempat."
-              : lang === "zh"
-                ? "你的课程、截止日期及进度都在这里。"
-                : "Your courses, deadlines and progress in one place."
-            : t("me.sub")
-        }
+        sub={w.sub}
         actions={
-          !user ? (
+          user ? (
             <Button
-              className="min-h-11"
-              onClick={() => start("worker")}
-              data-testid="button-new-profile"
+              variant="outline"
+              className="min-h-11 gap-2 lg:hidden"
+              onClick={() => signOut()}
             >
-              <Plus className="mr-1.5 h-4 w-4" />
-              {t("me.newProfile")}
+              <LogOut className="h-4 w-4" />
+              {t("common.logout")}
             </Button>
           ) : undefined
         }
       />
       {!user && (
-        <div className="mb-5">
+        <div className="mb-5 space-y-2">
           <GuestBanner />
+          <p className="px-1 text-xs text-muted-foreground">{w.device}</p>
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat
-          label={t("me.statProfiles")}
-          value={s ? f.num(s.profileCount) : "-"}
-          tone="maroon"
-          testid="text-stat-profiles"
-        />
-        <Stat label={t("me.statPlans")} value={s ? f.num(s.planCount) : "-"} />
-        <Stat
-          label={t("me.statInsights")}
-          value={s ? f.num(s.insightCount) : "-"}
-        />
-        <Stat
-          label={t("me.statPredictions")}
-          value={s ? f.num(s.predictionCount) : "-"}
-          tone="gold"
-        />
-      </div>
-      <div className="mt-5 space-y-4">
-        {visibleProfiles.map((p) => (
-          <LearningDashboard key={p.id} p={p} />
-        ))}
-      </div>
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <Panel
-          title={
-            user
-              ? lang === "ms"
-                ? "Profil saya"
-                : lang === "zh"
-                  ? "我的资料"
-                  : "My profile"
-              : t("me.profiles")
+      {profiles.isLoading ? (
+        <Rows n={2} h="h-28" />
+      ) : profiles.isError ? (
+        <ErrorBox error={profiles.error} retry={() => profiles.refetch()} />
+      ) : !p ? (
+        <Empty
+          title={w.ready}
+          icon={<UserRound className="h-5 w-5" />}
+          action={
+            <div className="flex flex-wrap justify-center gap-2">
+              <Button
+                className="min-h-11"
+                onClick={() => nav("/onboarding/cv?seg=worker&new=1")}
+              >
+                {t("landing.worker")}
+              </Button>
+              <Button
+                variant="outline"
+                className="min-h-11"
+                onClick={() => nav("/onboarding/cv?seg=graduate&new=1")}
+              >
+                {t("landing.grad")}
+              </Button>
+            </div>
           }
         >
-          {profiles.isLoading ? (
-            <Rows n={3} h="h-20" />
-          ) : profiles.isError ? (
-            <ErrorBox error={profiles.error} retry={() => profiles.refetch()} />
-          ) : !visibleProfiles.length ? (
-            <Empty
-              title={t("me.emptyTitle")}
-              icon={<UserRound className="h-5 w-5" />}
-              action={
-                <div className="flex flex-wrap justify-center gap-2">
-                  <Button
-                    className="min-h-11"
-                    onClick={() => start("worker")}
-                    data-testid="button-start-worker"
-                  >
-                    {t("landing.worker")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="min-h-11"
-                    onClick={() => start("graduate")}
-                    data-testid="button-start-graduate"
-                  >
-                    {t("landing.grad")}
-                  </Button>
+          {t("me.emptyBody")}
+        </Empty>
+      ) : (
+        <>
+          <WorkspaceMetrics p={p} />
+          <div className="mt-5">
+            <LearningDashboard p={p} />
+          </div>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <Panel title={w.profile}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="break-words text-lg font-bold">{p.name}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {p.currentRole}
+                  </p>
                 </div>
-              }
-            >
-              {t("me.emptyBody")}
-            </Empty>
-          ) : (
-            <div className="space-y-3">
-              <ul className="space-y-2">
-                {visibleProfiles.map((p, i) => (
-                  <li
-                    key={p.id}
-                    className="rise flex items-center gap-2"
-                    style={{ animationDelay: `${i * 40}ms` }}
+                {!user && <ClearGuestProfile id={p.id} name={p.name} />}
+              </div>
+              <div className="my-4 flex flex-wrap gap-2 text-xs">
+                <SegTag s={p.segment} />
+                <span className="rounded-full bg-muted px-3 py-1">
+                  {t("me.skillsN", { n: p.skills.length })}
+                </span>
+                {p.riasecCode && (
+                  <span
+                    translate="no"
+                    className="rounded-full bg-[hsl(var(--gold-soft))] px-3 py-1 font-semibold"
                   >
-                    <Link
-                      href={`/me/profiles/${p.id}/intake`}
-                      className="group flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-primary"
-                      data-testid={`link-profile-${p.id}`}
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--maroon-soft))] text-sm font-bold text-primary">
-                        {p.name.slice(0, 2).toUpperCase()}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span
-                          className="block truncate whitespace-nowrap font-semibold"
-                          title={p.name}
-                        >
-                          {p.name}
-                        </span>
-                        <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-                          <SegTag s={p.segment} />
-                          <span>{t("me.skillsN", { n: p.skills.length })}</span>
-                          {p.riasecCode && <span>RIASEC {p.riasecCode}</span>}
-                          {p.cvFileName && (
-                            <span className="inline-flex items-center gap-0.5">
-                              <FileText className="h-3 w-3" />
-                              CV
-                            </span>
-                          )}
-                        </span>
-                      </span>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                    </Link>
-                    {!user && <ClearGuestProfile id={p.id} name={p.name} />}
-                  </li>
-                ))}
-              </ul>
-              {profiles.hasNextPage && (
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => profiles.fetchNextPage()}
-                  disabled={profiles.isFetchingNextPage}
-                >
-                  {profiles.isFetchingNextPage ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : null}
-                  {t("me.loadMore")}
-                </Button>
-              )}
-            </div>
-          )}
-        </Panel>
-        <Panel title={t("me.activity")}>
-          {sum.isLoading ? (
-            <Rows n={4} h="h-10" />
-          ) : sum.isError ? (
-            <ErrorBox error={sum.error} retry={() => sum.refetch()} />
-          ) : !s?.recentActivity.length ? (
-            <p className="text-sm text-muted-foreground">
-              {t("me.noActivity")}
-            </p>
-          ) : (
-            <ul className="space-y-2.5">
-              {s.recentActivity.slice(0, 10).map((a, i) => {
-                const Icon =
-                  a.kind === "plan"
-                    ? ClipboardList
-                    : a.kind === "prediction"
-                      ? Sparkles
-                      : a.kind === "insight"
-                        ? Bot
-                        : UserRound;
-                const body = (
-                  <span className="flex min-w-0 items-start gap-2.5">
-                    <Icon className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                    <span className="min-w-0">
-                      <span
-                        className="block truncate whitespace-nowrap text-sm"
-                        title={a.label}
-                      >
-                        <b className="font-semibold">
-                          {tk("activity", a.kind)}:
-                        </b>{" "}
-                        {a.label}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {f.dateTime(a.createdAt)}
-                      </span>
-                    </span>
+                    RIASEC {p.riasecCode}
                   </span>
-                );
-                return (
-                  <li key={i}>
-                    {a.profileId ? (
-                      <Link
-                        href={`/me/profiles/${a.profileId}`}
-                        className="block rounded-lg hover:bg-muted/50"
-                      >
-                        {body}
-                      </Link>
-                    ) : a.kind === "prediction" ? (
-                      <Link
-                        href="/me/outlook"
-                        className="block rounded-lg hover:bg-muted/50"
-                      >
-                        {body}
-                      </Link>
-                    ) : (
-                      body
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Panel>
-      </div>
+                )}
+              </div>
+              <Link
+                href={`/me/profiles/${p.id}/intake`}
+                className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-primary"
+              >
+                {w.details}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Panel>
+            <Panel title={t("me.activity")}>
+              {sum.isLoading ? (
+                <Rows n={2} h="h-10" />
+              ) : sum.isError ? (
+                <ErrorBox error={sum.error} retry={() => sum.refetch()} />
+              ) : !sum.data?.recentActivity.length ? (
+                <p className="text-sm text-muted-foreground">
+                  {t("me.noActivity")}
+                </p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {sum.data.recentActivity.slice(0, 4).map((a, i) => (
+                    <li
+                      key={i}
+                      className="flex items-start gap-2 py-3 first:pt-0"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {tk("activity", a.kind)}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {f.dateTime(a.createdAt)}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+          </div>
+        </>
+      )}
     </>
+  );
+}
+
+function WorkspaceMetrics({ p }: { p: Profile }) {
+  const { lang } = useT(),
+    f = useFmt(),
+    q = useLearning(p.id),
+    j = q.data;
+  const w =
+    lang === "ms"
+      ? {
+          done: "Kursus selesai",
+          next: "Tarikh akhir seterusnya",
+          time: "Masa belajar",
+          budget: "Bajet latihan",
+          hours: "jam / minggu",
+        }
+      : lang === "zh"
+        ? {
+            done: "已完成课程",
+            next: "下个截止日期",
+            time: "学习时间",
+            budget: "学习预算",
+            hours: "小时 / 周",
+          }
+        : {
+            done: "Courses completed",
+            next: "Next deadline",
+            time: "Study time",
+            budget: "Training budget",
+            hours: p.weeklyHours === 1 ? "hour / week" : "hours / week",
+          };
+  const done =
+    j?.items.filter((i) => j.completed[String(i.courseId)]).length ?? 0;
+  const next = j?.items
+    .filter((i) => !j.completed[String(i.courseId)] && i.deadline)
+    .sort((a, b) => a.deadline!.localeCompare(b.deadline!))[0];
+  return (
+    <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {[
+        {
+          label: w.done,
+          value: j ? `${done} / ${j.items.length}` : "—",
+          Icon: CheckCircle2,
+        },
+        {
+          label: w.next,
+          value: next ? f.date(next.deadline) : "—",
+          Icon: CalendarDays,
+        },
+        {
+          label: w.time,
+          value: `${f.num(p.weeklyHours)} ${w.hours}`,
+          Icon: Clock3,
+        },
+        { label: w.budget, value: f.myr(p.budgetMyr), Icon: Wallet },
+      ].map(({ label, value, Icon }) => (
+        <div key={label} className="rounded-2xl border bg-card p-4">
+          <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <Icon className="h-4 w-4 shrink-0 text-primary" />
+            <span>{label}</span>
+          </div>
+          <p className="break-words text-lg font-bold sm:text-xl">{value}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 

@@ -37,14 +37,8 @@ import { cn } from "@/lib/utils";
 
 export function BrandMark({ className }: { className?: string }) {
   return (
-    <span
-      className={cn(
-        "relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] font-bold tracking-tight text-primary-foreground",
-        className,
-      )}
-    >
-      SK
-      <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-card bg-accent" />
+    <span className={cn("relative inline-block h-10 w-10 shrink-0 overflow-hidden", className)}>
+      <img src="/skilytics-logo.png" alt="Skilytics" className="absolute left-1/2 top-1/2 h-[145%] w-[145%] max-w-none -translate-x-1/2 -translate-y-1/2 object-contain" />
     </span>
   );
 }

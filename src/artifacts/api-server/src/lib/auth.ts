@@ -112,7 +112,7 @@ export async function claimGuestData(userId:number,guestToken:string|undefined,p
   preferredId=Number.isSafeInteger(preferredId)&&preferredId!>0&&preferredId!<=2147483647?preferredId:undefined;
   return db.transaction(async tx=>{
     await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${"individual-profile:"+userId},0))`);
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${"guest-claim:"+guestToken},0))`);
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${guestToken},0))`);
     const existing=await individualProfile(userId,tx);
     let moved=0;
     if(!existing) {

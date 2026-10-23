@@ -63,6 +63,6 @@ test("career news excludes unrelated, old, unlisted and unsafe metadata", () => 
   assert.ok(
     new URL(newsUrl("gdelt", "my")).searchParams
       .get("query")
-      ?.includes("sourcecountry:MY"),
+      ?.includes("Malaysia"),
   );
 });
