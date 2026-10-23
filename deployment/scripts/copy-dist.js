@@ -1,8 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const srcDir = path.resolve(__dirname, '../src/artifacts/reskill-ai/dist/public');
-const destDir = path.resolve(__dirname, '../dist');
+const rootDir = path.resolve(__dirname, '../..');
+const srcDir = path.resolve(rootDir, 'src/artifacts/reskill-ai/dist/public');
+const destDir = path.resolve(rootDir, 'dist');
 
 if (fs.existsSync(srcDir)) {
   fs.cpSync(srcDir, destDir, { recursive: true });

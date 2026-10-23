@@ -1,0 +1,30 @@
+# ==============================================================================
+# Skilytics — AI Reskilling Navigator & Analytics Platform
+# Python Environment Requirements (requirements.txt)
+# Python Runtime: >=3.10
+# ==============================================================================
+
+# --- AI & Cloud Inference SDKs ---
+runpod>=1.7.0                     # RunPod Serverless GPU inference SDK
+google-genai>=0.1.1               # Official Google Gemini SDK for multimodal CV extraction
+google-generativeai>=0.8.0        # Google Generative AI client support
+
+# --- HTTP & API Clients ---
+requests>=2.31.0                  # Synchronous HTTP requests for testing endpoints
+httpx>=0.27.0                     # High-performance async/sync HTTP client
+aiohttp>=3.9.0                    # Asynchronous networking for concurrent worker calls
+
+# --- Data Validation & Schemas ---
+pydantic>=2.7.0                   # Strict data modeling, RIASEC scores, and profile schemas
+typing-extensions>=4.11.0         # Modern type hinting primitives
+
+# --- Database & Environment Configuration ---
+psycopg2-binary>=2.9.9            # PostgreSQL database driver for Neon connectivity
+python-dotenv>=1.0.1              # .env configuration loader
+
+# --- Data Processing & Statistics ---
+pandas>=2.2.0                     # Labour dataset analysis and occupational mapping
+numpy>=1.26.0                     # Matrix and vector operations for skill similarity
+
+# --- Utilities & Progress Tracking ---
+tqdm>=4.66.0                      # Console progress bars for bulk fixture evaluations
