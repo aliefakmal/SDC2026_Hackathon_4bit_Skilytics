@@ -6,6 +6,8 @@ import {
   getGetMarketOverviewQueryKey, getGetRoleQueryKey, getListCoursesQueryKey, type CostType, type Role,
 } from "@workspace/api-client-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import {skillLabel} from "@/lib/skill-label";
 import { Switch } from "@/components/ui/switch";
 import { CostBadge, DataStamp, Empty, ErrorBox, ExplainNote, HrdcBadge, Meter, PageHeader, Panel, Rows, SdgBadge, SkillBadge, catIcon } from "@/components/kit";
 import { roleTitle, useFmt } from "@/lib/fmt";
@@ -17,14 +19,17 @@ export function Roles() {
   const { t, tk, lang } = useT();
   const f = useFmt();
   const q = useListRoles();
+  const [search,setSearch]=useState("");
   const [sector, setSector] = useState("all");
   const sectors = useMemo(() => Array.from(new Set((q.data ?? []).map((r) => r.sector))).sort(), [q.data]);
-  const list = (q.data ?? []).filter((r) => sector === "all" || r.sector === sector);
+  const list = (q.data ?? []).filter(r => (sector === "all" || r.sector === sector) && `${r.title} ${roleTitle(r,lang)} ${r.socCode} ${r.skills.map(s=>skillLabel(s.name,lang)).join(" ")}`.toLowerCase().includes(search.toLowerCase()));
+  const latest=(q.data??[]).map(r=>r.sourceFetchedAt).filter(Boolean).sort().at(-1);
   return (
     <>
       <PageHeader eyebrow={t("nav.roles")} title={t("roles.title")} sub={t("roles.sub")}
         actions={<Select value={sector} onValueChange={setSector}><SelectTrigger className="min-h-11 w-56" data-testid="select-sector"><SelectValue /></SelectTrigger>
           <SelectContent><SelectItem value="all">{t("roles.allSectors")}</SelectItem>{sectors.map((s) => <SelectItem key={s} value={s}>{tk("sector", s)}</SelectItem>)}</SelectContent></Select>} />
+      <div className="mb-4 space-y-2"><Input className="min-h-11" value={search} onChange={e=>setSearch(e.target.value)} aria-label={lang==="ms"?"Cari kerjaya atau kemahiran":lang==="zh"?"搜索职业或技能":"Search careers or skills"} placeholder={lang==="ms"?"Cari kerjaya atau kemahiran":lang==="zh"?"搜索职业或技能":"Search careers or skills"}/><DataStamp source={`O*NET ${(q.data??[])[0]?.sourceVersion??""} · Anthropic Economic Index`} fetchedAt={latest}/><p className="text-xs text-muted-foreground">{list.length} {lang==="ms"?"kerjaya dengan rujukan sumber":lang==="zh"?"个职业，附来源":"careers with source references"}</p></div>
       {q.isLoading ? <Rows n={6} h="h-28" /> : q.isError ? <ErrorBox error={q.error} retry={() => q.refetch()} /> : !list.length ? <Empty title={t("roles.empty")} /> : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
           {list.map((r, i) => {
@@ -35,7 +40,7 @@ export function Roles() {
                 className="rise flex min-w-0 flex-col rounded-2xl border border-card-border bg-card p-4 shadow-xs transition-colors hover:border-primary">
                 <div className="flex items-center gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--maroon-soft))] text-primary"><Icon className="h-5 w-5" /></span>
-                  <div className="min-w-0"><div title={title} className="truncate whitespace-nowrap font-semibold">{title}</div>
+                  <div className="min-w-0"><div title={title} className="font-semibold leading-snug">{title}</div>
                     <div className="truncate whitespace-nowrap text-[11px] text-muted-foreground">{tk("sector", r.sector)} · SOC {r.socCode}</div></div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-3 text-[11px]">
@@ -45,6 +50,7 @@ export function Roles() {
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold">RIASEC {r.riasecCode}</span>
                   <span className="text-[10px] text-muted-foreground">{t("roles.skillsN", { n: r.skills.length })}</span>
+                  <span className="text-[10px] text-muted-foreground">{r.skills.filter(s=>!!s.courseUrl).length} {lang==="ms"?"kemahiran dengan kursus":lang==="zh"?"项技能有配套课程":"skills with courses"}</span>
                 </div>
               </Link>
             );
@@ -83,7 +89,7 @@ export function RoleDetail() {
                     <div key={cat}>
                       <div className="mb-1.5 text-xs font-semibold text-muted-foreground">{tk("cat", cat)}</div>
                       <div className="flex flex-wrap gap-1.5">{[...skills].sort((a, b) => b.importance - a.importance).map((s) => (
-                        <span key={s.skillId} className="inline-flex items-center gap-1"><SkillBadge name={s.name} category={s.category} tone={s.importance >= 3 ? "gap" : "neutral"} /><span className="tnum text-[10px] text-muted-foreground">{s.importance}/3</span></span>
+                        <span key={s.skillId} className="inline-flex items-center gap-1"><SkillBadge name={skillLabel(s.name,lang)} category={s.category} tone={s.importance >= 3 ? "gap" : "neutral"} /><span className="tnum text-[10px] text-muted-foreground">{s.importance}/3</span>{s.courseUrl && <a className="inline-flex min-h-11 items-center text-xs text-primary underline" href={s.courseUrl} target="_blank" rel="noopener noreferrer">{lang==="ms"?"Kursus":lang==="zh"?"课程":"Course"} ↗</a>}</span>
                       ))}</div>
                     </div>
                   ))}

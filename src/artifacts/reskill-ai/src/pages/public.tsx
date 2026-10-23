@@ -3,7 +3,7 @@ import { Link, useLocation, useSearch } from "wouter";
 import { motion } from "framer-motion";
 import {
   Activity, ArrowDown, ArrowRight, Briefcase, Building2, ChevronRight, Database, FileText,
-  GraduationCap, HardHat, Loader2, Map, School, ShieldCheck, Sparkles, UserRound, Users
+  GraduationCap, HardHat, Loader2, Map, School, ShieldCheck, Sparkles, UserPlus, UserRound, Users
 } from "lucide-react";
 import { useGetMarketOverview, useListDemoAccounts, useLogin, useRegister, getGetMarketOverviewQueryKey, type UserRole } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { BrandMark, ErrorBox } from "@/components/kit";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, portalHome } from "@/lib/auth";
 import { errCode, useT, type DictKey } from "@/i18n";
-import { moveGuestObToUser, safeNext } from "@/lib/onboarding";
+import { moveGuestObToUser, safeNext, getObProfile, setObProfile, obScope } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 
 function HonestyLine() {
@@ -253,7 +253,7 @@ export function Landing() {
                 className="group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-primary/95 cursor-pointer"
                 data-testid="button-first-time-user"
               >
-                <Sparkles className="h-4 w-4 text-accent" />
+                <UserPlus className="h-4 w-4 text-accent" />
                 <span className="text-sm sm:text-base">{t("landing.ctaFirstTime")}</span>
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
               </button>
@@ -601,14 +601,21 @@ export function Login() {
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const demos = useListDemoAccounts();
-  const login = useLogin();
+  const login = useLogin({request:{headers:{"x-claim-profile-id":String(new URLSearchParams(next?.split("?")[1]??"").get("pid")??getObProfile("guest")??"")}}});
   useEffect(() => setErr(null), [role]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setErr(null);
     login.mutate({ data: { email: email.trim(), password, role } }, {
-      onSuccess: async (s) => { if (s.user.role === "individual") moveGuestObToUser(s.user.id); await signIn(s); nav(s.user.role === "individual" && next ? next : portalHome(s.user.role)); },
+      onSuccess: async (s) => {
+        if(s.claimedProfiles>0) moveGuestObToUser(s.user.id);
+        await signIn(s);
+        const pid=(s as typeof s & {profileId?:number}).profileId;
+        if(pid)setObProfile(obScope(s.user.id),pid);
+        const requested=Number(new URLSearchParams(next?.split("?")[1]??"").get("pid"));
+        nav(s.user.role === "individual" && next && (!requested||requested===pid) ? next : portalHome(s.user.role));
+      },
       onError: (e) => {
         const c = errCode(e);
         if (c === "wrong_role") {
@@ -688,15 +695,17 @@ export function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  const reg = useRegister();
+  const reg = useRegister({request:{headers:{"x-claim-profile-id":String(new URLSearchParams(next?.split("?")[1]??"").get("pid")??getObProfile("guest")??"")}}});
   const submit = (e: FormEvent) => {
     e.preventDefault();
     setErr(null);
     if (password.length < 8) { setErr(t("auth.pwShort")); return; }
     reg.mutate({ data: { email: email.trim(), password } }, {
       onSuccess: async (s) => {
-        moveGuestObToUser(s.user.id);
+        if(s.claimedProfiles>0) moveGuestObToUser(s.user.id);
         await signIn(s);
+        const pid=(s as typeof s & {profileId?:number}).profileId;
+        if(pid)setObProfile(obScope(s.user.id),pid);
         toast({ title: t("auth.welcome", { name: s.user.name }), description: s.claimedProfiles > 0 ? t("auth.claimed", { n: s.claimedProfiles }) : undefined });
         nav(next ?? "/me");
       },
