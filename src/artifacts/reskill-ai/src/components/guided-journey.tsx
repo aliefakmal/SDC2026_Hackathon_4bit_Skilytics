@@ -66,6 +66,14 @@ export function GuidedJourney({ p, mod }: { p: Profile; mod: string }) {
           ))}
         </ol>
       )}
+      {stage !== "active" && index > 0 && (
+        <Link
+          href={`/me/profiles/${p.id}/${index === 2 ? "matcher" : "intake"}`}
+          className="inline-flex min-h-11 items-center rounded-xl border bg-card px-4 text-sm font-semibold hover:bg-muted"
+        >
+          ← {w.steps[index - 1]}
+        </Link>
+      )}
       {index === 0 ? (
         <IntakeSummary p={p} active={stage === "active"} />
       ) : index === 1 ? (
