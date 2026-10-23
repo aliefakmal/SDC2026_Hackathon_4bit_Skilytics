@@ -419,46 +419,60 @@ export function Landing() {
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">{t("landing.sdgTitle")}</h2>
             </div>
 
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* SDG 4.4 */}
-              <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
+            <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+              {/* SDG 4.3 */}
+              <div className="rounded-2xl bg-white/10 p-4 sm:p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
                 <div>
                   <div className="flex items-center gap-3 mb-3">
-                    <img src="/sdg/4.png" alt="SDG 4" className="h-14 w-14 rounded-none object-contain shadow-md shrink-0 border border-white/20 bg-black/10" />
+                    <img src="/sdg/4.png" alt="SDG 4" className="h-12 w-12 sm:h-14 sm:w-14 rounded-none object-contain shadow-md shrink-0 border border-white/20 bg-black/10" />
                     <div>
-                      <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-none bg-accent text-accent-foreground">SDG 4.4</span>
-                      <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg4Title")}</h3>
+                      <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-none bg-accent text-accent-foreground">SDG 4.3</span>
+                      <h3 className="text-sm font-bold text-white leading-snug mt-0.5">{t("landing.sdg43Title")}</h3>
                     </div>
                   </div>
-                  <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg4Desc")}</p>
+                  <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg43Desc")}</p>
+                </div>
+              </div>
+
+              {/* SDG 4.4 */}
+              <div className="rounded-2xl bg-white/10 p-4 sm:p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <img src="/sdg/4.png" alt="SDG 4" className="h-12 w-12 sm:h-14 sm:w-14 rounded-none object-contain shadow-md shrink-0 border border-white/20 bg-black/10" />
+                    <div>
+                      <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-none bg-accent text-accent-foreground">SDG 4.4</span>
+                      <h3 className="text-sm font-bold text-white leading-snug mt-0.5">{t("landing.sdg44Title")}</h3>
+                    </div>
+                  </div>
+                  <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg44Desc")}</p>
+                </div>
+              </div>
+
+              {/* SDG 8.2 */}
+              <div className="rounded-2xl bg-white/10 p-4 sm:p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <img src="/sdg/8.png" alt="SDG 8" className="h-12 w-12 sm:h-14 sm:w-14 rounded-none object-contain shadow-md shrink-0 border border-white/20 bg-black/10" />
+                    <div>
+                      <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-none bg-accent text-accent-foreground">SDG 8.2</span>
+                      <h3 className="text-sm font-bold text-white leading-snug mt-0.5">{t("landing.sdg82Title")}</h3>
+                    </div>
+                  </div>
+                  <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg82Desc")}</p>
                 </div>
               </div>
 
               {/* SDG 8.5 */}
-              <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
+              <div className="rounded-2xl bg-white/10 p-4 sm:p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
                 <div>
                   <div className="flex items-center gap-3 mb-3">
-                    <img src="/sdg/8.png" alt="SDG 8" className="h-14 w-14 rounded-none object-contain shadow-md shrink-0 border border-white/20 bg-black/10" />
+                    <img src="/sdg/8.png" alt="SDG 8" className="h-12 w-12 sm:h-14 sm:w-14 rounded-none object-contain shadow-md shrink-0 border border-white/20 bg-black/10" />
                     <div>
                       <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-none bg-accent text-accent-foreground">SDG 8.5</span>
-                      <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg8Title")}</h3>
+                      <h3 className="text-sm font-bold text-white leading-snug mt-0.5">{t("landing.sdg85Title")}</h3>
                     </div>
                   </div>
-                  <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg8Desc")}</p>
-                </div>
-              </div>
-
-              {/* SDG 9.5 */}
-              <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
-                <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <img src="/sdg/9.png" alt="SDG 9" className="h-14 w-14 rounded-none object-contain shadow-md shrink-0 border border-white/20 bg-black/10" />
-                    <div>
-                      <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-none bg-accent text-accent-foreground">SDG 9.5</span>
-                      <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg9Title")}</h3>
-                    </div>
-                  </div>
-                  <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg9Desc")}</p>
+                  <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg85Desc")}</p>
                 </div>
               </div>
             </div>
