@@ -82,7 +82,7 @@ async function cached(hash: string, tx: Pick<typeof db, "select"> = db) {
     .where(
       and(
         eq(predictionsTable.inputHash, hash),
-        eq(predictionsTable.question, "PUBLIC_MARKET_OUTLOOK_V1"),
+        eq(predictionsTable.question, "PUBLIC_MARKET_OUTLOOK_V2"),
         gte(predictionsTable.createdAt, new Date(Date.now() - 86400000)),
       ),
     )
@@ -176,7 +176,7 @@ router.post("/market/outlook", async (req, res) => {
     const [row] = await tx
       .insert(predictionsTable)
       .values({
-        question: "PUBLIC_MARKET_OUTLOOK_V1",
+        question: "PUBLIC_MARKET_OUTLOOK_V2",
         horizonYears: horizon,
         lang: "en",
         inputHash: c.hash,
