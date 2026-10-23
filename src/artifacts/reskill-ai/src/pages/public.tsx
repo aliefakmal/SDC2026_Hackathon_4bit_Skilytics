@@ -1,11 +1,17 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import { motion } from "framer-motion";
-import { Activity, ArrowRight, Briefcase, Building2, Database, FileText, GraduationCap, HardHat, Loader2, Map, School, ShieldCheck, UserRound } from "lucide-react";
+import {
+  Activity, ArrowDown, ArrowRight, Briefcase, Building2, ChevronRight, Database, FileText,
+  GraduationCap, HardHat, Loader2, Map, School, ShieldCheck, Sparkles, UserRound
+} from "lucide-react";
 import { useGetMarketOverview, useListDemoAccounts, useLogin, useRegister, getGetMarketOverviewQueryKey, type UserRole } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { PublicHeader } from "@/components/shell";
 import { BrandMark, ErrorBox } from "@/components/kit";
 import { useToast } from "@/hooks/use-toast";
@@ -26,23 +32,11 @@ function HonestyLine() {
   );
 }
 
-function RadarMotif() {
-  const pts = (r: number[]) => r.map((v, i) => { const a = (Math.PI * 2 * i) / 6 - Math.PI / 2; return `${100 + Math.cos(a) * v},${100 + Math.sin(a) * v}`; }).join(" ");
-  return (
-    <svg viewBox="0 0 200 200" className="h-full w-full" aria-hidden>
-      {[25, 50, 75].map((r) => <polygon key={r} points={pts([r, r, r, r, r, r])} fill="none" stroke="hsl(352 71% 28% / .14)" />)}
-      {[0, 1, 2, 3, 4, 5].map((i) => { const a = (Math.PI * 2 * i) / 6 - Math.PI / 2; return <line key={i} x1="100" y1="100" x2={100 + Math.cos(a) * 75} y2={100 + Math.sin(a) * 75} stroke="hsl(352 71% 28% / .12)" />; })}
-      <motion.polygon initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, delay: 0.2 }} style={{ transformOrigin: "100px 100px" }}
-        points={pts([70, 62, 72, 55, 66, 60])} fill="hsl(352 71% 28% / .16)" stroke="#7A1523" strokeWidth="2" />
-      <motion.polygon initial={{ opacity: 0, scale: 0.4 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1, delay: 0.5 }} style={{ transformOrigin: "100px 100px" }}
-        points={pts([48, 58, 30, 50, 38, 44])} fill="hsl(41 82% 43% / .28)" stroke="#C69214" strokeWidth="2" />
-    </svg>
-  );
-}
-
 export function Landing() {
   const { t } = useT();
   const { user } = useAuth();
+  const [userModalOpen, setUserModalOpen] = useState(false);
+  const [partnerModalOpen, setPartnerModalOpen] = useState(false);
 
   useEffect(() => {
     // Pre-warm backend API while visitor explores landing page to eliminate cold start
@@ -55,75 +49,387 @@ export function Landing() {
     fetch(`${base}/api/auth/demo-accounts`, { cache: "no-store" }).catch(() => {});
   };
 
-  const steps: [DictKey, DictKey, typeof FileText][] = [
-    ["nav.intake", "landing.step1", FileText], ["nav.radar", "landing.step2", Activity], ["nav.matcher", "landing.step3", Briefcase], ["nav.pathway", "landing.step4", Map],
-  ];
   return (
     <div className="paper min-h-[100dvh] bg-background">
       <PublicHeader />
       <main className="relative z-[1] mx-auto max-w-6xl px-4 pb-16 md:px-8">
-        <section className="grid items-center gap-8 py-10 md:grid-cols-[1.25fr_1fr] md:py-16">
+        {/* 1. HERO SECTION WITH IMAGE.PNG ON RIGHT */}
+        <section className="grid items-center gap-8 py-8 md:grid-cols-[1.15fr_1fr] md:py-14">
           <div className="rise min-w-0">
-            <div className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-accent/50 bg-card px-3 py-1 text-xs font-semibold text-accent">
-              <ShieldCheck className="h-3.5 w-3.5 shrink-0" /><span className="truncate whitespace-nowrap">{t("landing.badge")}</span>
+            <div className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-accent/50 bg-card px-3.5 py-1 text-xs font-semibold text-accent shadow-xs">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-accent" />
+              <span className="truncate whitespace-nowrap">{t("landing.badge")}</span>
             </div>
-            <h1 className="text-[2rem] font-extrabold leading-[1.08] tracking-tight md:text-5xl">{t("landing.title")}</h1>
-            <p className="mt-4 max-w-xl text-base text-muted-foreground md:text-lg">{t("landing.sub")}</p>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-[1.12] tracking-tight text-foreground">
+              {t("landing.title")}
+            </h1>
+            <p className="mt-4 max-w-xl text-base sm:text-lg text-muted-foreground leading-relaxed">
+              {t("landing.sub")}
+            </p>
+
+            {/* TWO CTA BUTTONS: Maroon (First time user) + White with Maroon Outline (Employers & Educators) */}
+            <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5">
+              <button
+                type="button"
+                onClick={() => setUserModalOpen(true)}
+                className="group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg hover:bg-primary/95 cursor-pointer"
+                data-testid="button-first-time-user"
+              >
+                <Sparkles className="h-4 w-4 text-accent" />
+                <span className="text-sm sm:text-base">{t("landing.ctaFirstTime")}</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPartnerModalOpen(true)}
+                className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-primary bg-background px-6 py-3 font-semibold text-primary transition-all hover:-translate-y-0.5 hover:bg-primary/5 cursor-pointer"
+                data-testid="button-partners"
+              >
+                <Building2 className="h-4 w-4" />
+                <span className="text-sm sm:text-base">{t("landing.ctaPartners")}</span>
+                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </button>
+            </div>
+
             {user && (
-              <Link href={portalHome(user.role)} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 font-semibold text-primary-foreground" data-testid="link-continue">
-                {t("landing.continue", { name: user.name })}<ArrowRight className="h-4 w-4" />
-              </Link>
+              <div className="mt-4">
+                <Link href={portalHome(user.role)} className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-muted px-4 py-2 text-xs font-semibold text-foreground hover:bg-muted/80" data-testid="link-continue">
+                  {t("landing.continue", { name: user.name })}<ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
             )}
             <div className="mt-6"><HonestyLine /></div>
           </div>
-          <div className="mx-auto hidden aspect-square w-full max-w-sm md:block"><RadarMotif /></div>
-        </section>
 
-        <section className="grid gap-3 md:grid-cols-2" aria-label={t("landing.chooseTitle")}>
-          <h2 className="truncate whitespace-nowrap text-lg font-bold md:col-span-2">{t("landing.chooseTitle")}</h2>
-          {([["worker", HardHat, "landing.worker", "landing.workerSub"], ["graduate", GraduationCap, "landing.grad", "landing.gradSub"]] as const).map(([seg, Icon, title, sub], i) => (
-            <Link key={seg} href={`/onboarding/cv?seg=${seg}&new=1`} data-testid={`link-start-${seg}`} style={{ animationDelay: `${i * 80}ms` }}
-              onMouseEnter={prewarm}
-              className="rise group flex min-h-24 items-center gap-4 rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground"><Icon className="h-6 w-6" /></span>
-              <span className="min-w-0 flex-1"><span className="block truncate whitespace-nowrap font-bold">{t(title)}</span><span className="mt-0.5 block text-sm text-muted-foreground">{t(sub)}</span></span>
-              <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
-            </Link>
-          ))}
-          {([["hr", Building2, "portal.hr", "landing.hrSub"], ["tvet", School, "portal.tvet", "landing.tvetSub"]] as const).map(([role, Icon, title, sub], i) => (
-            <Link key={role} href={`/login?role=${role}`} data-testid={`link-portal-${role}`} style={{ animationDelay: `${160 + i * 80}ms` }}
-              className="rise group flex min-h-20 items-center gap-4 rounded-2xl border-2 border-accent/70 ring-2 ring-accent/20 bg-card p-4.5 shadow-xs transition-all hover:-translate-y-0.5 hover:border-accent hover:ring-accent/40 hover:shadow-md">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent"><Icon className="h-5 w-5" /></span>
-              <span className="min-w-0 flex-1"><span className="block truncate whitespace-nowrap font-semibold">{t(title)}</span><span className="block text-xs text-muted-foreground">{t(sub)}</span></span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
-            </Link>
-          ))}
-        </section>
-
-        <section className="mt-14">
-          <h2 className="truncate whitespace-nowrap text-lg font-bold">{t("landing.howTitle")}</h2>
-          <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {steps.map(([title, body, Icon], i) => (
-              <li key={title} className="rise relative rounded-2xl border border-card-border bg-card p-5" style={{ animationDelay: `${i * 70}ms` }}>
-                <div className="flex items-center justify-between"><Icon className="h-5 w-5 text-primary" /><span className="tnum text-xs font-bold text-accent">0{i + 1}</span></div>
-                <div className="mt-3 truncate whitespace-nowrap font-semibold" title={t(title)}>{t(title)}</div>
-                <p className="mt-1 text-sm text-muted-foreground">{t(body)}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        <section className="mt-14 grid gap-6 rounded-3xl bg-primary p-6 text-primary-foreground md:grid-cols-[1fr_1.3fr] md:p-10">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">{t("landing.trustTitle")}</h2>
-            <p className="mt-2 text-sm text-primary-foreground/80">{t("landing.trustBody")}</p>
+          {/* Right Side: image.png */}
+          <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
+            <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-primary/20 bg-card shadow-xl transition-all hover:shadow-2xl">
+              <img
+                src="/image.png"
+                alt="Find Your Fit. Fuel Your Future."
+                className="h-auto w-full object-cover max-h-[460px]"
+                loading="eager"
+              />
+            </div>
           </div>
-          <ul className="grid gap-3 text-sm">
-            {(["landing.trust1", "landing.trust2", "landing.trust3"] as const).map((k) => (
-              <li key={k} className="flex gap-3 rounded-xl bg-white/5 p-3"><span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent" /><span>{t(k)}</span></li>
-            ))}
-          </ul>
         </section>
+
+        {/* 2. TARGET MARKET HORIZONTAL CARDS (4 CHOICES) */}
+        <section className="mt-12 sm:mt-16" aria-label={t("landing.marketTitle")}>
+          <div className="mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("landing.marketTitle")}</h2>
+            <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t("landing.marketSub")}</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* 1. Student / Fresh Graduate */}
+            <Link
+              href="/onboarding/cv?seg=graduate&new=1"
+              onMouseEnter={prewarm}
+              data-testid="card-market-graduate"
+              className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <GraduationCap className="h-5 w-5" />
+                  </span>
+                  <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Talent</span>
+                </div>
+                <h3 className="mt-4 font-bold text-sm sm:text-base text-foreground">{t("landing.grad")}</h3>
+                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{t("landing.gradSub")}</p>
+              </div>
+              <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-primary">
+                <span>Start Assessment</span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </Link>
+
+            {/* 2. Jobseeker / Working Professional */}
+            <Link
+              href="/onboarding/cv?seg=worker&new=1"
+              onMouseEnter={prewarm}
+              data-testid="card-market-worker"
+              className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
+              style={{ animationDelay: "60ms" }}
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Briefcase className="h-5 w-5" />
+                  </span>
+                  <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">Professional</span>
+                </div>
+                <h3 className="mt-4 font-bold text-sm sm:text-base text-foreground">{t("landing.worker")}</h3>
+                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{t("landing.workerSub")}</p>
+              </div>
+              <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-primary">
+                <span>Analyze Reskilling</span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </Link>
+
+            {/* 3. Employer / Enterprise HR */}
+            <Link
+              href="/login?role=hr"
+              data-testid="card-market-hr"
+              className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
+              style={{ animationDelay: "120ms" }}
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
+                    <Building2 className="h-5 w-5" />
+                  </span>
+                  <span className="text-[11px] font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">Enterprise</span>
+                </div>
+                <h3 className="mt-4 font-bold text-sm sm:text-base text-foreground">{t("portal.hr")}</h3>
+                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{t("landing.hrSub")}</p>
+              </div>
+              <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-accent">
+                <span>HR Portal</span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </Link>
+
+            {/* 4. Educator / TVET Institution */}
+            <Link
+              href="/login?role=tvet"
+              data-testid="card-market-tvet"
+              className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
+              style={{ animationDelay: "180ms" }}
+            >
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
+                    <School className="h-5 w-5" />
+                  </span>
+                  <span className="text-[11px] font-semibold text-accent bg-accent/10 px-2 py-0.5 rounded-full">Institutions</span>
+                </div>
+                <h3 className="mt-4 font-bold text-sm sm:text-base text-foreground">{t("portal.tvet")}</h3>
+                <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{t("landing.tvetSub")}</p>
+              </div>
+              <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-accent">
+                <span>TVET Portal</span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        {/* 3. HOW IT WORKS SECTION (3 STEPS WITH CONNECTING ARROWS) */}
+        <section className="mt-14 sm:mt-18">
+          <div className="mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("landing.howTitle")}</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+            {/* Step 1: Intake */}
+            <div className="rise relative flex flex-col justify-between rounded-2xl border border-card-border bg-card p-6 shadow-xs">
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                    <FileText className="h-5 w-5" />
+                  </span>
+                  <span className="text-xs font-extrabold text-accent bg-accent/10 px-2.5 py-1 rounded-full">01</span>
+                </div>
+                <h3 className="mt-4 font-bold text-base text-foreground">{t("landing.stepIntake")}</h3>
+                <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">{t("landing.stepIntakeDesc")}</p>
+              </div>
+              {/* Desktop arrow right indicator */}
+              <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-6 w-6 items-center justify-center rounded-full bg-background border border-border shadow-xs text-muted-foreground">
+                <ArrowRight className="h-3.5 w-3.5" />
+              </div>
+              {/* Mobile arrow down indicator */}
+              <div className="flex md:hidden mx-auto mt-4 h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <ArrowDown className="h-3.5 w-3.5" />
+              </div>
+            </div>
+
+            {/* Step 2: Matcher */}
+            <div className="rise relative flex flex-col justify-between rounded-2xl border border-card-border bg-card p-6 shadow-xs" style={{ animationDelay: "70ms" }}>
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                    <Briefcase className="h-5 w-5" />
+                  </span>
+                  <span className="text-xs font-extrabold text-accent bg-accent/10 px-2.5 py-1 rounded-full">02</span>
+                </div>
+                <h3 className="mt-4 font-bold text-base text-foreground">{t("landing.stepMatcher")}</h3>
+                <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">{t("landing.stepMatcherDesc")}</p>
+              </div>
+              {/* Desktop arrow right indicator */}
+              <div className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 h-6 w-6 items-center justify-center rounded-full bg-background border border-border shadow-xs text-muted-foreground">
+                <ArrowRight className="h-3.5 w-3.5" />
+              </div>
+              {/* Mobile arrow down indicator */}
+              <div className="flex md:hidden mx-auto mt-4 h-6 w-6 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <ArrowDown className="h-3.5 w-3.5" />
+              </div>
+            </div>
+
+            {/* Step 3: Pathway */}
+            <div className="rise relative flex flex-col justify-between rounded-2xl border border-card-border bg-card p-6 shadow-xs" style={{ animationDelay: "140ms" }}>
+              <div>
+                <div className="flex items-center justify-between">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                    <Map className="h-5 w-5" />
+                  </span>
+                  <span className="text-xs font-extrabold text-accent bg-accent/10 px-2.5 py-1 rounded-full">03</span>
+                </div>
+                <h3 className="mt-4 font-bold text-base text-foreground">{t("landing.stepPathway")}</h3>
+                <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">{t("landing.stepPathwayDesc")}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. UN SUSTAINABLE DEVELOPMENT GOALS (SDG) SHOWCASE */}
+        <section className="mt-14 sm:mt-18 rounded-3xl bg-gradient-to-br from-primary via-[#65101c] to-[#450a12] p-6 text-primary-foreground sm:p-8 md:p-10 shadow-xl border border-primary/40">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-accent backdrop-blur-xs mb-3">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>United Nations Sustainable Development Goals</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{t("landing.sdgTitle")}</h2>
+            <p className="mt-2 text-xs sm:text-sm text-primary-foreground/85 leading-relaxed">{t("landing.sdgSub")}</p>
+          </div>
+
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* SDG 4.4 */}
+            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <img src="/sdg/4.png" alt="SDG 4" className="h-12 w-12 rounded-xl object-contain shadow-sm shrink-0" />
+                  <div>
+                    <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-accent text-accent-foreground">SDG 4.4</span>
+                    <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg4Title")}</h3>
+                  </div>
+                </div>
+                <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg4Desc")}</p>
+              </div>
+            </div>
+
+            {/* SDG 8.5 */}
+            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <img src="/sdg/8.png" alt="SDG 8" className="h-12 w-12 rounded-xl object-contain shadow-sm shrink-0" />
+                  <div>
+                    <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-accent text-accent-foreground">SDG 8.5</span>
+                    <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg8Title")}</h3>
+                  </div>
+                </div>
+                <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg8Desc")}</p>
+              </div>
+            </div>
+
+            {/* SDG 9.5 */}
+            <div className="rounded-2xl bg-white/10 p-5 backdrop-blur-xs border border-white/15 flex flex-col justify-between hover:bg-white/15 transition-colors">
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <img src="/sdg/9.png" alt="SDG 9" className="h-12 w-12 rounded-xl object-contain shadow-sm shrink-0" />
+                  <div>
+                    <span className="inline-block text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-accent text-accent-foreground">SDG 9.5</span>
+                    <h3 className="text-sm sm:text-base font-bold text-white leading-snug mt-0.5">{t("landing.sdg9Title")}</h3>
+                  </div>
+                </div>
+                <p className="text-xs sm:text-sm text-primary-foreground/80 leading-relaxed">{t("landing.sdg9Desc")}</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 5. MODAL: FIRST TIME USER (CHOICE OF WORKER OR GRADUATE) */}
+        <Dialog open={userModalOpen} onOpenChange={setUserModalOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold">{t("landing.modalUserTitle")}</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
+                {t("landing.modalUserSub")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-2 space-y-3">
+              <Link
+                href="/onboarding/cv?seg=worker&new=1"
+                onClick={() => setUserModalOpen(false)}
+                onMouseEnter={prewarm}
+                className="group flex items-center gap-4 rounded-2xl border border-card-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md cursor-pointer"
+                data-testid="modal-start-worker"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                  <Briefcase className="h-6 w-6" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-bold text-sm sm:text-base text-foreground">{t("landing.worker")}</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.workerSub")}</span>
+                </span>
+                <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
+              </Link>
+
+              <Link
+                href="/onboarding/cv?seg=graduate&new=1"
+                onClick={() => setUserModalOpen(false)}
+                onMouseEnter={prewarm}
+                className="group flex items-center gap-4 rounded-2xl border border-card-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md cursor-pointer"
+                data-testid="modal-start-graduate"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                  <GraduationCap className="h-6 w-6" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-bold text-sm sm:text-base text-foreground">{t("landing.grad")}</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.gradSub")}</span>
+                </span>
+                <ArrowRight className="h-5 w-5 shrink-0 text-primary transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* 6. MODAL: EMPLOYERS & EDUCATORS (PARTNER PORTALS) */}
+        <Dialog open={partnerModalOpen} onOpenChange={setPartnerModalOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-bold">{t("landing.modalPartnerTitle")}</DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm text-muted-foreground">
+                {t("landing.modalPartnerSub")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-2 space-y-3">
+              <Link
+                href="/login?role=hr"
+                onClick={() => setPartnerModalOpen(false)}
+                className="group flex items-center gap-4 rounded-2xl border-2 border-accent/60 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-md cursor-pointer"
+                data-testid="modal-portal-hr"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
+                  <Building2 className="h-6 w-6" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-bold text-sm sm:text-base text-foreground">{t("portal.hr")} ({t("landing.ctaEmployer")})</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.hrSub")}</span>
+                </span>
+                <ArrowRight className="h-5 w-5 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
+              </Link>
+
+              <Link
+                href="/login?role=tvet"
+                onClick={() => setPartnerModalOpen(false)}
+                className="group flex items-center gap-4 rounded-2xl border-2 border-accent/60 bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-accent hover:shadow-md cursor-pointer"
+                data-testid="modal-portal-tvet"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
+                  <School className="h-6 w-6" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-bold text-sm sm:text-base text-foreground">{t("portal.tvet")} ({t("landing.ctaEducator")})</span>
+                  <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.tvetSub")}</span>
+                </span>
+                <ArrowRight className="h-5 w-5 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <footer className="mt-12 flex flex-col gap-3 border-t border-border pt-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2"><BrandMark className="h-6 w-6 text-[9px]" /><span>{t("landing.footer")}</span></div>
