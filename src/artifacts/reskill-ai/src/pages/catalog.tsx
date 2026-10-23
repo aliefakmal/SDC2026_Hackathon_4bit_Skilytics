@@ -153,7 +153,7 @@ export function Roles() {
                 data-testid={`card-role-${r.id}`}
                 className="rise flex min-w-0 flex-col rounded-2xl border border-card-border bg-card p-4 shadow-xs transition-colors hover:border-primary"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-h-14 items-center gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[hsl(var(--maroon-soft))] text-primary">
                     <Icon className="h-5 w-5" />
                   </span>
