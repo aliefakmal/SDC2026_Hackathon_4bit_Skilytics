@@ -1,5 +1,8 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "pnpm --dir src install --frozen-lockfile",
+  "buildCommand": "pnpm --dir src --filter @workspace/reskill-ai run build && node scripts/copy-dist.js",
   "outputDirectory": "dist",
   "rewrites": [
     {

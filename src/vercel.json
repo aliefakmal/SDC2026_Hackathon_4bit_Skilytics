@@ -1,40 +1,17 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "services": {
-    "api-server": {
-      "root": "artifacts/api-server",
-      "framework": "express",
-      "functions": {
-        "**": {
-          "maxDuration": 60
-        }
-      }
-    },
-    "mockup-sandbox": {
-      "root": "artifacts/mockup-sandbox",
-      "framework": "vite"
-    },
-    "reskill-ai": {
-      "root": "artifacts/reskill-ai",
-      "framework": "vite",
-      "outputDirectory": "dist/public"
-    }
-  },
+  "framework": "vite",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm --filter @workspace/reskill-ai run build",
+  "outputDirectory": "artifacts/reskill-ai/dist/public",
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "https://sdc2026-hackathon-4bit-skilytics.onrender.com/api/$1"
     },
-    { "source": "/assets/(.*)", "destination": { "service": "reskill-ai" } },
-    { "source": "/sdg/(.*)", "destination": { "service": "reskill-ai" } },
-    { "source": "/favicon.svg", "destination": { "service": "reskill-ai" } },
-    { "source": "/robots.txt", "destination": { "service": "reskill-ai" } },
     {
       "source": "/(.*)",
-      "destination": {
-        "service": "reskill-ai",
-        "path": "/index.html"
-      }
+      "destination": "/index.html"
     }
   ]
 }
