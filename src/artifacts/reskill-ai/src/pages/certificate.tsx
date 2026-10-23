@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@workspace/api-client-react";
 import {
@@ -176,7 +176,7 @@ export default function CertificatePage() {
       <main className="mx-auto max-w-6xl px-4 py-5 sm:py-8">
         <div className="certificate-controls">
           <Link
-            href="/me"
+            href={window.location.pathname.startsWith("/hr/")?"/hr/members":"/me"}
             className="mb-5 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
           >
             <ArrowLeft className="h-4 w-4" />

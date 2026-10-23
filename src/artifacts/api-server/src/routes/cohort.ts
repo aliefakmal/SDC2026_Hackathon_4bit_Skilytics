@@ -4,6 +4,8 @@ import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { requireRole } from "../lib/auth";
 import { profileScope } from "../lib/profiles";
 import { loadCourses, loadRoles, loadSkills } from "../lib/catalog";
+import { profileSkills } from "../lib/profile-skills";
+import { selfDirectedRoles } from "../lib/self-directed";
 import { scoreRole } from "../lib/scoring";
 import { hasCurrentRiasec } from "../lib/riasec-scoring";
 
@@ -23,7 +25,7 @@ router.get("/cohort/summary", requireRole("hr", "tvet"), async (req, res) => {
     loadRoles(),
     loadSkills(),
     loadCourses(),
-    db.select({ profileId: plansTable.profileId }).from(plansTable),
+    db.select({ profileId: plansTable.profileId }).from(plansTable).where(inArray(plansTable.profileId,db.select({id:profilesTable.id}).from(profilesTable).where(profileScope(req)))),
   ]);
   const withPlan = new Set(plans.map((p) => p.profileId));
   const segCount = new Map<string, number>();
@@ -37,7 +39,7 @@ router.get("/cohort/summary", requireRole("hr", "tvet"), async (req, res) => {
     if (!hasCurrentRiasec(p.riasecAnswers)) { p.riasecCode = null; p.riasecScores = null; }
     segCount.set(p.segment, (segCount.get(p.segment) ?? 0) + 1);
     if (p.riasecCode) riasecCount.set(p.riasecCode[0], (riasecCount.get(p.riasecCode[0]) ?? 0) + 1);
-    const scored = roles.map((r) => ({ r, s: scoreRole(p, r, skills, courses) })).sort((a, b) => b.s.score - a.s.score);
+    const scored = (req.user?.role === "hr" ? selfDirectedRoles(roles,courses) : roles).map((r) => ({ r, s: scoreRole({...p,skills:profileSkills(p,skills)}, r, skills, courses) })).sort((a, b) => b.s.score - a.s.score);
     if (scored[0]) fitCount.set(scored[0].r.title, (fitCount.get(scored[0].r.title) ?? 0) + 1);
     const target = (p.targetRoleId && scored.find((x) => x.r.id === p.targetRoleId)) || scored[0];
     for (const g of target?.s.gapSkills ?? []) gapCount.set(g.name, (gapCount.get(g.name) ?? 0) + 1);

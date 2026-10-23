@@ -4,6 +4,7 @@ import profilesRouter from "./profiles";
 import catalogRouter from "./catalog";
 import marketRouter from "./market";
 import aiRouter from "./ai";
+import enterpriseRouter from "./enterprise";
 import cohortRouter from "./cohort";
 import authRouter from "./auth";
 import outlookRouter from "./market-outlook";
@@ -18,5 +19,6 @@ router.use(marketRouter);
 router.use(outlookRouter);
 router.use(aiRouter);
 router.use(cohortRouter);
+router.use(enterpriseRouter);
 
 export default router;

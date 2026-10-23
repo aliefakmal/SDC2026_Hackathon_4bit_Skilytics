@@ -694,7 +694,7 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
                     startDate: start,
                     durationWeeks: estimates,
                   });
-                  navigate(`/me/profiles/${p.id}/ready`);
+                  navigate(`${base}/${p.id}/${base.startsWith("/hr") ? "intake" : "ready"}`);
                 } catch {}
               }}
             >

@@ -42,7 +42,7 @@ export function useLearningAction(id: number) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["learning", id] }),
+    onSuccess: async () => { await qc.invalidateQueries({ queryKey: ["learning", id] }); await qc.invalidateQueries({queryKey:["enterprise"]}); },
   });
 }
 export function datedLearning(

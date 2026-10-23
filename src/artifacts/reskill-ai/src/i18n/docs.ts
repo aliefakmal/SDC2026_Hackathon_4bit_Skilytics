@@ -108,7 +108,7 @@ export const docsEn = {
   "docs.ai.cold": "RunPod generation and health checks are disabled during Gemini-only testing. Enabling hybrid routing and generation may wake a paid worker.",
   "docs.ai.ids": "Endpoint IDs are not public secrets. API keys are never shown.",
   "docs.ai.configured": "Provider, model and health come from the live AI status. If the API key is missing, the service shows as not configured.",
-  "docs.ai.privacy": "With your consent, CV text and images go to Gemini. All seven agents use Gemini during testing; RunPod is a disabled placeholder. Original files are discarded; extracted text and evidence stay with your profile. Guest profiles are kept for 7 days.",
+  "docs.ai.privacy": "With your consent, CV text and images go to Gemini. All seven agents use Gemini during testing; RunPod is a disabled placeholder. Original files are discarded; extracted text and evidence stay with your profile. Guest profiles are kept for 7 days. Employer employee summaries combine saved CV facts and fixed Holland results into English, Malay and Mandarin in one request, stored by input fingerprint. Company Future uses organisation-scoped learning and exposure data; its AI button caches the three-language analysis for each input and horizon. KPI targets are suggestions, not measured outcomes.",
 
   "docs.riasec.items": "30 workplace activities adapted from O*NET Interest Profiler domains, with English, Malay and Mandarin wording. Five items per RIASEC area; response scale 1–5. This adaptation is not the validated Mini-IP.",
   "docs.riasec.scoring": "All 30 unique answers are required by the API and both assessment screens. Each area uses the average of its five answers, rounded to two decimals. Ties follow R, I, A, S, E, C.",
@@ -239,7 +239,7 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.ai.cold": "Penjanaan dan semakan kesihatan RunPod dimatikan semasa ujian Gemini sahaja. Mengaktifkan laluan hibrid dan penjanaan mungkin membangunkan pekerja berbayar.",
   "docs.ai.ids": "ID titik akhir bukan rahsia awam. Kunci API tidak pernah ditunjukkan.",
   "docs.ai.configured": "Penyedia, model dan kesihatan datang daripada status AI langsung. Jika kunci API tiada, perkhidmatan ditunjukkan sebagai belum dikonfigurasi.",
-  "docs.ai.privacy": "Dengan persetujuan anda, teks dan imej CV dihantar kepada Gemini. Ketujuh-tujuh ejen menggunakan Gemini semasa ujian; RunPod ialah placeholder yang dimatikan. Fail asal dibuang; teks dan bukti disimpan bersama profil. Profil tetamu disimpan selama 7 hari.",
+  "docs.ai.privacy": "Dengan persetujuan anda, teks dan imej CV dihantar kepada Gemini. Ketujuh-tujuh ejen menggunakan Gemini semasa ujian; RunPod ialah placeholder yang dimatikan. Fail asal dibuang; teks dan bukti disimpan bersama profil. Profil tetamu disimpan selama 7 hari. Ringkasan pekerja mengaitkan CV dan keputusan Holland tetap, menjana dan menyimpan tiga bahasa dalam satu permintaan. Company Future menggunakan data syarikat sendiri; analisis AI disimpan mengikut input dan tempoh. Sasaran KPI ialah cadangan, bukan hasil terukur.",
 
   "docs.riasec.items": "30 aktiviti kerja diadaptasi daripada domain O*NET Interest Profiler dalam English, Bahasa Melayu dan Mandarin. Lima item bagi setiap kategori RIASEC; skala jawapan 1–5. Adaptasi ini bukan Mini-IP yang telah divalidasi.",
   "docs.riasec.scoring": "Semua 30 jawapan unik diwajibkan oleh API dan kedua-dua skrin ujian. Setiap kategori menggunakan purata lima jawapan, dibundarkan kepada dua perpuluhan. Seri mengikut susunan R, I, A, S, E, C.",
@@ -368,7 +368,7 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.ai.cold": "仅使用 Gemini 测试期间，RunPod 生成功能和健康检查均已关闭。启用混合路由与生成后，可能唤醒付费工作节点。",
   "docs.ai.ids": "接口 ID 不是公开机密。API 密钥从不显示。",
   "docs.ai.configured": "服务商、模型与健康状况来自实时 AI 状态。若缺少 API 密钥，服务会显示为未配置。",
-  "docs.ai.privacy": "经你同意，简历文字和图像发送至 Gemini。测试期间全部七个智能体使用 Gemini；RunPod 是已禁用的预留配置。原文件不保留，提取的文字和依据随档案保存；访客档案保留 7 天。",
+  "docs.ai.privacy": "经你同意，简历文字和图像发送至 Gemini。测试期间全部七个智能体使用 Gemini；RunPod 是已禁用的预留配置。原文件不保留，提取的文字和依据随档案保存；访客档案保留 7 天。员工摘要结合简历及固定霍兰德结果，一次生成并保存三种语言。公司未来分析仅使用所属公司的学习与暴露数据，按输入和年数缓存。KPI目标是建议，并非实测结果。",
 
   "docs.riasec.items": "根据 O*NET Interest Profiler 领域改编的 30 项工作活动，提供英语、马来语和中文。每个 RIASEC 领域五题，评分为 1–5。本改编版本并非已验证的 Mini-IP。",
   "docs.riasec.scoring": "API 及两个评估页面均要求回答全部 30 道不同题目。各领域取五题平均值，保留两位小数。平分时依次按 R、I、A、S、E、C 排序。",

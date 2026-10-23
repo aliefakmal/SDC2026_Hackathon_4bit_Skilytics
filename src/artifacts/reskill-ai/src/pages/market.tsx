@@ -1,3 +1,4 @@
+import { CompanyFuture } from "@/components/company-future";
 import { PageGuide, guides, guideSteps } from "@/components/page-guide";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -190,6 +191,7 @@ function PairBars({
 export function Market() {
   const { user } = useAuth();
   if (!user || user.role === "individual") return <MarketOutlook />;
+  if (user.role === "hr") return <CompanyFuture/>;
   return <ObservedMarket />;
 }
 

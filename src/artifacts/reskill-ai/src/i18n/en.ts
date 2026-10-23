@@ -189,7 +189,7 @@ export const en = {
   "members.tvetSub": "Open a student to map skills, interests and pathways.",
   "nav.agents": "AI agents", "nav.courses": "Courses", "nav.gradMarket": "Graduate market", "nav.group.data": "Data",
   "nav.group.explore": "Explore", "nav.group.modules": "Modules", "nav.group.portal": "Portal", "nav.group.workspace": "Workspace",
-  "nav.hrDashboard": "Dashboard", "nav.intake": "Intake", "nav.market": "Market", "nav.matcher": "Matcher",
+  "nav.future": "Future", "nav.hrDashboard": "Dashboard", "nav.intake": "Intake", "nav.market": "Market", "nav.matcher": "Matcher",
   "nav.members": "Employees", "nav.outlook": "Outlook", "nav.pathway": "Pathway", "nav.primary": "Main navigation",
   "nav.programmes": "Programmes", "nav.radar": "Radar", "nav.roles": "Roles", "nav.sources": "Data sources",
   "nav.students": "Students", "nav.tvetDashboard": "Dashboard", "nav.workspace": "Workspace",

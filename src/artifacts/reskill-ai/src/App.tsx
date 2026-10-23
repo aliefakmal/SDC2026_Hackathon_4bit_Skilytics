@@ -46,6 +46,7 @@ function AppRoutes() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/onboarding/:step?"><RoutedErrorBoundary><Onboarding /></RoutedErrorBoundary></Route>
+      <Route path="/hr/certificates/:id"><Gate role="hr"><RoutedErrorBoundary><CertificatePage /></RoutedErrorBoundary></Gate></Route>
       <Route path="/me/certificates/:id"><Gate role="individual"><RoutedErrorBoundary><CertificatePage /></RoutedErrorBoundary></Gate></Route>
       <Route>
         <Shell>

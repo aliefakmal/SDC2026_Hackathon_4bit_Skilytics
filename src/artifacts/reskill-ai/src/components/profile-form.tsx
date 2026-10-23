@@ -94,6 +94,7 @@ export function ProfileFormDialog({
     qc.invalidateQueries({ queryKey: ["/api/profiles"] });
     qc.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
     qc.invalidateQueries({ queryKey: ["/api/cohort/summary"] });
+    qc.invalidateQueries({queryKey:["enterprise"]});
     qc.invalidateQueries({ queryKey: [`/api/profiles/${p.id}/matches`] });
     toast({
       title: profile

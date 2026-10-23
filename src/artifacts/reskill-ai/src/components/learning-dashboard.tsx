@@ -12,7 +12,7 @@ import {
 import { Button } from "./ui/button";
 import { ErrorBox, SdgBadge } from "./kit";
 
-export function LearningDashboard({ p }: { p: Profile }) {
+export function LearningDashboard({ p, employer=false }: { p: Profile; employer?:boolean }) {
   const { lang } = useT(),
     w = learningWords[lang];
   const q = useLearning(p.id),
@@ -184,7 +184,7 @@ export function LearningDashboard({ p }: { p: Profile }) {
       {j.complete && (
         <div className="mt-5 space-y-3 rounded-2xl border-2 border-accent p-4">
           <h3 className="text-xl font-bold">{w.finish} 🎉</h3>
-          <Button asChild><Link href={`/me/certificates/${p.id}`}>
+          <Button asChild><Link href={`${employer?"/hr":"/me"}/certificates/${p.id}`}>
             <Award className="mr-2 h-4 w-4" />
             {w.certificate}
           </Link></Button>

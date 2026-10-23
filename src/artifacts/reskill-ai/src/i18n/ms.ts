@@ -190,7 +190,7 @@ export const ms: Record<DictKey, string> = {
   "members.tvetSub": "Buka pelajar untuk memetakan kemahiran, minat dan laluan.",
   "nav.agents": "Ejen AI", "nav.courses": "Kursus", "nav.gradMarket": "Pasaran graduan", "nav.group.data": "Data",
   "nav.group.explore": "Teroka", "nav.group.modules": "Modul", "nav.group.portal": "Portal", "nav.group.workspace": "Ruang kerja",
-  "nav.hrDashboard": "Papan pemuka", "nav.intake": "Kemasukan", "nav.market": "Pasaran", "nav.matcher": "Padanan",
+  "nav.future": "Masa depan", "nav.hrDashboard": "Papan pemuka", "nav.intake": "Kemasukan", "nav.market": "Pasaran", "nav.matcher": "Padanan",
   "nav.members": "Pekerja", "nav.outlook": "Tinjauan", "nav.pathway": "Laluan", "nav.primary": "Navigasi utama",
   "nav.programmes": "Program", "nav.radar": "Radar", "nav.roles": "Peranan", "nav.sources": "Sumber data",
   "nav.students": "Pelajar", "nav.tvetDashboard": "Papan pemuka", "nav.workspace": "Ruang kerja",

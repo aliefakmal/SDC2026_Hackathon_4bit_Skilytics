@@ -88,7 +88,7 @@ function Goals({ role }: { role: Candidate }) {
     </div>
   );
 }
-export function MarketOutlook() {
+export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = {}) {
   const { lang } = useT(),
     w = marketWords[lang];
   const qc = useQueryClient();
@@ -102,6 +102,7 @@ export function MarketOutlook() {
   const [mode, setMode] = useState<"ai" | "demand">(
     search.get("view") === "demand" ? "demand" : "ai",
   );
+  useEffect(()=>{if(selectedMode)setMode(selectedMode);},[selectedMode]);
   const [visible, setVisible] = useState(5);
   const [guide, setGuide] = useState(false),
     [step, setStep] = useState(0);
@@ -354,7 +355,7 @@ export function MarketOutlook() {
           {mode === "ai" ? w.aiAssumption : w.demandAssumption}
         </p>
       </section>
-      <div
+      {!selectedMode && <div
         className="flex w-fit max-w-full rounded-xl bg-muted p-1"
         role="tablist"
         aria-label={w.title}
@@ -378,7 +379,7 @@ export function MarketOutlook() {
             {w[m]}
           </button>
         ))}
-      </div>
+      </div>}
       {data && (
         <>
           <p className="text-xs font-semibold">

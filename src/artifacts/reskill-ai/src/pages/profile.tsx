@@ -30,6 +30,7 @@ import { useAuth } from "@/lib/auth";
 import { SECTOR_SDG, roleTitle, setActiveProfile, useFmt } from "@/lib/fmt";
 import { errStatus, useErrText, useT, type DictKey } from "@/i18n";
 import { cn } from "@/lib/utils";
+import { EnterpriseEmployee } from "@/components/enterprise-employee";
 import { GuidedJourney } from "@/components/guided-journey";
 import { IndividualMatcher, IndividualPathway } from "@/components/individual-journey";
 
@@ -48,6 +49,7 @@ function useRefreshProfile(pid: number) {
     qc.invalidateQueries({ queryKey: ["/api/profiles"] });
     qc.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
     qc.invalidateQueries({ queryKey: ["/api/cohort/summary"] });
+    qc.invalidateQueries({ queryKey: ["enterprise"] });
   };
 }
 
@@ -69,6 +71,7 @@ export default function ProfileWorkspace({ base, listHref }: { base: string; lis
         qc.invalidateQueries({ queryKey: ["/api/profiles"] });
         qc.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
         qc.invalidateQueries({ queryKey: ["/api/cohort/summary"] });
+    qc.invalidateQueries({ queryKey: ["enterprise"] });
         if (base === "/me/profiles") setActiveProfile(null);
         toast({ title: t("profile.deleted") });
         nav(listHref);
@@ -87,6 +90,7 @@ export default function ProfileWorkspace({ base, listHref }: { base: string; lis
   );
   const p = q.data;
   const individual = base === "/me/profiles";
+  if (base === "/hr/members") return <EnterpriseEmployee p={p} mod={requestedMod}/>;
   if (individual) return <GuidedJourney p={p} mod={params.module === "ready" ? "ready" : requestedMod}/>;
   const mod = individual && requestedMod === "radar" ? "matcher" : requestedMod;
   const seg = p.segment === "graduate" ? "graduate" : "worker";
@@ -207,7 +211,7 @@ function SavedReviewPanel({ p }: { p: Profile }) {
   );
 }
 
-function CvPanel({ p }: { p: Profile }) {
+export function CvPanel({ p }: { p: Profile }) {
   const { t, lang } = useT();
   const et = useErrText();
   const f = useFmt();
@@ -420,7 +424,7 @@ function SkillsPanel({ p }: { p: Profile }) {
 
 const RIASEC_KEYS = ["R", "I", "A", "S", "E", "C"] as const;
 
-function RiasecPanel({ p }: { p: Profile }) {
+export function RiasecPanel({ p }: { p: Profile }) {
   const { t, tk, lang } = useT();
   const et = useErrText();
   const { toast } = useToast();

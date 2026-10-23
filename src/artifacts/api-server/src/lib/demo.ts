@@ -4,6 +4,8 @@ import { DEMO_ACCOUNTS } from "./auth";
 import { loadCourses, loadRoles, loadSkills } from "./catalog";
 import { scoreRole } from "./scoring";
 import { buildPlan } from "./planner";
+import { RIASEC_QUESTIONS } from "../data/riasec";
+import { hasCurrentRiasec, scoreRiasec } from "./riasec-scoring";
 import { logger } from "./logger";
 
 // Clearly labelled sample members so the HR and TVET demo dashboards are not empty.
@@ -43,7 +45,22 @@ export async function seedDemoMembers(): Promise<void> {
   const skillId = new Map(skills.map((s) => [s.name, s.id]));
   for (const acct of DEMO_ACCOUNTS) {
     const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(profilesTable).where(eq(profilesTable.organization, acct.organization));
-    if (count > 0) continue;
+    if (count > 0) {
+      if (acct.role === "hr") {
+        const existing = await db.select().from(profilesTable).where(eq(profilesTable.organization, acct.organization));
+        for (const p of existing) {
+          const fixture=HR_MEMBERS.find(m=>m.name===p.name);
+          const answers = hasCurrentRiasec(p.riasecAnswers) ? p.riasecAnswers : fixedDemoAnswers(p.riasecScores ?? fixture?.riasec ?? HR_MEMBERS[p.id % HR_MEMBERS.length].riasec);
+          const scored = scoreRiasec(answers);
+          const missingCv=!p.cvExtractionKey && fixture;
+          if(hasCurrentRiasec(p.riasecAnswers) && !missingCv)continue;
+          await db.update(profilesTable).set({riasecAnswers:answers,riasecScores:scored.scores,riasecCode:scored.code,
+            ...(missingCv?{cvFileName:"Fictional employee CV",cvText:`Fictional demo CV: ${fixture.name}. ${fixture.currentRole}. Skills: ${fixture.skills.join(", ")}.`,experience:`Fictional demo experience in ${fixture.currentRole}. Uses ${fixture.skills.join(", ")}.`,cvExtractionKey:"hr-demo-v2",verified:true,onboardingStep:"complete"}:{}),
+          }).where(eq(profilesTable.id,p.id));
+        }
+      }
+      continue;
+    }
     const [owner] = await db.select().from(usersTable).where(eq(usersTable.email, acct.email));
     if (!owner) continue;
     const members = acct.role === "hr" ? HR_MEMBERS : TVET_MEMBERS;
@@ -60,12 +77,18 @@ export async function seedDemoMembers(): Promise<void> {
           budgetMyr: acct.role === "hr" ? 300 : 100,
           hrdcEligible: acct.role === "hr",
           skills: m.skills.map((n) => ({ skillId: skillId.get(n)!, status: "self_reported" as const, evidence: null })).filter((s) => s.skillId),
-          riasecScores: m.riasec,
-          riasecCode: code(m.riasec),
+          riasecAnswers: fixedDemoAnswers(m.riasec),
+          riasecScores: scoreRiasec(fixedDemoAnswers(m.riasec)).scores,
+          riasecCode: scoreRiasec(fixedDemoAnswers(m.riasec)).code,
+          ...(acct.role === "hr" ? {
+            cvFileName:"Fictional employee CV", cvText:`Fictional demo CV: ${m.name}. ${m.currentRole}. Skills: ${m.skills.join(", ")}.`,
+            experience:`Fictional demo experience in ${m.currentRole}. Uses ${m.skills.join(", ")}.`,
+            cvExtractionKey:"hr-demo-v2", verified:true, onboardingStep:"complete",
+          } : {}),
         })
         .returning();
       const role = m.plan ? roles.find((r) => r.title === m.plan) : undefined;
-      if (role) {
+      if (role && acct.role !== "hr") {
         const { gapSkills } = scoreRole(p, role, skills, courses);
         const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: p.hrdcEligible });
         await db.insert(plansTable).values({ profileId: p.id, roleId: role.id, roleTitle: role.title, ...plan });
@@ -74,4 +97,14 @@ export async function seedDemoMembers(): Promise<void> {
     }
     logger.info({ organization: acct.organization, members: members.length }, "Demo members seeded");
   }
+}
+
+/** Each type has five fixed integer answers, preserving the desired mean. */
+export function fixedDemoAnswers(scores: StoredRiasec) {
+  const seen: Record<string,number> = {};
+  return RIASEC_QUESTIONS.map(q=>{
+    const i=seen[q.type]??0;seen[q.type]=i+1;
+    const total=Math.round(Math.min(5,Math.max(1,scores[q.type]))*5);
+    return {questionId:q.id,value:Math.floor(total/5)+(i<total%5?1:0)};
+  });
 }

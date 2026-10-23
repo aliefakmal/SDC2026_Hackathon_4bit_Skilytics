@@ -190,7 +190,7 @@ export const zh: Record<DictKey, string> = {
   "members.tvetSub": "打开学生以梳理技能、兴趣与路径。",
   "nav.agents": "AI 助手", "nav.courses": "课程", "nav.gradMarket": "毕业生市场", "nav.group.data": "数据",
   "nav.group.explore": "探索", "nav.group.modules": "模块", "nav.group.portal": "门户", "nav.group.workspace": "工作区",
-  "nav.hrDashboard": "仪表板", "nav.intake": "录入", "nav.market": "市场", "nav.matcher": "匹配",
+  "nav.future": "未来", "nav.hrDashboard": "仪表板", "nav.intake": "录入", "nav.market": "市场", "nav.matcher": "匹配",
   "nav.members": "员工", "nav.outlook": "展望", "nav.pathway": "路径", "nav.primary": "主导航",
   "nav.programmes": "课程项目", "nav.radar": "雷达", "nav.roles": "职位", "nav.sources": "数据来源",
   "nav.students": "学生", "nav.tvetDashboard": "仪表板", "nav.workspace": "工作区",

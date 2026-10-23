@@ -201,12 +201,13 @@ router.patch("/profiles/:id", async (req, res) => {
   const body = UpdateProfileBody.parse(req.body);
   const p = await requireProfile(id, req, res);
   if (!p) return;
+  if (req.user?.role === "hr" && body.riasecAnswers && p.riasecCode) {res.status(409).json({error:"riasec_locked"});return;}
   if (req.user?.role !== "hr") { body.hrdcEligible = false; body.hrdcEligibilityStatus = "no"; }
   const individual = !req.user || req.user.role === "individual";
-  const journey = individual ? await learningState(p.id) : null;
-  const locked = individual && p.onboardingStep === "complete";
+  const journey = (individual || req.user?.role === "hr") ? await learningState(p.id) : null;
+  const locked = (individual || req.user?.role === "hr") && p.onboardingStep === "complete";
   if (locked && ((body.onboardingStep && body.onboardingStep !== "complete") || (body.riasecAnswers && JSON.stringify([...body.riasecAnswers].sort((a,b)=>a.questionId-b.questionId)) !== JSON.stringify([...p.riasecAnswers].sort((a,b)=>a.questionId-b.questionId))))) {res.status(409).json({error:"riasec_locked"});return;}
-  if (individual && body.targetRoleId && journey?.stage !== "matcher" && journey?.stage !== "pathway") {res.status(409).json({error:"journey_step_required"});return;}
+  if ((individual || req.user?.role === "hr") && body.targetRoleId && journey?.stage !== "matcher" && journey?.stage !== "pathway") {res.status(409).json({error:"journey_step_required"});return;}
   const step = body.onboardingStep;
   if (body.verified && !(body.name ?? p.name).trim()) {
     res.status(400).json({ error: "invalid_input" }); return;
@@ -214,10 +215,10 @@ router.patch("/profiles/:id", async (req, res) => {
   if ((body.verified || ["goals", "holland", "results", "save", "complete"].includes(step ?? "")) && !p.cvExtractionKey) {
     res.status(400).json({ error: "cv_required" }); return;
   }
-  if (["results", "save", "complete"].includes(step ?? "") && (!p.verified || !p.riasecScores)) {
+  if (["results", "save", "complete"].includes(step ?? "") && (!(body.verified ?? p.verified) || !p.riasecScores)) {
     res.status(400).json({ error: "riasec_required" }); return;
   }
-  if (step === "complete" && !(req.user?.role === "individual" && p.ownerUserId === req.user.id) && !(p.guestToken && p.guestToken === req.guestToken && !p.ownerUserId)) {
+  if (step === "complete" && !(req.user?.role === "hr" || (req.user?.role === "individual" && p.ownerUserId === req.user.id)) && !(p.guestToken && p.guestToken === req.guestToken && !p.ownerUserId)) {
     res.status(401).json({ error: "login_required" }); return;
   }
   if (body.riasecAnswers && (new Set(body.riasecAnswers.map((a) => a.questionId)).size !== body.riasecAnswers.length || body.riasecAnswers.some((a) => !RIASEC_QUESTIONS.some((q) => q.id === a.questionId)))) {
@@ -406,6 +407,7 @@ router.post("/profiles/:id/cv", async (req, res) => {
       cvEvidence: result.evidence, cvExtractionKey: key, verified: false, onboardingStep: "review",
       skills: [...extracted, ...manual],
     }).where(eq(profilesTable.id, id)).returning();
+    if(req.user?.role === "hr" && (await learningState(id)).stage !== "active") await saveLearningState(id,{stage:"intake",completed:{}});
     return profileToApi(row, allSkills);
   })();
   cvRequests.set(id, work);
@@ -432,7 +434,8 @@ router.post("/profiles/:id/riasec", async (req, res) => {
   const body = SubmitRiasecBody.parse(req.body);
   const p = await requireProfile(id, req, res);
   if (!p) return;
-  if ((!req.user || req.user.role === "individual") && p.onboardingStep === "complete") {res.status(409).json({error:"riasec_locked"});return;}
+  if ((!req.user || req.user.role === "individual" || req.user.role === "hr") && p.onboardingStep === "complete") {res.status(409).json({error:"riasec_locked"});return;}
+  if (req.user?.role === "hr" && p.riasecCode) {res.status(409).json({error:"riasec_locked"});return;}
   if (p.onboardingStep && !p.verified) { res.status(400).json({ error: "cv_review_required" }); return; }
   let scores, code;
   try { ({ scores, code } = scoreRiasec(body.answers)); }
@@ -453,7 +456,7 @@ router.get("/profiles/:id/matches", async (req, res) => {
   const { id } = GetProfileParams.parse(req.params);
   const p = await requireProfile(id, req, res);
   if (!p) return;
-  if ((!req.user || req.user.role === "individual") && !["matcher","pathway","active"].includes((await learningState(p.id)).stage)) {res.status(409).json({error:"journey_step_required"});return;}
+  if ((!req.user || req.user.role === "individual" || req.user.role === "hr") && !["matcher","pathway","active"].includes((await learningState(p.id)).stage)) {res.status(409).json({error:"journey_step_required"});return;}
   res.json(await computeMatches(p));
 });
 
@@ -470,7 +473,7 @@ router.post("/profiles/:id/plan", async (req, res) => {
   const { roleId } = CreateProfilePlanBody.parse(req.body);
   const p = await requireProfile(id, req, res);
   if (!p) return;
-  const journey = (!req.user || req.user.role === "individual") ? await learningState(p.id) : null;
+  const journey = (!req.user || req.user.role === "individual" || req.user.role === "hr") ? await learningState(p.id) : null;
   if(journey && !["matcher","pathway"].includes(journey.stage)) {res.status(409).json({error:"journey_step_required"});return;}
   const [roles, skills, courses] = await Promise.all([loadRoles(), loadSkills(), loadCourses()]);
   if (!courses.length) { res.status(503).json({ error: "course_catalogue_unavailable" }); return; }
@@ -481,7 +484,7 @@ router.post("/profiles/:id/plan", async (req, res) => {
     return;
   }
   const { gapSkills } = scoreRole({ ...p, skills: profileSkills(p, skills) }, role, skills, courses);
-  const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: req.user?.role === "hr" && p.hrdcEligible, roleTitle: role.title, aiAdvancement: !req.user || req.user.role === "individual" });
+  const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: req.user?.role === "hr" && p.hrdcEligible, roleTitle: role.title, aiAdvancement: !req.user || req.user.role === "individual" || req.user.role === "hr" });
   const [row] = await db
     .insert(plansTable)
     .values({ profileId: id, roleId, roleTitle: role.title, ...plan })

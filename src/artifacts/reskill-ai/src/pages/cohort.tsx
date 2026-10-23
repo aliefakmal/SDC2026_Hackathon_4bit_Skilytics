@@ -1,3 +1,6 @@
+import { EnterpriseDashboard } from "@/components/company-future";
+import { PageGuide } from "@/components/page-guide";
+import { enterpriseWords } from "@/i18n/enterprise";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ArrowRight, ExternalLink, Plus, Search, Users } from "lucide-react";
@@ -34,7 +37,9 @@ function Bars({ items, label, tone = "maroon" }: { items: CountItem[]; label?: (
   );
 }
 
-export function CohortDashboard({ kind }: { kind: "hr" | "tvet" }) {
+export function CohortDashboard({kind}:{kind:"hr"|"tvet"}) { return kind === "hr" ? <EnterpriseDashboard/> : <LegacyCohortDashboard kind={kind}/>; }
+
+function LegacyCohortDashboard({ kind }: { kind: "hr" | "tvet" }) {
   const { t, tk } = useT();
   const f = useFmt();
   const { user } = useAuth();
@@ -132,7 +137,8 @@ export function Programmes() {
 }
 
 export function Members({ kind }: { kind: "hr" | "tvet" }) {
-  const { t, tk } = useT();
+  const { t, tk, lang } = useT();
+  const ew=enterpriseWords[lang];
   const f = useFmt();
   const [, nav] = useLocation();
   const q = useCohort();
@@ -143,7 +149,7 @@ export function Members({ kind }: { kind: "hr" | "tvet" }) {
   return (
     <>
       <PageHeader eyebrow={q.data?.organization ?? t(kind === "hr" ? "portal.hr" : "portal.tvet")} title={t(kind === "hr" ? "nav.members" : "nav.students")} sub={t(kind === "hr" ? "members.hrSub" : "members.tvetSub")}
-        actions={<Button className="min-h-11" onClick={() => setOpen(true)} data-testid="button-add-member"><Plus className="mr-1.5 h-4 w-4" />{t(kind === "hr" ? "cohort.addMember" : "cohort.addStudent")}</Button>} />
+        actions={<div className="flex gap-2"><PageGuide title={ew.guide} steps={[{title:ew.employees,body:ew.guideEmployee},{title:ew.progress,body:ew.reported}]}/><Button className="min-h-11" onClick={() => setOpen(true)} data-testid="button-add-member"><Plus className="mr-1.5 h-4 w-4" />{t(kind === "hr" ? "cohort.addMember" : "cohort.addStudent")}</Button></div>} />
       <div className="relative mb-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("members.search")} aria-label={t("members.search")} className="min-h-11 pl-9" data-testid="input-member-search" />
@@ -166,6 +172,7 @@ export function Members({ kind }: { kind: "hr" | "tvet" }) {
                 <div className="text-[11px]"><span className="text-muted-foreground">{kind === "hr" ? t("matcher.exposure") : "RIASEC"}</span>{kind === "hr" ? <Meter value={m.currentRoleExposure} tone="slate" label={f.frac(m.currentRoleExposure, 0)} /> : <div className="font-semibold">{m.riasecCode ?? "-"}</div>}</div>
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
                   <span className="rounded-full bg-muted px-2 py-0.5">{t("me.skillsN", { n: m.skillCount ?? 0 })}</span>
+                  {m.riasecCode && <span translate="no" className="rounded-full border px-2 py-1 font-semibold">{m.riasecCode}</span>}
                   {m.hasPlan && <span className="rounded-full bg-primary px-2 py-0.5 font-semibold text-primary-foreground">{t("members.hasPlan")}</span>}
                   {kind === "hr" && m.hrdcEligible && <span className="rounded-full bg-accent px-2 py-0.5 font-semibold text-accent-foreground">HRD Corp</span>}
                   <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground group-hover:text-primary" />

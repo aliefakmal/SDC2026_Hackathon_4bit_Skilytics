@@ -54,7 +54,7 @@ function useNav(): NavSet {
       },
       { href: "/hr/members", label: "nav.members", icon: Users },
       { href: "/hr/courses", label: "nav.courses", icon: BookOpen },
-      { href: "/market", label: "nav.market", icon: BarChart3 },
+      { href: "/market", label: "nav.future", icon: BarChart3 },
     ];
     const more: Item[] = [
       { href: "/sources", label: "nav.sources", icon: Database },
@@ -384,7 +384,7 @@ export function Shell({ children }: { children: ReactNode }) {
                     active ? "font-bold" : "font-medium",
                   )}
                 >
-                  {mobileLabels[it.href] ?? label}
+                  {it.label === "nav.future" ? label : mobileLabels[it.href] ?? label}
                 </span>
               </Link>
             );
