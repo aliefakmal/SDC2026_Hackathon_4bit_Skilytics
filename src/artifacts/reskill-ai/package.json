@@ -76,6 +76,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
+    "@spelling-creator/spellophone": "0.2.1",
     "react-markdown": "^10.1.0"
   }
 }

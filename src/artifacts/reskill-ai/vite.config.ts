@@ -3,6 +3,7 @@ import path from 'path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
+import { localSpeechAssets } from './tts-assets';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
@@ -18,6 +19,7 @@ export default defineConfig({
     ),
   },
   plugins: [
+    localSpeechAssets(),
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),

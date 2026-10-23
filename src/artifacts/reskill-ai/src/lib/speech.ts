@@ -23,9 +23,3 @@ export function speechParts(markdown: string, fallback: SpeechLanguage): SpeechP
   }
   return parts;
 }
-
-export function chooseVoice(voices: SpeechSynthesisVoice[], lang: SpeechLanguage) {
-  const tag = lang === "ms" ? "ms-MY" : lang === "zh" ? "zh-CN" : "en-US";
-  const matches = voices.filter((v) => v.lang.toLowerCase().replaceAll("_", "-").split("-")[0] === lang);
-  return matches.sort((a, b) => Number(b.lang === tag) - Number(a.lang === tag) || Number(b.localService) - Number(a.localService))[0];
-}
