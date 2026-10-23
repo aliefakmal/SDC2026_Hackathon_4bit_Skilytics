@@ -1,6 +1,8 @@
 // Data Sources documentation strings. URLs, dataset field names, file names and official
 // English titles are reference identifiers and are intentionally kept verbatim.
 export const docsEn = {
+  "docs.learning.name": "Learning records and completion",
+  "docs.learning.method": "Your confirmed intake unlocks career matching, then a selected role unlocks the timeline. Holland answers are locked after onboarding. Start date, estimated durations and self-reported course completions are saved per profile in learning_journeys with ownership checks. Badges and the branded SVG certificate record self-reported pathway completion, not provider qualifications. Calendar files contain all dated course events, provider links and a one-day reminder; users confirm their own Google/Apple import. New course suggestions use the public catalogue, not guaranteed future technology forecasts.",
   "docs.openlearn.name": "OpenLearn · reviewed public courses",
   "docs.openlearn.method": "Seven public Open University course pages reviewed on 23 October 2026. This is a manually maintained metadata selection, not a live API. Subject links are application-authored from course descriptions/outcomes and restricted to relevant role titles. Unknown duration stays unknown. These resources do not establish full skill mastery, professional registration or qualifications. Check current details with the provider.",
   "docs.category.market": "Labour market and AI research",
@@ -92,6 +94,8 @@ export const docsEn = {
 export type DocsKey = keyof typeof docsEn;
 
 export const docsMs: Record<DocsKey, string> = {
+  "docs.learning.name": "Rekod pembelajaran dan penyempurnaan",
+  "docs.learning.method": "Pengesahan intake membuka padanan kerjaya, kemudian pilihan peranan membuka garis masa. Jawapan Holland dikunci selepas onboarding. Tarikh mula, anggaran tempoh dan tanda selesai kursus disimpan bagi setiap profil dalam learning_journeys dengan semakan pemilikan. Lencana dan sijil SVG berjenama merekod penyempurnaan laluan yang dilaporkan sendiri, bukan kelayakan penyedia. Fail kalendar mengandungi semua acara kursus bertarikh, pautan penyedia dan peringatan sehari; pengguna mengesahkan import Google/Apple sendiri. Cadangan kursus seterusnya menggunakan katalog awam, bukan ramalan teknologi masa depan yang dijamin.",
   "docs.openlearn.name": "OpenLearn · kursus awam disemak",
   "docs.openlearn.method": "Tujuh halaman kursus awam Open University disemak pada 23 Oktober 2026. Pilihan metadata ini diselenggara secara manual, bukan API live. Kaitan bidang dipetakan oleh aplikasi berdasarkan penerangan/hasil pembelajaran kursus dan dihadkan kepada peranan berkaitan. Tempoh tidak diketahui tidak direka. Kursus ini tidak membuktikan penguasaan kemahiran penuh, pendaftaran profesional atau kelayakan. Semak maklumat terkini dengan penyedia.",
   "docs.category.market": "Pasaran buruh dan penyelidikan AI",
@@ -181,6 +185,8 @@ export const docsMs: Record<DocsKey, string> = {
 };
 
 export const docsZh: Record<DocsKey, string> = {
+  "docs.learning.name": "学习记录与完成",
+  "docs.learning.method": "确认录入后解锁职业匹配，选择职位后解锁时间线。入职引导结束后 Holland 答案锁定。每份资料的开始日期、估计时长及自行确认的课程完成记录保存至 learning_journeys，并检查所有权。徽章与品牌 SVG 证书记录自行报告的路径完成情况，并非机构资格认证。日历文件包含所有已排期课程、机构链接及提前一天提醒；由用户自行确认 Google/Apple 导入。后续建议来自公开目录，不保证预测未来技术。",
   "docs.openlearn.name": "OpenLearn · 已审核公开课程",
   "docs.openlearn.method": "七个 Open University 公开课程页面于 2026 年 10 月 23 日审核。此为人工维护的元数据选集，并非实时 API。主题关联由应用根据课程介绍及学习成果编制，并限定至相关职位。未知时长保留为未知。这些课程不代表全面掌握技能、专业注册或取得执业资格。最新详情请向机构确认。",
   "docs.category.market": "劳动力市场与 AI 研究",

@@ -69,7 +69,6 @@ test("both individual paths validate prerequisites, preserve state and reject cr
     assert.equal(scored.body.riasecCode, "SRI"); assert.equal(scored.body.riasecScores.S, 5);
     assert.deepEqual((await request(`/profiles/${id}`)).body.riasecAnswers, answers);
     assert.equal((await request(`/profiles/${id}`, "PATCH", { onboardingStep: "results" })).status, 200);
-    assert.equal((await request(`/profiles/${id}`, "PATCH", { onboardingStep: "complete" })).status, 401);
     const changed = await request(`/profiles/${id}`, "PATCH", { riasecAnswers: answers.map((a, i) => i ? a : { ...a, value: 1 }) });
     assert.equal(changed.body.riasecScores, null);
     assert.equal(changed.body.riasecCode, null);
@@ -333,4 +332,37 @@ test("multimodal uploads fall back to grounded text extraction and reject empty 
       else process.env[key] = value;
     }
   }
+});
+
+
+test("guided journey prevents skipping and persists completion with a scoped certificate", async()=>{
+ const id=await draft("graduate");
+ assert.equal((await request('/profiles/'+id+'/journey')).body.stage,'intake');
+ assert.equal((await request('/profiles/'+id+'/matches')).status,409);
+ assert.equal((await request('/profiles/'+id+'/journey','POST',{action:'confirm_intake'})).status,409);
+ assert.equal((await request('/profiles/'+id+'/plan','POST',{roleId:1})).status,409);
+ await extractedFixture(id);
+ await request('/profiles/'+id,'PATCH',{name:'TEST ONLY <Learning>',weeklyHours:5,budgetMyr:0,verified:true});
+ await request('/profiles/'+id+'/riasec','POST',{answers});
+ assert.equal((await request('/profiles/'+id,'PATCH',{onboardingStep:'complete'})).status,200);
+ assert.equal((await request('/profiles/'+id+'/riasec','POST',{answers})).body.error,'riasec_locked');
+ assert.equal((await request('/profiles/'+id,'PATCH',{onboardingStep:'holland'})).status,409);
+ const edit=await request('/profiles/'+id,'PATCH',{education:'TEST ONLY Updated course',verified:true});assert.equal(edit.body.riasecCode,'SRI');
+ assert.equal((await request('/profiles/'+id+'/journey','POST',{action:'confirm_intake'})).status,200);
+ const matches=await request('/profiles/'+id+'/matches');assert.equal(matches.status,200);
+ const role=matches.body.find((m:any)=>m.role.title==='Data Analyst').role;
+ const plan=await request('/profiles/'+id+'/plan','POST',{roleId:role.id});assert.equal(plan.status,201);assert.ok(plan.body.items.length);
+ const weeks=Object.fromEntries(plan.body.items.filter((i:any)=>i.durationWeeks==null).map((i:any)=>[String(i.courseId),2]));
+ assert.equal((await request('/profiles/'+id+'/journey','POST',{action:'activate',startDate:'2026-02-30',durationWeeks:weeks})).status,400);
+ assert.equal((await request('/profiles/'+id+'/journey','POST',{action:'activate',startDate:'2026-11-01',durationWeeks:weeks})).status,200);
+ const active=await request('/profiles/'+id+'/journey');assert.equal(active.body.stage,'active');assert.ok(active.body.items.every((i:any)=>i.deadline));
+ assert.equal((await request('/profiles/'+id+'/journey','GET',undefined,{'x-guest-token':stranger})).status,404);
+ assert.equal((await request('/profiles/'+id+'/journey/certificate')).status,409);
+ assert.equal((await request('/profiles/'+id+'/journey','POST',{action:'complete_course',courseId:2147483647,done:true})).status,409);
+ for(const item of active.body.items) assert.equal((await request('/profiles/'+id+'/journey','POST',{action:'complete_course',courseId:item.courseId,done:true})).status,200);
+ const finished=await request('/profiles/'+id+'/journey');assert.equal(finished.body.complete,true);assert.ok(finished.body.certificateId);assert.ok(finished.body.recommendations.length);
+ const certificate=await fetch(base+'/api/profiles/'+id+'/journey/certificate?lang=ms',{headers:{'x-guest-token':guest}});assert.equal(certificate.status,200);const svg=await certificate.text();assert.ok(svg.includes('&lt;Learning&gt;'));assert.ok(svg.includes('SIJIL PENYEMPURNAAN'));
+ await request('/profiles/'+id+'/journey','POST',{action:'complete_course',courseId:active.body.items[0].courseId,done:false});
+ assert.equal((await request('/profiles/'+id+'/journey/certificate')).status,409);
+ assert.equal((await request('/profiles/'+id+'/plan','POST',{roleId:role.id})).status,409);
 });

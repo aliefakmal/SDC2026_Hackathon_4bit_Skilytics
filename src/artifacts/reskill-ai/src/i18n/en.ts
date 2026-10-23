@@ -1,6 +1,11 @@
 import { docsEn } from "./docs";
 import { obEn } from "./ob";
 export const en = {
+  "err.journey_step_required": "Complete the current step before continuing.",
+  "err.intake_required": "Review and confirm your intake summary first.",
+  "err.riasec_locked": "Your Holland assessment is saved and locked. Edit your CV details in the intake summary.",
+  "err.course_dates_required": "Set study weeks for every course before starting.",
+  "err.pathway_incomplete": "Complete all courses before downloading your completion certificate.",
   "cat.Domain": "Subject knowledge",
   "sdg.related": "Related SDG",
   "sdg.main": "Main SDG",

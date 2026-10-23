@@ -17,6 +17,12 @@ import { Input } from "@/components/ui/input";
 import { ErrorBox, Rows, SdgBadge, Markdown } from "@/components/kit";
 import { useT } from "@/i18n";
 import { roleTitle } from "@/lib/fmt";
+import { learningWords } from "@/i18n/learning";
+import {
+  useLearningAction,
+  datedLearning,
+  learningCalendar,
+} from "@/lib/learning";
 import { ChevronDown, MapPin } from "lucide-react";
 import {
   AiExposure,
@@ -156,6 +162,7 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
         data: { roleId: id },
       });
       qc.setQueryData(getGetProfilePlanQueryKey(p.id), plan);
+      await qc.invalidateQueries({ queryKey: ["learning", p.id] });
       nav(`${base}/${p.id}/pathway`);
     } catch {
       setError(true);
@@ -343,6 +350,13 @@ function escapeIcs(s: string) {
 
 export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
   const { lang } = useT();
+  const lw = learningWords[lang];
+  const [, navigate] = useLocation();
+  const activate = useLearningAction(p.id);
+  const [estimates, setEstimates] = useState<Record<string, number>>({});
+  const [calendarTarget, setCalendarTarget] = useState(() =>
+    /iPad|iPhone|Macintosh/.test(navigator.userAgent) ? "apple" : "google",
+  );
   const w = words[lang];
   const qc = useQueryClient();
   const plan = useGetProfilePlan(p.id, {
@@ -424,6 +438,7 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
   const pl = plan.data;
   const busy = create.isPending || update.isPending;
   const items = pl && pl.roleId === p.targetRoleId ? pl.items : [];
+  const dated = datedLearning(items, start, estimates);
   const calendar = (courseId?: number) => {
     const events = items
       .filter((item) => courseId === undefined || item.courseId === courseId)
@@ -509,13 +524,37 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
               {pl.totalCostMyr ?? "—"}
             </span>
           </div>
-          <Button
-            variant="outline"
-            disabled={!start || !items.some((i) => i.startWeek != null)}
-            onClick={() => calendar()}
-          >
-            {w.download}
-          </Button>
+          <div className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-4">
+            <label className="text-sm font-semibold">
+              {lw.calendar}
+              <select
+                className="ml-3 rounded-lg border bg-card p-2"
+                aria-label={lw.calendar}
+                value={calendarTarget}
+                onChange={(e) => setCalendarTarget(e.target.value)}
+              >
+                <option value="google">{lw.google}</option>
+                <option value="apple">{lw.apple}</option>
+              </select>
+            </label>
+            <Button
+              className="mt-3 block min-h-12 w-full"
+              disabled={!items.length || dated.some((i) => !i.deadline)}
+              onClick={() =>
+                learningCalendar(
+                  dated,
+                  p.id,
+                  pl.roleTitle,
+                  calendarTarget === "google",
+                )
+              }
+            >
+              {lw.calendar} · {calendarTarget === "google" ? "Google" : "Apple"}
+            </Button>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {lw.calendarNote}
+            </p>
+          </div>
           <ol className="space-y-4 border-l-2 border-primary/25 pl-5">
             {items.map((item, index) => {
               const dated =
@@ -557,11 +596,34 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
                   <p className="mt-2 text-sm">
                     {item.provider} · RM {item.costMyr}
                   </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {dated
-                      ? `${w.dates}: ${begin} → ${dateAt(start, (item.startWeek! - 1 + item.durationWeeks!) * 7 - 1)}`
-                      : w.unknown}
+                  <p className="mt-3 rounded-lg border border-accent/40 bg-[hsl(var(--gold-soft))] p-3 text-sm font-bold">
+                    {lw.dates}:{" "}
+                    {datedLearning(items, start, estimates)[index]?.startDate ??
+                      "—"}{" "}
+                    →{" "}
+                    {datedLearning(items, start, estimates)[index]?.deadline ??
+                      "—"}
                   </p>
+                  {item.durationWeeks == null && (
+                    <label className="mt-3 block text-sm">
+                      {lw.estimate}
+                      <Input
+                        type="number"
+                        min={1}
+                        max={520}
+                        value={estimates[String(item.courseId)] || ""}
+                        onChange={(e) =>
+                          setEstimates((v) => ({
+                            ...v,
+                            [String(item.courseId)]: Number(e.target.value),
+                          }))
+                        }
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {lw.estimateNote}
+                      </span>
+                    </label>
+                  )}
                   <div className="my-3 flex flex-wrap gap-1">
                     {item.sdgTargets
                       .filter(
@@ -619,6 +681,35 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
             </details>
           )}
           <p className="text-xs text-muted-foreground">{w.estimated}</p>
+          <div className="rounded-2xl border bg-card p-5">
+            <p className="mb-3 text-sm">{lw.activateNote}</p>
+            <Button
+              className="min-h-12 w-full text-base"
+              disabled={
+                activate.isPending ||
+                busy ||
+                !items.length ||
+                dated.some((i) => !i.deadline)
+              }
+              onClick={async () => {
+                try {
+                  await activate.mutateAsync({
+                    action: "activate",
+                    startDate: start,
+                    durationWeeks: estimates,
+                  });
+                  navigate("/me");
+                } catch {}
+              }}
+            >
+              {lw.activate}
+            </Button>
+            {!items.length && <p className="mt-2 text-sm">{lw.noCourses}</p>}
+            {dated.some((i) => !i.deadline) && (
+              <p className="mt-2 text-sm">{lw.dateRequired}</p>
+            )}
+            {activate.isError && <ErrorBox error={activate.error} />}
+          </div>
         </>
       )}
     </div>

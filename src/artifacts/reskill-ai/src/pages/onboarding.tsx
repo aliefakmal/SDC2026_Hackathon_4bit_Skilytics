@@ -273,6 +273,7 @@ export default function Onboarding() {
     );
   }
 
+  if(p.onboardingStep === "complete") return <Redirect to={"/me/profiles/"+p.id+"/intake"} replace />;
   const allowed = serverStep(p);
   const step = requested ?? allowed;
   if (!requested) return <Redirect to={`/onboarding/${allowed}${pid ? `?pid=${pid}` : ""}`} replace />;
@@ -1728,7 +1729,7 @@ function SaveStep({ p, scope, onProfileReady }: { p: Profile; scope: string; onP
   const seg = p.segment === "graduate" ? "student" : "worker";
   const finish = async () => {
     try {
-      await go("complete", {}, `/me/profiles/${p.id}/matcher`);
+      await go("complete", {}, `/me/profiles/${p.id}/intake`);
       clearDraft(scope, p.id);
       setObProfile(scope, null);
     } catch { /* shown */ }

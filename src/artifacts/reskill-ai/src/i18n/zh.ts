@@ -3,6 +3,11 @@ import { obZh } from "./ob";
 import type { DictKey } from "./en";
 
 export const zh: Record<DictKey, string> = {
+  "err.journey_step_required": "请先完成当前步骤。",
+  "err.intake_required": "请先核对并确认录入摘要。",
+  "err.riasec_locked": "Holland 测评已保存并锁定，请在录入摘要中编辑简历资料。",
+  "err.course_dates_required": "请先为每门课程设置学习周数。",
+  "err.pathway_incomplete": "请完成所有课程后再下载完成证书。",
   "cat.Domain": "专业知识",
   ...docsZh,
   "sdg.notice": "本内容未经联合国批准，亦不代表联合国的观点。",

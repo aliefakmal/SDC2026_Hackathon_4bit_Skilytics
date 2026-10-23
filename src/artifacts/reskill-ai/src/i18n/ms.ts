@@ -3,6 +3,11 @@ import { obMs } from "./ob";
 import type { DictKey } from "./en";
 
 export const ms: Record<DictKey, string> = {
+  "err.journey_step_required": "Lengkapkan langkah semasa sebelum meneruskan.",
+  "err.intake_required": "Semak dan sahkan ringkasan intake dahulu.",
+  "err.riasec_locked": "Keputusan Holland telah disimpan dan dikunci. Edit maklumat CV dalam ringkasan intake.",
+  "err.course_dates_required": "Tetapkan minggu belajar bagi setiap kursus sebelum bermula.",
+  "err.pathway_incomplete": "Lengkapkan semua kursus sebelum memuat turun sijil penyempurnaan.",
   "cat.Domain": "Pengetahuan bidang",
   ...docsMs,
   "sdg.notice": "Kandungan ini tidak diluluskan oleh PBB dan tidak mewakili pandangan PBB.",

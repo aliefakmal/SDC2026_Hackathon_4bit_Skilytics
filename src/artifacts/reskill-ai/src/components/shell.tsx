@@ -38,21 +38,8 @@ function useNav(): NavSet {
     const more: Item[] = [{ href: "/sources", label: "nav.sources", icon: Database }];
     return { primary, more, groups: [{ label: "nav.group.portal", items: primary }, { label: "nav.group.data", items: more }] };
   }
-  const m = loc.match(/^\/me\/profiles\/(\d+)/);
-  const pid = m ? Number(m[1]) : getActiveProfile();
-  const mod = (k: string): string => (pid ? `/me/profiles/${pid}/${k}` : "/me");
-  const modMatch = (k: string) => (l: string) => !!pid && (l === `/me/profiles/${pid}/${k}` || (k === "intake" && l === `/me/profiles/${pid}`));
-  const primary: Item[] = [
-    { href: mod("intake"), label: "nav.intake", icon: FileText, match: modMatch("intake") },
-
-    { href: mod("matcher"), label: "nav.matcher", icon: Briefcase, match: modMatch("matcher") },
-    { href: mod("pathway"), label: "nav.pathway", icon: Map, match: modMatch("pathway") },
-  ];
-  const ws: Item[] = [
-    { href: "/me", label: "nav.workspace", icon: LayoutGrid, match: (l) => l === "/me" },
-    { href: mod("agents"), label: "nav.agents", icon: Bot, match: modMatch("agents") },
-    { href: "/me/outlook", label: "nav.outlook", icon: Sparkles },
-  ];
+  const primary: Item[] = [{ href: "/me", label: "nav.workspace", icon: LayoutGrid, match: l => l === "/me" }];
+  const ws: Item[] = [{ href: "/me/outlook", label: "nav.outlook", icon: Sparkles }];
   const explore: Item[] = [
     { href: "/roles", label: "nav.roles", icon: Target },
     { href: "/courses", label: "nav.courses", icon: BookOpen },
@@ -62,7 +49,7 @@ function useNav(): NavSet {
   return {
     primary,
     more: [...ws, ...explore],
-    groups: [{ label: "nav.group.modules", items: primary }, { label: "nav.group.workspace", items: ws }, { label: "nav.group.explore", items: explore }],
+    groups: [{ label: "nav.group.workspace", items: [...primary,...ws] }, { label: "nav.group.explore", items: explore }],
   };
 }
 

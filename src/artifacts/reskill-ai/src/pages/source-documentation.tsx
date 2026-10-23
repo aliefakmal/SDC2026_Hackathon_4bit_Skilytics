@@ -88,6 +88,11 @@ const DOCS: Doc[] = [
     {label: "docs.f.files", ref: "src/artifacts/api-server/src/data/openlearn.ts"},
     {label: "docs.f.method", k: ["docs.openlearn.method"]},
   ]},
+  { id: "learningRecords", types: ["user", "derived"], name: "docs.learning.name", rows: [
+    {label:"docs.f.method",k:["docs.learning.method"]},
+    {label:"docs.f.dataset",url:"https://support.google.com/calendar/answer/37118"},
+    {label:"docs.f.dataset",url:"https://support.apple.com/guide/calendar/icl1023/mac"},
+  ]},
   { id: "runpod", types: ["service", "user"], name: "sources.aiTitle", sourceIds: ["gemini", "runpod_main", "runpod_light"], ai: true, rows: [
     { label: "docs.f.publisher", ref: "Google Gemini API + RunPod Serverless (vLLM, OpenAI-compatible)" },
     { label: "docs.f.api", url: "https://ai.google.dev/gemini-api/docs/models" },
@@ -127,7 +132,7 @@ const CATEGORIES = [
   { key: "career", ids: ["onet", "riasec", "match"] },
   { key: "learning", ids: ["courses", "freecodecamp", "githubskills", "huggingface", "openlearn", "sdg"] },
   { key: "aiService", ids: ["runpod"] },
-  { key: "privacy", ids: ["demo"] },
+  { key: "privacy", ids: ["demo", "learningRecords"] },
 ] as const;
 const TYPE_TONE: Record<DocType, string> = {
   external: "bg-[hsl(var(--maroon-soft))] text-primary",

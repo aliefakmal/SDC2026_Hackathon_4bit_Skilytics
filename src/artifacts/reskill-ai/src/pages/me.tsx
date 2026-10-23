@@ -1,3 +1,4 @@
+import { LearningDashboard } from "@/components/learning-dashboard";
 import { useState, type FormEvent } from "react";
 import { Link, Redirect, useLocation, useSearch } from "wouter";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
@@ -49,6 +50,7 @@ export function Workspace() {
         <Stat label={t("me.statInsights")} value={s ? f.num(s.insightCount) : "-"} />
         <Stat label={t("me.statPredictions")} value={s ? f.num(s.predictionCount) : "-"} tone="gold" />
       </div>
+      <div className="mt-5 space-y-4">{visibleProfiles.map(p=><LearningDashboard key={p.id} p={p}/>)}</div>
       <div className="mt-5 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <Panel title={t("me.profiles")}>
           {profiles.isLoading ? <Rows n={3} h="h-20" /> : profiles.isError ? <ErrorBox error={profiles.error} retry={() => profiles.refetch()} /> : !visibleProfiles.length ? (
