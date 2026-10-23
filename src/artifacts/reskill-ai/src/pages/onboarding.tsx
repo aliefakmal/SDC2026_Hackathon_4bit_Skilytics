@@ -1638,7 +1638,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-accent/20">
           <div>
             <h2 className="flex items-center gap-2 text-base font-bold text-foreground">
-              <Sparkles className="h-4 w-4 text-accent" />
+              <Lightbulb className="h-4 w-4 text-accent" />
               {t("ob.results.explainTitle")}
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">{t("ob.results.explainNote")}</p>

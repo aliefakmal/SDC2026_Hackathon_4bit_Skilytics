@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { useT } from "@/i18n";
 import { chooseVoice, speechParts, type SpeechLanguage } from "@/lib/speech";
+import { useToast } from "@/hooks/use-toast";
 
 const copy = {
   en: { listen: "Listen", stop: "Stop", info: "Free device voices · switches voices for mixed languages. English/Malay detection is approximate.", missing: "This device has no voice for: ", install: ". Add the language in your device’s speech settings, then try again.", failed: "Speech could not play. Check your device voices and try again.", loading: "Voices are not ready yet. Please try again in a moment." },
@@ -12,9 +14,11 @@ const names = { en: "English", ms: "Bahasa Melayu", zh: "中文" };
 
 export function MultilingualListen({ text, language }: { text: string; language: string }) {
   const { lang } = useT();
+  const { toast } = useToast();
+  const reducedMotion = useReducedMotion();
   const words = copy[lang];
   const [speaking, setSpeaking] = useState(false);
-  const [notice, setNotice] = useState("");
+  const notify = (description: string) => toast({ title: lang === "ms" ? "Bacaan suara tidak tersedia" : lang === "zh" ? "语音暂不可用" : "Speech unavailable", description, variant: "destructive", duration: 6000 });
   const voices = useRef<SpeechSynthesisVoice[]>([]);
   const token = useRef(0);
   const utterance = useRef<SpeechSynthesisUtterance | null>(null);
@@ -29,7 +33,6 @@ export function MultilingualListen({ text, language }: { text: string; language:
   }, [supported]);
   useEffect(() => {
     setSpeaking(false);
-    setNotice("");
     return () => { token.current++; if (supported) window.speechSynthesis.cancel(); };
   }, [text, language, lang, supported]);
   if (!supported) return null;
@@ -41,10 +44,9 @@ export function MultilingualListen({ text, language }: { text: string; language:
     if (speaking) { setSpeaking(false); return; }
     voices.current = synth.getVoices();
     const parts = speechParts(text, (["en", "ms", "zh"].includes(language) ? language : "en") as SpeechLanguage);
-    if (!voices.current.length) { setNotice(words.loading); return; }
+    if (!voices.current.length) { notify(words.loading); return; }
     const missing = [...new Set(parts.filter((part) => !chooseVoice(voices.current, part.lang)).map((part) => names[part.lang]))];
-    if (missing.length) { setNotice(words.missing + missing.join(", ") + words.install); return; }
-    setNotice("");
+    if (missing.length) { notify(words.missing + missing.join(", ") + words.install); return; }
     setSpeaking(true);
     const session = token.current;
     const play = (index: number) => {
@@ -57,11 +59,11 @@ export function MultilingualListen({ text, language }: { text: string; language:
       utter.lang = voice.lang;
       utter.rate = .92;
       utter.onend = () => play(index + 1);
-      utter.onerror = () => { if (token.current === session) { setSpeaking(false); setNotice(words.failed); } };
+      utter.onerror = () => { if (token.current === session) { setSpeaking(false); notify(words.failed); } };
       utterance.current = utter;
-      synth.speak(utter);
+      try { synth.speak(utter); } catch { setSpeaking(false); notify(words.failed); }
     };
     play(0);
   };
-  return <div className="max-w-sm"><button type="button" onClick={toggle} aria-pressed={speaking} className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-medium hover:bg-muted" title={words.info} data-testid="button-multilingual-listen">{speaking ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}{speaking ? words.stop : words.listen}</button>{notice && <p className="mt-1 text-xs text-muted-foreground" role="status">{notice}</p>}</div>;
+  return <motion.button type="button" onClick={toggle} aria-pressed={speaking} whileHover={reducedMotion ? undefined : { scale: 1.04 }} whileTap={reducedMotion ? undefined : { scale: .97 }} className={`inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 py-2 text-sm font-bold shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${speaking ? "border-primary bg-primary text-primary-foreground ring-2 ring-primary/20" : "border-primary/40 bg-[hsl(var(--gold-soft))] text-primary hover:border-primary hover:bg-primary/10"}`} title={words.info} data-testid="button-multilingual-listen">{speaking ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}{speaking ? words.stop : words.listen}{speaking && <span aria-hidden="true" className="flex h-5 items-center gap-0.5">{[0, 1, 2, 3].map((bar) => <motion.span key={bar} className="w-0.5 rounded-full bg-current" style={{ height: 14 }} animate={reducedMotion ? {} : { scaleY: [.3, 1, .3] }} transition={{ duration: .7, repeat: Infinity, delay: bar * .12 }} />)}</span>}</motion.button>;
 }
