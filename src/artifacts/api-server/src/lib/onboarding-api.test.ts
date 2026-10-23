@@ -80,6 +80,20 @@ test("both individual paths validate prerequisites, preserve state and reject cr
   }
 });
 
+test("guest can create more than ten profiles while retries remain idempotent", async () => {
+  const created = [];
+  for (let i = 0; i < 12; i++) created.push(await draft("graduate"));
+  assert.equal(new Set(created).size, 12);
+  const key = randomUUID();
+  const input = { name: "TEST ONLY Retry", segment: "graduate", weeklyHours: 1, budgetMyr: 0 };
+  const first = await request("/profiles", "POST", input, { "x-idempotency-key": key });
+  assert.equal(first.status, 201); profileIds.push(first.body.id);
+  const retry = await request("/profiles", "POST", input, { "x-idempotency-key": key });
+  assert.equal(retry.status, 200);
+  assert.equal(retry.body.id, first.body.id);
+  assert.equal((await request("/profiles", "POST", input, { "x-idempotency-key": key, "x-guest-token": stranger })).status, 409);
+});
+
 test("register then existing login claims guest profiles and dependent evidence/answers once", async () => {
   const id = await draft("graduate"); await extractedFixture(id);
   await db.insert(insightsTable).values({ profileId: id, agent: "cv", lang: "en", inputHash: "test-only", content: "TEST ONLY insight", sources: [], model: "test-fixture" });

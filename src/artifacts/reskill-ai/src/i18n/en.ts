@@ -103,7 +103,6 @@ export const en = {
   "err.generic": "Something went wrong.", "err.invalid_input": "Some fields are not valid.", "err.not_found": "Not found.",
   "err.timeout": "The request took too long. Please try again.", "err.network": "Could not connect. Check your connection and try again.",
   "err.pageTitle": "This page could not load", "err.pageBody": "Please try again. If the service is starting, it may take a moment.",
-  "err.profile_creation_limit": "Too many new profiles today. Please continue an existing profile or try again tomorrow.",
   "err.profile_creation_conflict": "This profile request conflicted. Please try again.",
   "err.server_error": "Server error. Please try again.", "err.ai_not_connected": "The AI service is not connected right now.",
   "err.ai_vision_unsupported": "The configured AI model cannot read images. Please contact the administrator to configure a vision-capable model.",

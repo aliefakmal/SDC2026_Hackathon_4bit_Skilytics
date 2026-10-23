@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { performance } from "node:perf_hooks";
 import { db, profilesTable, plansTable, insightsTable, rolesTable, type StoredProfileSkill } from "@workspace/db";
-import { and, desc, eq, gte, isNotNull, lt, ne, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, lt, ne, sql } from "drizzle-orm";
 import {
   ListProfilesQueryParams,
   CreateProfileBody,
@@ -83,13 +83,9 @@ router.post("/profiles", async (req, res) => {
         const [existing] = await tx.select().from(profilesTable).where(eq(profilesTable.createRequestKey, requestKey));
         if (existing) return { kind: existing.guestToken === guestToken && !existing.ownerUserId ? "existing" : "conflict", row: existing } as const;
       }
-      const [{ recent }] = await tx.select({ recent: sql<number>`count(*)::int` }).from(profilesTable)
-        .where(and(eq(profilesTable.guestToken, guestToken), gte(profilesTable.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000))));
-      if (recent >= 10) return { kind: "limit", row: null } as const;
       const [row] = await tx.insert(profilesTable).values(values).onConflictDoNothing().returning();
       return { kind: row ? "created" : "conflict", row: row ?? null } as const;
     });
-    if (outcome.kind === "limit") { res.status(429).json({ error: "profile_creation_limit" }); return; }
     if (outcome.kind === "conflict" || !outcome.row) { res.status(409).json({ error: "profile_creation_conflict" }); return; }
     res.status(outcome.kind === "created" ? 201 : 200).json(profileToApi(outcome.row, await loadSkills()));
     return;

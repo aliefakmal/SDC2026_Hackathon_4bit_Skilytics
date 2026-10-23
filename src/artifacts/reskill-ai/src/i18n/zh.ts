@@ -104,7 +104,6 @@ export const zh: Record<DictKey, string> = {
   "err.generic": "出现问题。", "err.invalid_input": "部分字段无效。", "err.not_found": "未找到。",
   "err.timeout": "请求耗时过长，请重试。", "err.network": "无法连接。请检查网络后重试。",
   "err.pageTitle": "无法加载此页面", "err.pageBody": "请重试。如果服务正在启动，可能需要稍等片刻。",
-  "err.profile_creation_limit": "今天创建的新资料过多。请继续已有资料或明天再试。",
   "err.profile_creation_conflict": "资料请求发生冲突，请重试。",
   "err.server_error": "服务器错误，请重试。", "err.ai_not_connected": "AI 服务目前未连接。",
   "err.ai_vision_unsupported": "当前配置的 AI 模型无法读取图像。请联系管理员配置支持图像的模型。",

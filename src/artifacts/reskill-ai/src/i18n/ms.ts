@@ -104,7 +104,6 @@ export const ms: Record<DictKey, string> = {
   "err.generic": "Ada masalah berlaku.", "err.invalid_input": "Sesetengah medan tidak sah.", "err.not_found": "Tidak dijumpai.",
   "err.timeout": "Permintaan mengambil masa terlalu lama. Sila cuba lagi.", "err.network": "Tidak dapat bersambung. Semak sambungan dan cuba lagi.",
   "err.pageTitle": "Halaman ini tidak dapat dimuatkan", "err.pageBody": "Sila cuba lagi. Jika perkhidmatan sedang bermula, ia mungkin mengambil sedikit masa.",
-  "err.profile_creation_limit": "Terlalu banyak profil baharu hari ini. Sambung profil sedia ada atau cuba lagi esok.",
   "err.profile_creation_conflict": "Permintaan profil ini bertembung. Sila cuba lagi.",
   "err.server_error": "Ralat pelayan. Sila cuba lagi.", "err.ai_not_connected": "Perkhidmatan AI tidak bersambung buat masa ini.",
   "err.ai_vision_unsupported": "Model AI yang dikonfigurasikan tidak boleh membaca imej. Sila hubungi pentadbir untuk menyediakan model yang menyokong imej.",
