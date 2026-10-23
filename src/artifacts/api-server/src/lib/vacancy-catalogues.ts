@@ -114,7 +114,7 @@ export async function additionalVacancies() {
       for (const j of data.slice(1))
         if (
           safe(j.url) &&
-          /^https:\/\/remoteok\.com\//.test(j.url) &&
+          /^https:\/\/remoteok\.com\//i.test(j.url) &&
           typeof j.description === "string" &&
           Number.isFinite(Date.parse(j.date)) &&
           Date.parse(j.date) > Date.now() - 30 * 86400000

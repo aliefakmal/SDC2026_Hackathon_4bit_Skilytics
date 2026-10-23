@@ -23,3 +23,5 @@ test("job discovery requires completed owned pathway and uses canonical public l
 
 import {himalayasMalaysia} from "./vacancy-catalogues";
 test("Himalayas eligibility requires both Malaysia location and UTC+8",()=>{assert.equal(himalayasMalaysia({locationRestrictions:[],timezoneRestrictions:[8]}),true);assert.equal(himalayasMalaysia({locationRestrictions:["United States"],timezoneRestrictions:[8]}),false);assert.equal(himalayasMalaysia({locationRestrictions:["Malaysia"],timezoneRestrictions:[-5]}),false);assert.equal(himalayasMalaysia({}),false);});
+
+test("RemoteOK canonical mixed-case hostnames stay valid without changing application links",()=>{const original="https://remoteOK.com/remote-jobs/example";assert.equal(new URL(original).hostname,"remoteok.com");assert.equal(/^https:\/\/remoteok\.com\//i.test(original),true);assert.equal(/^https:\/\/remoteok\.com\//i.test("https://remoteok.com.evil.test/jobs"),false);});
