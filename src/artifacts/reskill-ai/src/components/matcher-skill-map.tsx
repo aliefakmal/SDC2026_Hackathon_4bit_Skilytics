@@ -86,6 +86,7 @@ export function roleGoals(role: Pick<Role, "title" | "sector">) {
   if (role.sector === "Education & Training") return ["4"];
   if (role.sector === "Engineering & Manufacturing") return ["9", "8"];
   if (role.sector === "Logistics") return ["9", "8"];
+  if (role.sector === "Digital & ICT") return ["9", "8"];
   if (/scientist|machine learning|research/.test(title)) return ["9", "8"];
   return ["8"];
 }
