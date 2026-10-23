@@ -20,6 +20,7 @@ import { hashInput, type AgentName, type Lang } from "./agents";
 import { agentRoutes } from "./agent-routing";
 import { loadCourses, loadRoles, loadSkills, roleToApi } from "./catalog";
 import { selfDirectedRoles } from "./self-directed";
+import { saveLearningState } from "./learning-journey";
 import { profileToApi } from "./profiles";
 import { scoreRole } from "./scoring";
 import { RIASEC_QUESTIONS } from "../data/riasec";
@@ -122,6 +123,7 @@ async function insertCachedProfilerInsight(guestToken: string) {
     guestToken,
   }).returning();
   profileIds.push(profileRow!.id);
+  await saveLearningState(profileRow!.id, { stage: "pathway", completed: {} });
 
   const [skills, roles, courses] = await Promise.all([loadSkills(), loadRoles(), loadCourses()]);
   const profile = profileToApi(profileRow!, skills);
