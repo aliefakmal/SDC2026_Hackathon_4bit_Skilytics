@@ -3,7 +3,7 @@ import { Link, useLocation, useSearch } from "wouter";
 import { motion } from "framer-motion";
 import {
   Activity, ArrowDown, ArrowRight, Briefcase, Building2, ChevronRight, Database, FileText,
-  GraduationCap, HardHat, Loader2, Map, Pause, Play, School, ShieldCheck, Sparkles, UserRound
+  GraduationCap, HardHat, Loader2, Map, School, ShieldCheck, Sparkles, UserRound
 } from "lucide-react";
 import { useGetMarketOverview, useListDemoAccounts, useLogin, useRegister, getGetMarketOverviewQueryKey, type UserRole } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,6 @@ export function Landing() {
   const { user } = useAuth();
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [partnerModalOpen, setPartnerModalOpen] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     // Pre-warm backend API while visitor explores landing page to eliminate cold start
@@ -130,18 +129,16 @@ export function Landing() {
             <div className="mt-6"><HonestyLine /></div>
           </div>
 
-          {/* Right Side: image.png (RAW PNG CUTOUT, NO BOX, BOTTOM FADE EFFECT) */}
+          {/* Right Side: image.png (RAW PNG CUTOUT, NO BOX, GENTLE BOTTOM FADE) */}
           <div className="relative mx-auto flex w-full max-w-md items-end justify-center lg:max-w-none">
             <div className="relative w-full max-w-[480px]">
-              {/* Soft ambient lighting backlight behind the cutout */}
-              <div className="pointer-events-none absolute inset-x-6 top-10 bottom-2 -z-10 rounded-full bg-gradient-to-t from-accent/25 via-primary/10 to-transparent blur-3xl opacity-80" />
               <img
                 src="/image.png"
                 alt="Find Your Fit. Fuel Your Future."
-                className="relative z-10 mx-auto h-auto w-full max-h-[480px] object-contain drop-shadow-2xl select-none pointer-events-none"
+                className="relative z-10 mx-auto h-auto w-full max-h-[480px] object-contain drop-shadow-xl select-none pointer-events-none"
                 style={{
-                  maskImage: "linear-gradient(to bottom, black 65%, transparent 98%)",
-                  WebkitMaskImage: "linear-gradient(to bottom, black 65%, transparent 98%)",
+                  maskImage: "linear-gradient(to bottom, black 82%, transparent 100%)",
+                  WebkitMaskImage: "linear-gradient(to bottom, black 82%, transparent 100%)",
                 }}
                 loading="eager"
               />
@@ -150,14 +147,9 @@ export function Landing() {
         </div>
       </section>
 
-      {/* SECTION WITH DIFFERENT TONE BACKGROUND & UPWARD LIGHTING EFFECT */}
-      <div className="relative w-full border-t border-border/60 bg-muted/35 dark:bg-card/25 flex-1">
-        {/* Upward lighting & glow effect directed towards hero */}
-        <div className="pointer-events-none absolute -top-24 inset-x-0 h-24 bg-gradient-to-t from-muted/50 via-accent/15 to-transparent" />
-        <div className="pointer-events-none absolute -top-14 left-1/2 -translate-x-1/2 w-3/4 max-w-3xl h-14 bg-accent/25 blur-3xl rounded-full" />
-        <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
-
-        <main className="relative z-[1] mx-auto max-w-6xl px-4 py-10 md:px-8 md:py-14">
+      {/* SECTION WITH DIFFERENT TONE BACKGROUND (SEAMLESS FADE, NO BORDER LINE, NO NEON) */}
+      <div className="relative w-full bg-gradient-to-b from-transparent via-muted/30 to-muted/40 dark:via-card/20 dark:to-card/30 flex-1">
+        <main className="relative z-[1] mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-14">
           {/* 2. TARGET MARKET HORIZONTAL CARDS (2x2 ON MOBILE, 4 IN A ROW ON DESKTOP) */}
           <section className="mb-14 sm:mb-18" aria-label={t("landing.marketTitle")}>
             <div className="mb-6">
@@ -260,71 +252,77 @@ export function Landing() {
             </div>
           </section>
 
-          {/* 3. HOW IT WORKS SECTION (MOVING IN LOOP CAROUSEL) */}
+          {/* 3. HOW IT WORKS SECTION */}
           <section className="mb-14 sm:mb-18" aria-label={t("landing.howTitle")}>
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("landing.howTitle")}</h2>
-                <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t("landing.howSub")}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="hidden sm:inline-flex text-[11px] text-muted-foreground font-medium">
-                  {isPaused ? "Dijeda" : "Bergerak (Looping)"}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsPaused((prev) => !prev)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer shadow-xs"
-                  title={isPaused ? "Play carousel" : "Pause carousel"}
-                >
-                  {isPaused ? <Play className="h-3.5 w-3.5 text-primary fill-primary" /> : <Pause className="h-3.5 w-3.5 text-primary fill-primary" />}
-                  <span>{isPaused ? "Play" : "Pause"}</span>
-                </button>
-              </div>
+            <div className="mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("landing.howTitle")}</h2>
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t("landing.howSub")}</p>
             </div>
 
-            {/* Carousel container with edge fade masks */}
+            {/* Desktop View: Static horizontal 3-column layout (tak bergerak) */}
+            <div className="hidden md:grid md:grid-cols-3 gap-5 items-stretch">
+              {howItWorksSteps.map((item, idx) => {
+                const IconComponent = item.icon;
+                const isNotLast = idx < howItWorksSteps.length - 1;
+                return (
+                  <div key={item.step} className="rise relative flex flex-col justify-between rounded-2xl border border-card-border bg-card p-6 shadow-xs hover:border-primary/40 transition-colors">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+                          <IconComponent className="h-5 w-5" />
+                        </span>
+                        <span className="text-xs font-extrabold text-accent bg-accent/10 px-2.5 py-1 rounded-full">{item.step}</span>
+                      </div>
+                      <h3 className="mt-4 font-bold text-base text-foreground">{t(item.titleKey)}</h3>
+                      <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">{t(item.descKey)}</p>
+                    </div>
+
+                    {/* Desktop arrow indicator to next step */}
+                    {isNotLast && (
+                      <div className="absolute -right-3.5 top-1/2 -translate-y-1/2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background border border-border shadow-xs text-muted-foreground">
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Mobile View: Moving in loop carousel (untuk mobile view sahaja, tanpa status & tanpa butang) */}
             <div
-              className="relative -mx-4 sm:-mx-8 overflow-hidden py-3 px-4 sm:px-8 select-none"
+              className="block md:hidden relative -mx-4 overflow-hidden py-2 px-4 select-none"
               style={{
-                maskImage: "linear-gradient(to right, transparent, black 4%, black 96%, transparent)",
-                WebkitMaskImage: "linear-gradient(to right, transparent, black 4%, black 96%, transparent)",
+                maskImage: "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
+                WebkitMaskImage: "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
               }}
             >
               <motion.div
-                className="flex items-center gap-4 sm:gap-6 w-max cursor-grab active:cursor-grabbing will-change-transform"
-                animate={isPaused ? { x: undefined } : { x: ["0%", "-33.333%"] }}
+                className="flex items-center gap-3 w-max will-change-transform"
+                animate={{ x: ["0%", "-33.333%"] }}
                 transition={{
                   repeat: Infinity,
                   ease: "linear",
-                  duration: 22,
+                  duration: 18,
                 }}
-                onMouseEnter={() => setIsPaused(true)}
-                onMouseLeave={() => setIsPaused(false)}
-                onTouchStart={() => setIsPaused(true)}
-                onTouchEnd={() => setIsPaused(false)}
               >
                 {carouselItems.map((item, idx) => {
                   const IconComponent = item.icon;
                   return (
-                    <div key={`${item.step}-${idx}`} className="flex items-center gap-4 sm:gap-6 shrink-0">
-                      <div className="w-[260px] sm:w-[310px] md:w-[340px] shrink-0 rounded-2xl border border-card-border bg-card p-5 sm:p-6 shadow-xs hover:border-primary/50 transition-all hover:shadow-md">
+                    <div key={`${item.step}-${idx}`} className="flex items-center gap-3 shrink-0">
+                      <div className="w-[260px] shrink-0 rounded-2xl border border-card-border bg-card p-5 shadow-xs">
                         <div className="flex items-center justify-between">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-                            <IconComponent className="h-5 w-5" />
+                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+                            <IconComponent className="h-4 w-4" />
                           </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-semibold text-muted-foreground">{item.badge}</span>
-                            <span className="text-xs font-extrabold text-accent bg-accent/10 px-2.5 py-0.5 rounded-full">{item.step}</span>
-                          </div>
+                          <span className="text-xs font-extrabold text-accent bg-accent/10 px-2 py-0.5 rounded-full">{item.step}</span>
                         </div>
-                        <h3 className="mt-4 font-bold text-base text-foreground">{t(item.titleKey)}</h3>
-                        <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed line-clamp-3">{t(item.descKey)}</p>
+                        <h3 className="mt-3 font-bold text-sm text-foreground">{t(item.titleKey)}</h3>
+                        <p className="mt-1 text-xs text-muted-foreground leading-relaxed line-clamp-3">{t(item.descKey)}</p>
                       </div>
 
                       {/* Arrow to next step */}
-                      <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 shadow-xs">
-                        <ArrowRight className="h-4 w-4" />
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 shadow-xs">
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </div>
                     </div>
                   );
