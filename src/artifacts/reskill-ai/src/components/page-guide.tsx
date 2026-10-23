@@ -86,7 +86,7 @@ export function PageGuide({
       />
       <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : close())}>
         <DialogContent
-          className="max-w-md rounded-2xl"
+          className="w-[calc(100%-2rem)] max-w-md rounded-2xl p-5"
           closeLabel={
             lang === "ms"
               ? "Tutup panduan"
@@ -123,13 +123,13 @@ export function PageGuide({
             </Button>
             <Button
               variant="outline"
-              className="ml-auto"
+              className="ml-auto min-w-0 flex-1 whitespace-normal px-2 text-xs sm:flex-none sm:px-4 sm:text-sm"
               disabled={step === 0}
               onClick={() => setStep((n) => n - 1)}
             >
               {w[0]}
             </Button>
-            <Button
+            <Button className="min-w-0 flex-1 whitespace-normal px-2 text-xs sm:flex-none sm:px-4 sm:text-sm"
               onClick={() =>
                 step === steps.length - 1 ? close() : setStep((n) => n + 1)
               }

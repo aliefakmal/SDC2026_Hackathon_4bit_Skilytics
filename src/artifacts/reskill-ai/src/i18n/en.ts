@@ -237,7 +237,7 @@ export const en = {
   "roles.importanceNote": "Importance 1-3", "roles.mycol": "MyCOL critical",
   "roles.mycolExplain": "MyCOL is Malaysia's Critical Occupations List of roles enterprises struggle to fill.",
   "roles.requiredSkills": "Required skills", "roles.signals": "Signals", "roles.skillsN": "{n} skills",
-  "roles.sub": "Roles with skills, AI exposure and demand signals.", "roles.title": "Role library", "roles.usageMy": "AI usage MY",
+  "roles.sub": "Choose a direction and see the skills to learn.", "roles.title": "Role library", "roles.usageMy": "AI usage MY",
   "skills.addPh": "Add a skill", "skills.confirm": "Confirm", "skills.emptyBody": "Upload a CV or add skills manually.",
   "skills.emptyTitle": "No skills yet", "skills.meta": "Confirm skills you can back up.", "skills.remove": "Remove {name}",
   "skills.title": "Skills ({n})", "skills.updated": "Skills updated",

@@ -238,7 +238,7 @@ export const zh: Record<DictKey, string> = {
   "roles.importanceNote": "重要程度 1-3", "roles.mycol": "MyCOL 关键职位",
   "roles.mycolExplain": "MyCOL 是马来西亚关键职业清单，列出企业难以招聘的职位。",
   "roles.requiredSkills": "所需技能", "roles.signals": "信号", "roles.skillsN": "{n} 项技能",
-  "roles.sub": "包含技能、AI 影响度与需求信号的职位。", "roles.title": "职位库", "roles.usageMy": "马来西亚 AI 使用",
+  "roles.sub": "选择方向，了解需要学习的技能。", "roles.title": "职位库", "roles.usageMy": "马来西亚 AI 使用",
   "skills.addPh": "添加技能", "skills.confirm": "确认", "skills.emptyBody": "上传简历或手动添加技能。",
   "skills.emptyTitle": "暂无技能", "skills.meta": "确认你能证明的技能。", "skills.remove": "移除 {name}",
   "skills.title": "技能（{n}）", "skills.updated": "技能已更新",

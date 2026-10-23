@@ -487,7 +487,7 @@ export function Courses({ hr }: { hr?: boolean }) {
                   <div className="text-[11px] text-muted-foreground">
                     {c.durationHours === null
                       ? t("courses.durationUnknown")
-                      : t("common.hours", { n: c.durationHours })}
+                      : t("common.hours", { n: f.num(c.durationHours, 1) })}
                   </div>
                 </div>
               </div>
@@ -510,7 +510,7 @@ export function Courses({ hr }: { hr?: boolean }) {
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {c.skills.map((s) => (
-                  <SkillBadge key={s.id} name={s.name} category={s.category} />
+                  <SkillBadge key={s.id} name={skillLabel(s.name,lang)} category={s.category} />
                 ))}
               </div>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-2">

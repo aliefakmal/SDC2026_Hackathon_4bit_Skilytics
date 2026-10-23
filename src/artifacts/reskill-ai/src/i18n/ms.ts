@@ -238,7 +238,7 @@ export const ms: Record<DictKey, string> = {
   "roles.importanceNote": "Kepentingan 1-3", "roles.mycol": "Kritikal MyCOL",
   "roles.mycolExplain": "MyCOL ialah Senarai Pekerjaan Kritikal Malaysia bagi peranan yang sukar diisi oleh enterprise.",
   "roles.requiredSkills": "Kemahiran diperlukan", "roles.signals": "Isyarat", "roles.skillsN": "{n} kemahiran",
-  "roles.sub": "Peranan dengan kemahiran, pendedahan AI dan isyarat permintaan.", "roles.title": "Pustaka peranan", "roles.usageMy": "Penggunaan AI MY",
+  "roles.sub": "Pilih hala tuju dan lihat kemahiran untuk dipelajari.", "roles.title": "Pustaka peranan", "roles.usageMy": "Penggunaan AI MY",
   "skills.addPh": "Tambah kemahiran", "skills.confirm": "Sahkan", "skills.emptyBody": "Muat naik CV atau tambah kemahiran secara manual.",
   "skills.emptyTitle": "Belum ada kemahiran", "skills.meta": "Sahkan kemahiran yang boleh anda buktikan.", "skills.remove": "Buang {name}",
   "skills.title": "Kemahiran ({n})", "skills.updated": "Kemahiran dikemas kini",
