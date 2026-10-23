@@ -376,6 +376,7 @@ export async function translateHollandInsight(
     `You are an expert bilingual Malaysian translator and career advisor.`,
     `Translate the provided Holland (RIASEC) ELI5 explanation from ${fromName} into natural, grammatically correct, friendly ${toName}.`,
     `CRITICAL REQUIREMENTS:`,
+    `Identifiers are immutable: preserve RIASEC, Holland codes (for example CSI), the type letters R/I/A/S/E/C, SDG identifiers, URLs, model names, course titles and personal/institution names exactly as written. In this assessment I is Investigative, never the pronoun 'I'; do not translate that type letter as 'saya' or '我'. Translate explanatory prose and type descriptions only. Do not change numeric scores or the association between each letter and its meaning.`,
     `1. Preserve the EXACT meaning, analogy/metaphor (e.g. master organizer, librarian, architect, researcher), reasoning, CV evidence facts, degree/institution names, and practical action advice.`,
     `2. Keep it simple and easily understandable (ELI5). Do NOT dump long quotes or wrap paragraphs in quotation marks.`,
     `3. Maintain the warm 2-sentence micro-experiment for the action tip.`,

@@ -35,6 +35,10 @@ export function LangProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem(KEY, lang);
     document.documentElement.lang = HTML_LANG[lang];
+    // The app owns EN/MS/ZH translations. Browser rewriting corrupts identifiers
+    // such as RIASEC "I" and can leave React-managed labels out of sync.
+    document.documentElement.translate = false;
+    document.documentElement.classList.add("notranslate");
   }, [lang]);
   const setLang = useCallback((l: Lang) => setLangState(l), []);
   const cycle = useCallback(() => setLangState((l) => LANGS[(LANGS.indexOf(l) + 1) % LANGS.length]), []);

@@ -1594,7 +1594,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
         <div className="tnum flex gap-1" role="group" aria-label={t("ob.results.exploreCode")}>
           {code.split("").slice(0, 3).map((c, i) => (
             <motion.button type="button" key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.12 }}
-              onClick={() => setSelectedLetter(i)} aria-pressed={selectedLetter === i} aria-label={`${c}: ${tk("riasec", c)}`}
+              translate="no" onClick={() => setSelectedLetter(i)} aria-pressed={selectedLetter === i} aria-label={`${c}: ${tk("riasec", c)}`}
               className={cn("flex h-16 w-14 items-center justify-center rounded-2xl text-3xl font-extrabold transition-transform hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary", selectedLetter === i ? "bg-primary text-primary-foreground" : "bg-[hsl(var(--gold-soft))] text-primary")}>{c}</motion.button>
           ))}
         </div>
@@ -1605,7 +1605,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
       </div>
       {selectedType && selectedType !== "-" && <div className="mb-6 rounded-2xl border border-primary/25 bg-card p-4" data-testid="holland-letter-detail">
         <p className="text-xs font-semibold uppercase tracking-wide text-accent">{t("ob.results.exploreCode")}</p>
-        <p className="mt-1 font-bold">{selectedType} · {tk("riasec", selectedType)}</p>
+        <p className="mt-1 font-bold"><span translate="no" className="notranslate">{selectedType}</span> · {tk("riasec", selectedType)}</p>
         <p className="mt-1 text-sm text-muted-foreground">{t(`ob.results.type.${selectedType}` as Parameters<typeof t>[0])}</p>
       </div>}
 
@@ -1622,7 +1622,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5">
             {RIASEC.map((k) => (
               <div key={k} className="grid grid-cols-[1.5rem_minmax(0,7.5rem)_1fr] items-center gap-2 text-sm" data-testid={`meter-riasec-${k}`}>
-                <span className="font-bold text-primary">{k}</span>
+                <span translate="no" className="notranslate font-bold text-primary">{k}</span>
                 <span className="truncate font-medium">{tk("riasec", k)}</span>
                 <Meter value={scores[k]} max={max} tone={code.includes(k) ? "maroon" : "gold"} label={scores[k].toFixed(1)} />
               </div>
