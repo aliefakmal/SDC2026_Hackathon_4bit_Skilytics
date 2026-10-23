@@ -84,7 +84,7 @@ export const docsEn = {
   "docs.sdg.method": "Course subject themes take priority: climate 13, clean energy 7, health 3, manufacturing/research 9, productivity 8 and inclusion 10. Education 4.4 is a fallback. Roles use explicit title/sector rules: health 3, education 4, engineering/logistics/research 9, green roles 7/12/13, other work 8. These application associations are not UN occupational classifications or measured impact. The first goal has a bold outline; icons are deduplicated by goal.",
   "docs.sdg.limits": "Not measured or certified impact, and not SDG statistics.",
 
-  "docs.demo.org": "Employer and Educators demo accounts are tagged as dummy. Their organisations and members are not external facts.",
+  "docs.demo.org": "Enterprise and Educators demo accounts are tagged as dummy. Their organisations and members are not external facts.",
   "docs.demo.individual": "Dummy individual sign-ups use a unique @example.invalid address. No email is ever sent.",
   "docs.demo.private": "Real inputs from signed-in users and guests are private and are never counted as market statistics.",
 
@@ -178,7 +178,7 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.sdg.method": "Tema kursus diutamakan: iklim 13, tenaga bersih 7, kesihatan 3, pembuatan/penyelidikan 9, produktiviti 8 dan keterangkuman 10. Pendidikan 4.4 menjadi sandaran. Peranan mengikut aturan tajuk/sektor jelas: kesihatan 3, pendidikan 4, kejuruteraan/logistik/penyelidikan 9, peranan hijau 7/12/13, kerja lain 8. Kaitan aplikasi ini bukan pengelasan pekerjaan PBB atau impak diukur. Matlamat pertama mempunyai bingkai tebal; ikon tidak diulang bagi matlamat sama.",
   "docs.sdg.limits": "Bukan impak yang diukur atau diperakui, dan bukan statistik SDG.",
 
-  "docs.demo.org": "Akaun demo Majikan dan Pendidik ditandakan sebagai contoh. Organisasi, pekerja dan pelajar ialah data contoh.",
+  "docs.demo.org": "Akaun demo Enterprise dan Pendidik ditandakan sebagai contoh. Organisasi, pekerja dan pelajar ialah data contoh.",
   "docs.demo.individual": "Pendaftaran individu contoh menggunakan alamat @example.invalid yang unik. Tiada e-mel pernah dihantar.",
   "docs.demo.private": "Input sebenar pengguna log masuk dan tetamu adalah peribadi dan tidak pernah dikira sebagai statistik pasaran.",
 
@@ -270,7 +270,7 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.sdg.method": "课程优先按主题关联：气候 13、清洁能源 7、健康 3、制造/科研 9、生产力 8、包容性 10。教育 4.4 仅作后备。职业采用明确的名称/行业规则：医疗 3、教育 4、工程/物流/科研 9、绿色职业 7/12/13、其他工作 8。这是应用关联，并非联合国职业分类或实测影响。首个目标采用粗边框，同一目标图标不重复。",
   "docs.sdg.limits": "并非经测量或认证的影响，也不是 SDG 统计数据。",
 
-  "docs.demo.org": "雇主与教育工作者演示账户已标注为示例。其机构与成员并非外部事实。",
+  "docs.demo.org": "企业与教育工作者演示账户已标注为示例。其机构与成员并非外部事实。",
   "docs.demo.individual": "示例个人注册使用唯一的 @example.invalid 地址，不会发送任何邮件。",
   "docs.demo.private": "已登录用户与访客的真实输入均为私密，绝不计入市场统计。",
 

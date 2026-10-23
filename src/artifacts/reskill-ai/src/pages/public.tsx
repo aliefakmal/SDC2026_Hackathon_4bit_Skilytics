@@ -3,7 +3,7 @@ import { Link, useLocation, useSearch } from "wouter";
 import { motion } from "framer-motion";
 import {
   Activity, ArrowDown, ArrowRight, Briefcase, Building2, ChevronRight, Database, FileText,
-  GraduationCap, HardHat, Loader2, Map, School, ShieldCheck, Sparkles, UserRound
+  GraduationCap, HardHat, Loader2, Map, School, ShieldCheck, Sparkles, UserRound, Users
 } from "lucide-react";
 import { useGetMarketOverview, useListDemoAccounts, useLogin, useRegister, getGetMarketOverviewQueryKey, type UserRole } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -307,96 +307,76 @@ export function Landing() {
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">{t("landing.marketTitle")}</h2>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4.5">
-              {/* 1. Student / Fresh Graduate */}
+              {/* 1. Student & Grads */}
               <Link
                 href="/onboarding/cv?seg=graduate&new=1"
                 onMouseEnter={prewarm}
                 data-testid="card-market-graduate"
-                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-3.5 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
+                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <GraduationCap className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" />
                     </span>
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-primary bg-primary/10 px-1.5 sm:px-2 py-0.5 rounded-full">Talent</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
                   </div>
-                  <h3 className="mt-3 sm:mt-4 font-bold text-xs sm:text-base text-foreground leading-snug line-clamp-1 sm:line-clamp-none">{t("landing.grad")}</h3>
-                  <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-none">{t("landing.gradSub")}</p>
-                </div>
-                <div className="mt-3 sm:mt-5 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-primary">
-                  <span>Start Assessment</span>
-                  <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                  <h3 className="mt-4 sm:mt-5 font-bold text-sm sm:text-base lg:text-lg text-foreground leading-snug">{t("landing.targetStudents")}</h3>
                 </div>
               </Link>
 
-              {/* 2. Jobseeker / Working Professional */}
+              {/* 2. Publics */}
               <Link
                 href="/onboarding/cv?seg=worker&new=1"
                 onMouseEnter={prewarm}
                 data-testid="card-market-worker"
-                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-3.5 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
+                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
                 style={{ animationDelay: "60ms" }}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <Briefcase className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Users className="h-5 w-5 sm:h-6 sm:w-6" />
                     </span>
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-primary bg-primary/10 px-1.5 sm:px-2 py-0.5 rounded-full">Pro</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
                   </div>
-                  <h3 className="mt-3 sm:mt-4 font-bold text-xs sm:text-base text-foreground leading-snug line-clamp-1 sm:line-clamp-none">{t("landing.worker")}</h3>
-                  <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-none">{t("landing.workerSub")}</p>
-                </div>
-                <div className="mt-3 sm:mt-5 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-primary">
-                  <span>Analyze Reskilling</span>
-                  <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                  <h3 className="mt-4 sm:mt-5 font-bold text-sm sm:text-base lg:text-lg text-foreground leading-snug">{t("landing.targetPublics")}</h3>
                 </div>
               </Link>
 
-              {/* 3. Employer / Enterprise HR */}
+              {/* 3. Enterprise */}
               <Link
                 href="/login?role=hr"
                 data-testid="card-market-hr"
-                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-3.5 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
+                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
                 style={{ animationDelay: "120ms" }}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
-                      <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
+                      <Building2 className="h-5 w-5 sm:h-6 sm:w-6" />
                     </span>
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-accent bg-accent/10 px-1.5 sm:px-2 py-0.5 rounded-full">HR</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-accent" />
                   </div>
-                  <h3 className="mt-3 sm:mt-4 font-bold text-xs sm:text-base text-foreground leading-snug line-clamp-1 sm:line-clamp-none">{t("portal.hr")}</h3>
-                  <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-none">{t("landing.hrSub")}</p>
-                </div>
-                <div className="mt-3 sm:mt-5 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-accent">
-                  <span>HR Portal</span>
-                  <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                  <h3 className="mt-4 sm:mt-5 font-bold text-sm sm:text-base lg:text-lg text-foreground leading-snug">{t("landing.targetEnterprise")}</h3>
                 </div>
               </Link>
 
-              {/* 4. Educator / TVET Institution */}
+              {/* 4. Educators */}
               <Link
                 href="/login?role=tvet"
                 data-testid="card-market-tvet"
-                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-3.5 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
+                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
                 style={{ animationDelay: "180ms" }}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
-                      <School className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
+                      <School className="h-5 w-5 sm:h-6 sm:w-6" />
                     </span>
-                    <span className="text-[10px] sm:text-[11px] font-semibold text-accent bg-accent/10 px-1.5 sm:px-2 py-0.5 rounded-full">TVET</span>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-accent" />
                   </div>
-                  <h3 className="mt-3 sm:mt-4 font-bold text-xs sm:text-base text-foreground leading-snug line-clamp-1 sm:line-clamp-none">{t("portal.tvet")}</h3>
-                  <p className="mt-1 sm:mt-1.5 text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 sm:line-clamp-none">{t("landing.tvetSub")}</p>
-                </div>
-                <div className="mt-3 sm:mt-5 flex items-center gap-1 sm:gap-1.5 text-[11px] sm:text-xs font-semibold text-accent">
-                  <span>TVET Portal</span>
-                  <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 transition-transform group-hover:translate-x-1" />
+                  <h3 className="mt-4 sm:mt-5 font-bold text-sm sm:text-base lg:text-lg text-foreground leading-snug">{t("landing.targetEducators")}</h3>
                 </div>
               </Link>
             </div>
@@ -570,7 +550,7 @@ export function Landing() {
                 <Building2 className="h-6 w-6" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block font-bold text-sm sm:text-base text-foreground">{t("portal.hr")} ({t("landing.ctaEmployer")})</span>
+                <span className="block font-bold text-sm sm:text-base text-foreground">{t("portal.hr")}</span>
                 <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.hrSub")}</span>
               </span>
               <ArrowRight className="h-5 w-5 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
@@ -586,7 +566,7 @@ export function Landing() {
                 <School className="h-6 w-6" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block font-bold text-sm sm:text-base text-foreground">{t("portal.tvet")} ({t("landing.ctaEducator")})</span>
+                <span className="block font-bold text-sm sm:text-base text-foreground">{t("portal.tvet")}</span>
                 <span className="block text-xs text-muted-foreground mt-0.5 leading-snug">{t("landing.tvetSub")}</span>
               </span>
               <ArrowRight className="h-5 w-5 shrink-0 text-accent transition-transform group-hover:translate-x-1" />
