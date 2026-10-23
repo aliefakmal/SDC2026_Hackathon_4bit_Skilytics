@@ -715,7 +715,7 @@ function CvStep({
       <div className="mt-4 rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/[0.04] via-muted/30 to-background p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2 mb-2.5">
           <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-            {lang === "ms" ? "Uji Cepat Dengan Fail Demo CV:" : lang === "zh" ? "使用演示简历快速测试：" : "Quick Test with Demo CVs:"}
+            {lang === "ms" ? "Cuba contoh CV" : lang === "zh" ? "试用示例简历" : "Try a sample CV"}
           </span>
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
             {lang === "ms" ? "1-Klik Sedia" : lang === "zh" ? "一键可用" : "1-Click Ready"}
@@ -723,8 +723,8 @@ function CvStep({
         </div>
         <p className="text-[11px] text-muted-foreground mb-3">
           {lang === "ms"
-            ? "Pilih mana-mana sampel CV di bawah untuk menguji pengekstrak AI Vision & OCR secara langsung:"
-            : "Select any sample CV below to test multimodal AI Vision & OCR extraction instantly:"}
+            ? "Pilih satu contoh untuk melihat cara CV anda dibaca."
+            : lang === "zh" ? "选一个示例，看看系统如何读取简历。" : "Pick a sample to see how your CV is read."}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
           <Button
@@ -739,8 +739,8 @@ function CvStep({
             <span className="font-semibold text-primary flex items-center gap-1.5 text-xs">
               <FileText className="h-3.5 w-3.5" /> Demo 1
             </span>
-            <span className="text-[10px] text-muted-foreground font-medium">
-              Scanned PDF (Vision + OCR)
+            <span className="whitespace-normal text-[10px] text-muted-foreground font-medium">
+              {lang === "ms" ? "PDF imbasan" : lang === "zh" ? "扫描 PDF" : "Scanned PDF"}
             </span>
           </Button>
 
@@ -756,8 +756,8 @@ function CvStep({
             <span className="font-semibold text-primary flex items-center gap-1.5 text-xs">
               <FileImage className="h-3.5 w-3.5" /> Demo 2
             </span>
-            <span className="text-[10px] text-muted-foreground font-medium">
-              Pure Image (JPEG)
+            <span className="whitespace-normal text-[10px] text-muted-foreground font-medium">
+              {lang === "ms" ? "Gambar CV (JPEG)" : lang === "zh" ? "简历照片 (JPEG)" : "CV photo (JPEG)"}
             </span>
           </Button>
 
@@ -773,8 +773,8 @@ function CvStep({
             <span className="font-semibold text-primary flex items-center gap-1.5 text-xs">
               <FileText className="h-3.5 w-3.5" /> Demo 3
             </span>
-            <span className="text-[10px] text-muted-foreground font-medium">
-              Digital Text PDF
+            <span className="whitespace-normal text-[10px] text-muted-foreground font-medium">
+              {lang === "ms" ? "PDF teks" : lang === "zh" ? "文字 PDF" : "Text PDF"}
             </span>
           </Button>
         </div>
