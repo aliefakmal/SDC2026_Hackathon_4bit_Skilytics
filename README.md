@@ -9,7 +9,7 @@
 
   [![Live Demo](https://img.shields.io/badge/🌐_Live_Website-skilytics.vercel.app-802424?style=for-the-badge)](https://skilytics.vercel.app/)
   [![Domain](https://img.shields.io/badge/Domain_1-Aiversecity_Workforce-d4af37?style=for-the-badge)](#)
-  [![UN SDGs](https://img.shields.io/badge/UN_SDGs-4_%7C_5_%7C_8_%7C_9_%7C_10-007dbc?style=for-the-badge)](#🌍-alignment-with-un-sustainable-development-goals-sdgs)
+  [![UN SDGs](https://img.shields.io/badge/UN_SDGs-4_%7C_8_%7C_9-007dbc?style=for-the-badge)](#🌍-alignment-with-un-sustainable-development-goals-sdgs)
   [![License](https://img.shields.io/badge/License-Permissive_Open_Source-2ea44f?style=for-the-badge)](#📜-third-party-licenses--attributions)
 
   <p align="center">
