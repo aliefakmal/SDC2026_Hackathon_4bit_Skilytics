@@ -47,10 +47,11 @@ AI is transforming industries faster than traditional training programmes and ed
 * **📡 Live AI-Trend Signal Layer & Market Pulse:** Integrates real-time, citable public data sources—displaying unemployment & participation rates, labour force trends, AI usage by role, and most AI-exposed roles.
 * **🎯 Explainable Future-Role Matching & Skill Mapping:** Ranks best-fit future roles with transparent match scores, visual radar skill maps, and handling of future uncertainty (modelling moderate vs. fast AI disruption scenarios).
 * **🗺️ Personalised Reskilling Pathways:** Generates ordered, time-bound learning plans tailored to the user's weekly study hours and budget constraints, utilizing accessible online courses and HRD Corp-claimable programmes.
-* **🌍 Meaningful UN SDG Mapping:** Tags every recommended role and skill to relevant UN Sustainable Development Goals (**SDG 4** Quality Education, **SDG 5** Gender Equality, **SDG 8** Decent Work & Economic Growth, **SDG 9** Industry, Innovation & Infrastructure, and **SDG 10** Reduced Inequalities).
+* **🌍 Meaningful UN SDG Mapping:** Tags every recommended role and skill to relevant UN Sustainable Development Goals (**SDG 4** Quality Education,**SDG 8** Decent Work & Economic Growth, **SDG 9** Industry and Innovation & Infrastructure.
 * **🏆 Gamified Workspace & Certification:** Tracks learning milestones, awards skill badges/achievements, and generates a verifiable **Certificate of Accomplishment** upon course completion.
 
 ---
+
 ## ⚙️ Environment Requirements (`.env`)
 
 Before running the application locally or deploying backend services, ensure you configure your environment variables. Create a `.env` file in the root directory and populate it with the following configuration:
@@ -108,7 +109,7 @@ The table below describes each required variable, sorted alphabetically to align
 | `RUNPOD_LLM_MODEL` | Yes | `deepseek-ai/DeepSeek-R1-Distill-Qwen-32B` | Primary large language model checkpoint identifier deployed on the main RunPod compute worker. |
 | `SESSION_SECRET` | Yes | `generate-a-strong-random-key` | High-entropy cryptographic string used to sign, verify, and secure HTTP session cookies against tampering. |
 
-
+---
 
 ## 🧭 How to Use Skilytics (Step-by-Step Guide)
 
