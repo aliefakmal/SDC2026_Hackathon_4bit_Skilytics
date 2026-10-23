@@ -151,7 +151,7 @@ test("all three saved summary translations survive concurrent revisits without g
     profileId: pid,
     agent: "employee_summary",
     lang: "all",
-    inputHash: hashInput("employee-summary-v1", p.organization, p.id, context),
+    inputHash: hashInput("employee-summary-v2", p.organization, p.id, context),
     content: JSON.stringify(translations),
     sources: [],
     model: "qa-cached-no-generation",

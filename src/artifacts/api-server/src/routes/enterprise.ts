@@ -60,7 +60,7 @@ router.post("/enterprise/employees/:id/summary", async (req, res) => {
     scores: p.riasecScores,
   };
   const inputHash = hashInput(
-    "employee-summary-v1",
+    "employee-summary-v2",
     p.organization,
     p.id,
     context,
@@ -91,7 +91,7 @@ router.post("/enterprise/employees/:id/summary", async (req, res) => {
       const out = await chat(
         "light",
         policy +
-          " Explain this employee's CV strengths, how their supplied Holland interests relate to their work, and one small development activity. Total under 180 words per language. Do not repeat the raw CV.",
+          " Explain like a friendly guide to someone new to career planning. Use exactly three short headings: CV strengths, interest mix, one 10-minute activity. Describe the practical result of their work in everyday words. Do not copy CV jargon such as pipelines, containerization, MLOps, end-to-end or unexplained abbreviations. Use one relatable example connecting the fixed Holland letters to their actual CV. Describe CV claims as reported experience, not proven expertise. Suggest one specific small practice task, not vague advice to explore certifications. Under 120 words per language. Do not repeat the raw CV.",
         JSON.stringify(context),
         { agent: "holland" },
       );
