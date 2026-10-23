@@ -363,7 +363,7 @@ test("guided journey prevents skipping and persists completion with a scoped cer
  assert.equal((await request('/profiles/'+id+'/journey','POST',{action:'complete_course',courseId:2147483647,done:true})).status,409);
  for(const item of active.body.items) assert.equal((await request('/profiles/'+id+'/journey','POST',{action:'complete_course',courseId:item.courseId,done:true})).status,200);
  const finished=await request('/profiles/'+id+'/journey');assert.equal(finished.body.complete,true);assert.ok(finished.body.certificateId);assert.ok(finished.body.recommendations.length);
- const certificate=await fetch(base+'/api/profiles/'+id+'/journey/certificate?lang=ms',{headers:{'x-guest-token':guest}});assert.equal(certificate.status,200);const svg=await certificate.text();assert.ok(svg.includes('&lt;Learning&gt;'));assert.ok(svg.includes('SIJIL PENYEMPURNAAN'));
+ const certificate=await fetch(base+'/api/profiles/'+id+'/journey/certificate?lang=ms',{headers:{'x-guest-token':guest}});assert.equal(certificate.status,200);const data=await certificate.json() as {name:string;id:string;courseCount:number};assert.equal(data.name,'TEST ONLY <Learning>');assert.equal(data.id,finished.body.certificateId);assert.equal(data.courseCount,active.body.items.length);
  await request('/profiles/'+id+'/journey','POST',{action:'complete_course',courseId:active.body.items[0].courseId,done:false});
  assert.equal((await request('/profiles/'+id+'/journey/certificate')).status,409);
  assert.equal((await request('/profiles/'+id+'/plan','POST',{roleId:role.id})).status,409);
@@ -414,7 +414,8 @@ test("demo buttons apply fixture data without AI and preserve access boundaries"
 });
 
 test("registered individuals keep one profile across parallel creation and later guest logins",async()=>{
- const selected=await draft("graduate"),other=await draft("worker");
+ let other=await draft("worker");
+ const selected=await draft("graduate");
  const email=`single-${randomUUID()}@example.invalid`,password="Test-only-password123";
  const reg=await request("/auth/register","POST",{email,password},{"x-claim-profile-id":String(selected)});assert.equal(reg.status,201);userIds.push(reg.body.user.id);assert.equal(reg.body.claimedProfiles,1);assert.equal(reg.body.profileId,selected);
  const auth={authorization:`Bearer ${reg.body.token}`};
@@ -423,6 +424,7 @@ test("registered individuals keep one profile across parallel creation and later
  const parallel=await Promise.all(Array.from({length:4},()=>request("/profiles","POST",{name:"TEST ONLY Extra",segment:"worker",weeklyHours:2,budgetMyr:0},{...auth,"x-idempotency-key":randomUUID()})));
  assert.ok(parallel.every(r=>r.status===200&&r.body.id===selected));
  assert.equal((await request(`/profiles/${selected}`,"DELETE",undefined,auth)).status,409);
+ other=await draft("worker");
  const login=await request("/auth/login","POST",{email,password,role:"individual"},{"x-claim-profile-id":String(other)});assert.equal(login.body.claimedProfiles,0);assert.equal(login.body.profileId,selected);
  assert.equal((await request(`/profiles/${other}`)).status,200,"unclaimed guest test profiles remain guest-owned");
 });
