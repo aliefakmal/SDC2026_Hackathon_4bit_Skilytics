@@ -1,6 +1,7 @@
 import { docsEn } from "./docs";
 import { obEn } from "./ob";
 export const en = {
+  "cadence.daily": "Daily public catalogue check",
   "err.journey_step_required": "Complete the current step before continuing.",
   "err.intake_required": "Review and confirm your intake summary first.",
   "err.riasec_locked": "Your Holland assessment is saved and locked. Edit your CV details in the intake summary.",

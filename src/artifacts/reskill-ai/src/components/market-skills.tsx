@@ -28,7 +28,7 @@ export const jobWords = {
     jobNote:
       "Suggested from CV skills, completed courses and Holland role fit. Not a hiring score. Job titles stay in their original language. Confirm location, qualifications and availability on the original listing; applying may require an employer account.",
     source:
-      "Public vacancy catalogues: Jobicy (hourly), Himalayas and Remotive (daily). No API keys. Location restrictions, original links and source attribution are retained. Remotive listings are delayed by 24 hours.",
+      "Public vacancy catalogues: Himalayas, Remotive and RemoteOK (daily). No API keys. Location restrictions, original links and source attribution are retained. Remotive listings are delayed by 24 hours.",
     none: "No Malaysia or worldwide remote vacancies in the current sample.",
     more: "Load more",
   },
@@ -50,7 +50,7 @@ export const jobWords = {
     jobNote:
       "Cadangan berdasarkan kemahiran CV, kursus selesai dan padanan minat Holland. Bukan skor pengambilan kerja. Tajuk kerja kekal dalam bahasa asal. Semak lokasi, kelayakan dan ketersediaan pada iklan asal; permohonan mungkin memerlukan akaun majikan.",
     source:
-      "Katalog vacancy awam: Jobicy (sejam), Himalayas dan Remotive (harian). Tanpa kunci API. Syarat lokasi, pautan asal dan atribusi dikekalkan. Iklan Remotive lewat 24 jam.",
+      "Katalog vacancy awam: Himalayas, Remotive dan RemoteOK (harian). Tanpa kunci API. Syarat lokasi, pautan asal dan atribusi dikekalkan. Iklan Remotive lewat 24 jam.",
     none: "Tiada kekosongan Malaysia atau remote seluruh dunia dalam sampel semasa.",
     more: "Muat lagi",
   },
@@ -70,7 +70,7 @@ export const jobWords = {
     jobNote:
       "根据简历技能、已完成课程和霍兰德兴趣匹配推荐，并非招聘评分。职位名称保留原文。请在原招聘页面确认地点、资格与职位状态；申请可能需要雇主账号。",
     source:
-      "公开招聘目录：Jobicy每小时缓存，Himalayas及Remotive每天缓存，无需密钥。保留地点限制、原链接和来源。Remotive职位延迟24小时。",
+      "公开招聘目录：Himalayas、Remotive及RemoteOK每天缓存，无需密钥。保留地点限制、原链接和来源。Remotive职位延迟24小时。",
     none: "当前样本没有马来西亚或全球远程职位。",
     more: "加载更多",
   },
@@ -168,7 +168,7 @@ export function MarketSkills({
       <p className="mt-5 text-xs">
         {q.data?.source} · {q.data?.sample ?? 0} · {q.data?.checkedAt} ·{" "}
         <a
-          href="https://github.com/Jobicy/remote-jobs-api"
+          href="https://github.com/public-apis/public-apis#jobs"
           target="_blank"
           rel="noreferrer"
           className="underline"
@@ -226,28 +226,5 @@ export function MarketExplore() {
         />
       )}
     </div>
-  );
-}
-export function JobsSource() {
-  const { lang } = useT(),
-    w = jobWords[lang];
-  return (
-    <Panel title="Jobicy · Himalayas · Remotive" meta={w.source}>
-      <div className="flex flex-wrap gap-4 text-sm"><a href="https://himalayas.app/api" target="_blank" rel="noreferrer" className="underline">Himalayas · API</a><a href="https://github.com/remotive-com/remote-jobs-api" target="_blank" rel="noreferrer" className="underline">Remotive · API</a></div>
-      <a
-        href="https://www.dosm.gov.my/uploads/release-content/file_20260525094010.pdf"
-        className="block min-h-11 text-sm underline"
-      >
-        DOSM JMI Q4 2025 · selected occupations → O*NET skills
-      </a>
-      <a
-        className="inline-flex min-h-11 items-center text-sm underline"
-        target="_blank"
-        rel="noreferrer"
-        href="https://github.com/Jobicy/remote-jobs-api"
-      >
-        Jobicy · REST API · Public dataset ↗
-      </a>
-    </Panel>
   );
 }

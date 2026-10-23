@@ -1,3 +1,4 @@
+import { db, marketSourcesTable } from "@workspace/db";
 import { createHash } from "node:crypto";
 export type Vacancy = {
   id: number;
@@ -37,11 +38,13 @@ export function himalayasMalaysia(j: {
   );
 }
 export async function additionalVacancies() {
-  if (cache && Date.now() - cache.at < 86400000) return cache.rows.filter(j=>!j.expiresAt||j.expiresAt>Date.now());
+  if (cache && Date.now() - cache.at < 86400000)
+    return cache.rows.filter((j) => !j.expiresAt || j.expiresAt > Date.now());
   if (pending) return pending;
   pending = (async () => {
     const rows: Vacancy[] = [];
     let successes = 0;
+    const successful = new Set<string>();
     try {
       const r = await fetch("https://remotive.com/api/remote-jobs", {
         signal: AbortSignal.timeout(15000),
@@ -61,6 +64,7 @@ export async function additionalVacancies() {
             source: "Remotive",
             sourceUrl: j.url,
           });
+      successful.add("Remotive");
       successes++;
     } catch {}
     try {
@@ -72,6 +76,7 @@ export async function additionalVacancies() {
         if (!r.ok) throw Error();
         const d = (await r.json()) as { jobs: any[] };
         if (!Array.isArray(d.jobs)) throw Error();
+        successful.add("Himalayas");
         successes++;
         if (!d.jobs.length) break;
         for (const j of d.jobs) {
@@ -92,14 +97,66 @@ export async function additionalVacancies() {
             jobGeo: "Malaysia",
             jobDescription: j.description ?? "",
             pubDate: new Date(j.pubDate * 1000).toISOString(),
-            expiresAt:j.expiryDate*1000,
+            expiresAt: j.expiryDate * 1000,
             source: "Himalayas",
             sourceUrl: j.guid,
           });
         }
       }
     } catch {}
+    try {
+      const r = await fetch("https://remoteok.com/api", {
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!r.ok) throw Error();
+      const data = (await r.json()) as any[];
+      if (!Array.isArray(data)) throw Error();
+      for (const j of data.slice(1))
+        if (
+          safe(j.url) &&
+          /^https:\/\/remoteok\.com\//.test(j.url) &&
+          typeof j.description === "string" &&
+          Number.isFinite(Date.parse(j.date)) &&
+          Date.parse(j.date) > Date.now() - 30 * 86400000
+        )
+          rows.push({
+            id: id(j.url),
+            url: j.url,
+            jobTitle: j.position,
+            companyName: j.company,
+            jobGeo: j.location || "Unknown",
+            jobDescription: j.description,
+            pubDate: j.date,
+            source: "RemoteOK",
+            sourceUrl: j.url,
+          });
+      successful.add("RemoteOK");
+      successes++;
+    } catch {}
     if (!successes) throw Error("jobs_unavailable");
+    for (const [name, sourceId] of [
+      ["Remotive", "remotive_jobs"],
+      ["Himalayas", "himalayas_jobs"],
+      ["RemoteOK", "remoteok_jobs"],
+    ]) {
+      const status = successful.has(name) ? "ok" : "error";
+      const state = {
+        status,
+        lastFetchedAt: new Date(),
+        recordCount: rows.filter((j) => j.source === name).length,
+        version: "public-api-2026-10",
+        detail:
+          "Public unauthenticated provider response; count before profile matching. Daily cache; partial feed, not all market vacancies.",
+        error:
+          status === "error"
+            ? "Provider unavailable; other public sources remain separate"
+            : null,
+      };
+      await db
+        .insert(marketSourcesTable)
+        .values({ id: sourceId, ...state })
+        .onConflictDoUpdate({ target: marketSourcesTable.id, set: state });
+    }
     cache = {
       at: Date.now(),
       rows: [
@@ -111,7 +168,7 @@ export async function additionalVacancies() {
         ).values(),
       ],
     };
-    return cache.rows.filter(j=>!j.expiresAt||j.expiresAt>Date.now());
+    return cache.rows.filter((j) => !j.expiresAt || j.expiresAt > Date.now());
   })();
   try {
     return await pending;
@@ -119,3 +176,5 @@ export async function additionalVacancies() {
     pending = undefined;
   }
 }
+
+export const vacancyFetchedAt = () => cache?.at ?? null;

@@ -1,3 +1,4 @@
+import {additionalVacancies} from "./vacancy-catalogues";
 import { RIASEC_QUESTIONS } from "../data/riasec";
 import { OPENLEARN, OPENLEARN_REVIEWED_AT } from "../data/openlearn";
 import { SDG_TARGETS } from "../data/courses";
@@ -33,6 +34,10 @@ const HF_DATASET = "Anthropic/EconomicIndex";
 
 // Consumer keys are translated in the frontend.
 export const SOURCES: SourceDef[] = [
+ {id:"himalayas_jobs",name:"Himalayas",kind:"catalogue",url:"https://himalayas.app/api",description:"Public keyless Malaysia-eligible remote vacancies; preserve application links, attribution and expiry.",refreshCadence:"daily",consumers:["pathway"]},
+ {id:"remotive_jobs",name:"Remotive",kind:"catalogue",url:"https://github.com/remotive-com/remote-jobs-api",description:"Public keyless remote vacancies with attribution; listings delayed by 24 hours.",refreshCadence:"daily",consumers:["pathway"]},
+ {id:"remoteok_jobs",name:"RemoteOK",kind:"catalogue",url:"https://remoteok.com/api",description:"Public keyless remote vacancies; original RemoteOK links and attribution, no provider logo.",refreshCadence:"daily",consumers:["pathway"]},
+ {id:"dosm_jmi_skills",name:"DOSM JMI Q4 2025 · selected occupation snapshot",kind:"dataset",url:"https://www.dosm.gov.my/uploads/release-content/file_20260525094010.pdf",description:"Five reviewed occupation counts; editorial O*NET skill priority proxy, not measured skill shortages.",refreshCadence:"reviewed_snapshot",consumers:["market"]},
   {id:"onet_interest_profiler",name:"Holland / O*NET Interest Profiler",kind:"dataset",url:"https://www.onetcenter.org/dl_files/Mini-IP.pdf",description:"30 contextual RIASEC activities adapted and translated by Skilytics under the O*NET Tools Developer License; not the validated Mini-IP.",refreshCadence:"reviewed_snapshot",consumers:["role_matcher","agent_holland"]},
   {id:"onet_content_model",name:"O*NET Content Model · CV skill references",kind:"dataset",url:"https://www.onetcenter.org/content.html",description:"Attributed local collection of O*NET skill definitions used for CV retrieval. App aliases are editorial crosswalks, not employment statistics.",refreshCadence:"reviewed_snapshot",consumers:["agent_cv","role_matcher"]},
   {id:"openlearn_catalogue",name:"OpenLearn · reviewed public courses",kind:"catalogue",url:"https://www.open.edu/openlearn/",description:"Manually reviewed public course metadata selection; not a live catalogue API. Course bodies are not ingested.",refreshCadence:"reviewed_snapshot",consumers:["pathway","role_matcher"]},
@@ -319,6 +324,7 @@ export function refreshAll(force = false): Promise<void> {
   const jobs: [string, () => Promise<void>][] = [
     ["gdelt_career_news", async () => { await loadCareerNews(force); }],
     ["onet", ingestOnet],
+    ["himalayas_jobs", async()=>{await additionalVacancies();}],
     ["dosm_lfs_month", ingestLabour],
     ["aei_exposure", ingestExposure],
     ["aei_usage", () => ingestUsage(force)],
@@ -344,6 +350,7 @@ export function refreshAll(force = false): Promise<void> {
 }
 
 const staticSources: Record<string,{version:string;lastFetchedAt:Date;status:"ok";detail:string;dataDate:string;recordCount:number;error:null}> = Object.fromEntries([
+  ["dosm_jmi_skills","reviewed-q4-2025","2026-05-25",5,"Five DOSM JMI occupation counts mapped editorially to O*NET skills; not a measured shortage series."],
   ["bls_projections",blsSnapshot.period,blsSnapshot.period,blsSnapshot.rows.length,blsSnapshot.method],
   ["onet_interest_profiler","skilytics-contextual-riasec-201-230","2026-10-23",RIASEC_QUESTIONS.length,"Adapted 30-item questionnaire with English, Malay and Mandarin wording. All answers required. Independent psychometric validation remains outstanding."],
   ["onet_content_model","content-model-reference-2026-10","2026-10",SKILL_REFERENCES.length,"O*NET Content Model definitions, locally attributed retrieval reference. Separate from the occupation database and the Interest Profiler."],

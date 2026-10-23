@@ -1,4 +1,5 @@
-import { MarketExplore, JobsSource } from "@/components/market-skills";
+import {SourceAccess,SourceAccessAudit,auditedSourceDescription} from "@/components/source-access";
+import { MarketExplore } from "@/components/market-skills";
 import { CompanyFuture } from "@/components/company-future";
 import { PageGuide, guides, guideSteps } from "@/components/page-guide";
 import { useEffect, useMemo, useState } from "react";
@@ -703,6 +704,7 @@ export function Sources() {
           {t("sources.coldStart")} {t("docs.ai.cold")}
         </p>
       </Panel>
+      <SourceAccessAudit/>
       {src.isLoading ? (
         <Rows n={5} h="h-28" />
       ) : src.isError ? (
@@ -721,10 +723,9 @@ export function Sources() {
                   <Icon className="h-4 w-4 text-accent" />
                   {tk("srcKind", k)}
                   <span className="text-xs font-normal text-muted-foreground">
-                    ({items.length + (k === "catalogue" ? 3 : 0)})
+                    ({items.length})
                   </span>
                 </h2>
-                {k === "catalogue" && <JobsSource/>}
                 <div className="grid gap-3 lg:grid-cols-2">
                   {items.map((s) => {
                     const name = tk("src", `${s.id}.name`);
@@ -750,11 +751,12 @@ export function Sources() {
                               <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                             </a>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                              {desc === `${s.id}.desc` ? s.description : desc}
+                              {desc === `${s.id}.desc` ? auditedSourceDescription(s.id,lang)??s.description : desc}
                             </p>
                           </div>
                           <StatusPill s={s.status} />
                         </div>
+                        <SourceAccess id={s.id}/>
                         <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs sm:grid-cols-4">
                           <div>
                             <dt className="text-muted-foreground">

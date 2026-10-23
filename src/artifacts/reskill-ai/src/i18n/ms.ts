@@ -22,6 +22,7 @@ export const ms: Record<DictKey, string> = {
   "courses.stale": "Semakan terakhir {d} · penyedia tidak tersedia",
   "level.self-paced": "Belajar mengikut kadar sendiri",
   ...obMs,
+  "cadence.daily": "Semakan katalog awam harian",
   "lang.toggle": "Tukar bahasa",
   "agent.generateIn": "Dijana dalam {lang}",
   "agent.model": "Model",

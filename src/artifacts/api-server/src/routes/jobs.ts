@@ -1,4 +1,7 @@
-import {additionalVacancies} from "../lib/vacancy-catalogues";
+import {
+  additionalVacancies,
+  vacancyFetchedAt,
+} from "../lib/vacancy-catalogues";
 import { Router } from "express";
 import { z } from "zod";
 import { db, profilesTable, plansTable } from "@workspace/db";
@@ -21,44 +24,17 @@ type Job = {
   jobDescription: string;
   pubDate: string;
 };
-let snapshot: { at: number; jobs: Job[] } | undefined;
-let pending: Promise<Job[]> | undefined;
 export function malaysiaLocation(s: string) {
   return /\bmalaysia\b/i.test(s);
 }
 export function eligibleLocation(s: string) {
   return malaysiaLocation(s) || /^(anywhere|worldwide|global)$/i.test(s.trim());
 }
-export async function publicJobs() {
-  if (snapshot && Date.now() - snapshot.at < 3600000) return snapshot.jobs;
-  if (pending) return pending;
-  pending = (async () => {
-    const r = await fetch("https://jobicy.com/api/jobs?count=200", {
-      signal: AbortSignal.timeout(15000),
-    });
-    if (!r.ok) throw Error("jobs_unavailable");
-    const body = (await r.json()) as { jobs?: Job[] };
-    if (!Array.isArray(body.jobs)) throw Error("jobs_unavailable");
-    const jobs = body.jobs.filter(
-      (j) =>
-        Number.isSafeInteger(j.id) &&
-        typeof j.jobDescription === "string" &&
-        /^https:\/\/jobicy\.com\/jobs\//.test(j.url) &&
-        Number.isFinite(Date.parse(j.pubDate)) &&
-        Date.parse(j.pubDate) >= Date.now() - 7 * 86400000,
-    );
-    snapshot = { at: Date.now(), jobs };
-    return jobs;
-  })();
-  try {
-    return await pending;
-  } finally {
-    pending = undefined;
-  }
-}
+export const publicJobs = additionalVacancies;
 router.get("/market/skill-demand", async (_req, res) => {
   try {
-    const [jobs, skills] = await Promise.all([publicJobs().catch(() => [] as Job[]), loadSkills()]);
+    const skills = await loadSkills();
+    const jobs: Job[] = []; // Remote country eligibility is not evidence of domestic vacancy demand.
     const local = jobs.filter((j) => malaysiaLocation(j.jobGeo));
     const counts = new Map<number, number>();
     for (const j of local)
@@ -106,18 +82,6 @@ router.get("/market/skill-demand", async (_req, res) => {
       });
       return;
     }
-    res.json({
-      sample: local.length,
-      checkedAt: new Date(snapshot!.at).toISOString(),
-      source: "Jobicy",
-      skills: [...counts]
-        .map(([id, count]) => ({
-          id,
-          name: skills.find((s) => s.id === id)!.name,
-          count,
-        }))
-        .sort((a, b) => b.count - a.count),
-    });
   } catch {
     res.status(503).json({ error: "jobs_unavailable" });
   }
@@ -149,7 +113,7 @@ router.get("/profiles/:id/jobs", async (req, res) => {
   }
   try {
     const [jobs, skills, roles, courses] = await Promise.all([
-      Promise.allSettled([publicJobs(),additionalVacancies()]).then(results=>{const lists=results.filter(r=>r.status==="fulfilled").flatMap(r=>r.status==="fulfilled"?r.value:[]);if(!lists.length&&results.every(r=>r.status==="rejected"))throw Error("jobs_unavailable");return lists;}),
+      publicJobs(),
       loadSkills(),
       loadRoles(),
       loadCourses(),
@@ -187,7 +151,8 @@ router.get("/profiles/:id/jobs", async (req, res) => {
           ? scoreRole({ ...p, skills: existing }, role.r, skills, courses).score
           : 0;
         return {
-          source:j.source??"Jobicy",sourceUrl:j.sourceUrl??j.url,
+          source: j.source ?? "Public vacancy catalogue",
+          sourceUrl: j.sourceUrl ?? j.url,
           id: j.id,
           title: j.jobTitle,
           company: j.companyName,
@@ -200,16 +165,31 @@ router.get("/profiles/:id/jobs", async (req, res) => {
           missing: required
             .filter((s) => !matched.includes(s))
             .map((s) => skills.find((k) => k.id === s.skillId)!.name),
-          score: matched.length * 10 + fit / 10 + plan.roleTitle.toLowerCase().split(/[^a-z]+/).filter(w=>w.length>3&&j.jobTitle.toLowerCase().includes(w)).length*15,
+          score:
+            matched.length * 10 +
+            fit / 10 +
+            plan.roleTitle
+              .toLowerCase()
+              .split(/[^a-z]+/)
+              .filter(
+                (w) => w.length > 3 && j.jobTitle.toLowerCase().includes(w),
+              ).length *
+              15,
         };
       })
-      .filter(j=>j.matched.length>0 && !/nurse|physician|surgeon|dentist|licensed|mechanical|electrical|\bMSc\b|\bPhD\b/i.test(j.title))
+      .filter(
+        (j) =>
+          j.matched.length > 0 &&
+          !/nurse|physician|surgeon|dentist|licensed|mechanical|electrical|\bMSc\b|\bPhD\b/i.test(
+            j.title,
+          ),
+      )
       .sort((a, b) => b.score - a.score);
     res.setHeader("Cache-Control", "no-store");
     res.json({
-      checkedAt: new Date(snapshot!.at).toISOString(),
+      checkedAt: new Date(vacancyFetchedAt() ?? Date.now()).toISOString(),
       jobs: ranked,
-      source: "Jobicy · Himalayas · Remotive",
+      source: "Himalayas · Remotive · RemoteOK",
     });
   } catch {
     res.status(503).json({ error: "jobs_unavailable" });

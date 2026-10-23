@@ -22,6 +22,7 @@ export const zh: Record<DictKey, string> = {
   "courses.stale": "上次检查于 {d} · 机构暂不可用",
   "level.self-paced": "自主进度",
   ...obZh,
+  "cadence.daily": "每日公开目录检查",
   "lang.toggle": "切换语言",
   "agent.generateIn": "以{lang}生成",
   "agent.model": "模型",
