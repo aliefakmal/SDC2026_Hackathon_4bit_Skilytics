@@ -1,3 +1,4 @@
+import {jobWords} from "./market-skills";
 import type { Profile } from "@workspace/api-client-react";
 import { Link } from "wouter";
 import { Award, Medal, CalendarCheck, CheckCircle2 } from "lucide-react";
@@ -188,6 +189,7 @@ export function LearningDashboard({ p, employer=false }: { p: Profile; employer?
             <Award className="mr-2 h-4 w-4" />
             {w.certificate}
           </Link></Button>
+          {!employer && <Button asChild><Link href={`/me/jobs/${p.id}`}>{jobWords[lang].jobs} →</Link></Button>}
           <p className="text-xs">{j.certificateId}</p>
           <h3 className="pt-4 font-bold">{w.nextSkills}</h3>
           <p className="text-sm text-muted-foreground">{w.nextNote}</p>

@@ -13,6 +13,7 @@ const { Outlook, Workspace } = {
   Outlook: lazy(() => import("@/pages/me").then((m) => ({ default: m.Outlook }))),
   Workspace: lazy(() => import("@/pages/me").then((m) => ({ default: m.Workspace }))),
 };
+const Jobs = lazy(()=>import("@/pages/jobs"));
 const CertificatePage = lazy(() => import("@/pages/certificate"));
 const ProfileWorkspace = lazy(() => import("@/pages/profile"));
 const Onboarding = lazy(() => import("@/pages/onboarding"));
@@ -53,6 +54,7 @@ function AppRoutes() {
           <RoutedErrorBoundary>
             <Switch>
               <Route path="/me"><Gate role="individual"><Workspace /></Gate></Route>
+              <Route path="/me/jobs/:id"><Gate role="individual"><Jobs/></Gate></Route>
               <Route path="/me/outlook"><Gate role="individual"><Outlook /></Gate></Route>
               <Route path="/me/profiles/:id/:module?"><Gate role="individual"><ProfileWorkspace base="/me/profiles" listHref="/me" /></Gate></Route>
               <Route path="/roles" component={Roles} />

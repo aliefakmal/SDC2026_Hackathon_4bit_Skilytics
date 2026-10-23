@@ -1,3 +1,4 @@
+import { MarketSkills, jobWords } from "./market-skills";
 import { useState } from "react";
 import { Link } from "wouter";
 import { useMutation } from "@tanstack/react-query";
@@ -190,12 +191,13 @@ export function CompanyFuture() {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div
           role="tablist"
-          className="grid grid-cols-3 rounded-2xl border bg-card p-1"
+          className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl border bg-card p-1"
         >
           {[
             ["company", w.company],
             ["ai", marketWords[lang].ai],
             ["demand", marketWords[lang].demand],
+              ["skills", jobWords[lang].tab],
           ].map(([id, label]) => (
             <button
               key={id}
@@ -212,8 +214,8 @@ export function CompanyFuture() {
       </div>
       {tab === "company" ? (
         <CompanyProjection />
-      ) : (
-        <MarketOutlook selectedMode={tab === "demand" ? "demand" : "ai"} />
+      ) : tab === "skills" ? <MarketSkills employer/> : (
+        <MarketOutlook hideGuide selectedMode={tab === "demand" ? "demand" : "ai"} />
       )}
     </>
   );

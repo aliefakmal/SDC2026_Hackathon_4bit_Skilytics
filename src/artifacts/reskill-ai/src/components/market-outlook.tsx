@@ -88,7 +88,7 @@ function Goals({ role }: { role: Candidate }) {
     </div>
   );
 }
-export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = {}) {
+export function MarketOutlook({ selectedMode, hideGuide=false }: {selectedMode?:"ai"|"demand";hideGuide?:boolean} = {}) {
   const { lang } = useT(),
     w = marketWords[lang];
   const qc = useQueryClient();
@@ -183,13 +183,13 @@ export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = 
           <h1 className="text-2xl font-extrabold sm:text-3xl">{w.title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{w.sub}</p>
         </div>
-        <GuideButton
+        {!hideGuide && <GuideButton
           label={w.guide}
           onClick={() => {
             setStep(0);
             setGuide(true);
           }}
-        />
+        />}
       </header>
       <section
         className="min-w-0 rounded-2xl border bg-card p-4 sm:p-6"

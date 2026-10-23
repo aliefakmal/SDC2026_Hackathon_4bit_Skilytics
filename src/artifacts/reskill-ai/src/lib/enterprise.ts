@@ -38,8 +38,9 @@ export type SavedAnalysis = {
   generatedAt: string;
   cached: boolean;
 };
-export function useCompany() {
+export function useCompany(enabled=true) {
   return useQuery({
+    enabled,
     queryKey: ["enterprise"],
     queryFn: () => customFetch<Company>("/api/enterprise/overview"),
     retry: false,

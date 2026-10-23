@@ -1,3 +1,4 @@
+import { MarketExplore, JobsSource } from "@/components/market-skills";
 import { CompanyFuture } from "@/components/company-future";
 import { PageGuide, guides, guideSteps } from "@/components/page-guide";
 import { useEffect, useMemo, useState } from "react";
@@ -190,7 +191,7 @@ function PairBars({
 
 export function Market() {
   const { user } = useAuth();
-  if (!user || user.role === "individual") return <MarketOutlook />;
+  if (!user || user.role === "individual") return <MarketExplore />;
   if (user.role === "hr") return <CompanyFuture/>;
   return <ObservedMarket />;
 }
@@ -843,7 +844,7 @@ export function Sources() {
           })}
         </div>
       )}
-      <SourceDocumentation sources={src.data ?? []} ai={a} />
+      <JobsSource/><SourceDocumentation sources={src.data ?? []} ai={a} />
     </>
   );
 }
