@@ -14,14 +14,6 @@ type Row = { label: DictKey; k?: DictKey[]; ref?: string; url?: string };
 type Doc = { id: string; types: DocType[]; name: DictKey; sourceIds?: string[]; ai?: boolean; rows: Row[] };
 
 const DOCS: Doc[] = [
-  { id: "local_tts", types: ["static", "service"], name: "docs.tts.name", rows: [
-    { label: "docs.f.publisher", ref: "eSpeak NG 1.52.0 / Spellophone 0.2.1" },
-    { label: "docs.f.dataset", url: "https://github.com/espeak-ng/espeak-ng" },
-    { label: "docs.f.method", k: ["docs.tts.method"] },
-    { label: "docs.f.limits", k: ["docs.tts.limits"] },
-    { label: "docs.f.license", ref: "GPL-3.0-or-later", url: "/tts/espeak/LICENSE.txt" },
-    { label: "docs.f.files", url: "/tts/espeak/SOURCES.txt" },
-  ] },
   { id: "dosm", types: ["external"], name: "src.dosm_lfs_month.name", sourceIds: ["dosm_lfs_month"], rows: [
     { label: "docs.f.publisher", ref: "Department of Statistics Malaysia (DOSM) / OpenDOSM" },
     { label: "docs.f.dataset", url: "https://data.gov.my/data-catalogue/lfs_month" },
@@ -128,7 +120,7 @@ const CATEGORIES = [
   { key: "market", ids: ["dosm", "aei_usage", "aei_exposure"] },
   { key: "career", ids: ["onet", "riasec", "match"] },
   { key: "learning", ids: ["courses", "freecodecamp", "githubskills", "huggingface", "sdg"] },
-  { key: "aiService", ids: ["runpod", "local_tts"] },
+  { key: "aiService", ids: ["runpod"] },
   { key: "privacy", ids: ["demo"] },
 ] as const;
 const TYPE_TONE: Record<DocType, string> = {

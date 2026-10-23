@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { speechParts } from "./speech";
+import { chooseVoice, speechParts } from "./speech";
 
 test("switches English, Malay and Mandarin voices within a mixed script", () => {
   const parts = speechParts("Your skills can help you. Anda boleh cuba kerja ini. 你可以试试 Python。", "en");
@@ -12,4 +12,17 @@ test("cleans Markdown and keeps long text in small speakable chunks", () => {
   assert.ok(parts.every((part) => part.text.length <= 180));
   assert.ok(parts.every((part) => !/[#*]|https:/.test(part.text)));
   assert.ok(parts.map((part) => part.text).join(" ").includes("Python"));
+});
+test("does not silently substitute English when a Malay voice is missing", () => {
+  const voices = [{ lang: "en-US", localService: true }, { lang: "zh-CN", localService: true }] as SpeechSynthesisVoice[];
+  assert.equal(chooseVoice(voices, "ms"), undefined);
+  assert.equal(chooseVoice(voices, "zh")?.lang, "zh-CN");
+});
+
+test("prefers an available natural Malay voice", () => {
+  const voices = [
+    { name: "Malay", lang: "ms-MY", localService: true },
+    { name: "Microsoft Yasmin Online (Natural)", lang: "ms-MY", localService: false },
+  ] as SpeechSynthesisVoice[];
+  assert.equal(chooseVoice(voices, "ms")?.name, "Microsoft Yasmin Online (Natural)");
 });

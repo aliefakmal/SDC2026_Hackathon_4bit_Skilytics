@@ -1,7 +1,6 @@
 // Data Sources documentation strings. URLs, dataset field names, file names and official
 // English titles are reference identifiers and are intentionally kept verbatim.
 export const docsEn = {
-  "docs.tts.name": "Local speech playback", "docs.tts.method": "English, Malay and Mandarin speech is synthesized in a browser worker using eSpeak NG WebAssembly. Voice assets are served by this app. Text is not sent to a TTS service; no API tokens or per-request TTS quotas apply.", "docs.tts.limits": "Synthetic voice quality. Initial voice download requires a connection. WebAssembly, Web Workers and Web Audio are required. English/Malay language detection is approximate. Versions are pinned and updated with application releases.",
   "docs.category.market": "Labour market and AI research",
   "docs.category.career": "Career and interest assessment",
   "docs.category.learning": "Learning catalogue and SDG references",
@@ -91,7 +90,6 @@ export const docsEn = {
 export type DocsKey = keyof typeof docsEn;
 
 export const docsMs: Record<DocsKey, string> = {
-  "docs.tts.name": "Bacaan suara setempat", "docs.tts.method": "Bacaan English, Melayu dan Mandarin dijana dalam worker browser menggunakan eSpeak NG WebAssembly. Fail suara disajikan oleh aplikasi ini. Teks tidak dihantar kepada perkhidmatan TTS; tiada token API atau kuota setiap permintaan TTS.", "docs.tts.limits": "Kualiti suara sintetik. Muat turun awal memerlukan sambungan. WebAssembly, Web Workers dan Web Audio diperlukan. Pengesanan English/Melayu adalah anggaran. Versi dikunci dan dikemas kini bersama keluaran aplikasi.",
   "docs.category.market": "Pasaran buruh dan penyelidikan AI",
   "docs.category.career": "Kerjaya dan penilaian minat",
   "docs.category.learning": "Katalog pembelajaran dan rujukan SDG",
@@ -179,7 +177,6 @@ export const docsMs: Record<DocsKey, string> = {
 };
 
 export const docsZh: Record<DocsKey, string> = {
-  "docs.tts.name": "本地语音播放", "docs.tts.method": "通过 eSpeak NG WebAssembly 在浏览器 worker 中合成英语、马来语和普通话。语音资源由本应用提供，文本不会发送到 TTS 服务，无需 API 令牌或按次 TTS 配额。", "docs.tts.limits": "声音较为机械。首次下载语音资源需要网络。需要 WebAssembly、Web Workers 和 Web Audio。英语与马来语识别为近似判断。版本固定，随应用发布更新。",
   "docs.category.market": "劳动力市场与 AI 研究",
   "docs.category.career": "职业与兴趣评估",
   "docs.category.learning": "学习目录与 SDG 参考",
