@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, useRef, type FormEvent } from "react";
 import { Link, useLocation, useSearch } from "wouter";
 import { motion } from "framer-motion";
 import {
@@ -56,6 +56,159 @@ const howItWorksSteps = [
   },
 ];
 
+function MobileInteractiveLoopCarousel({
+  steps,
+  t,
+}: {
+  steps: typeof howItWorksSteps;
+  t: (k: DictKey) => string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const singleSetWidthRef = useRef<number>(0);
+  const isInteractingRef = useRef(false);
+  const resumeTimerRef = useRef<number | undefined>(undefined);
+  const isMouseDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollStartRef = useRef(0);
+
+  // 4 identical sets for smooth infinite wrap margin
+  const items = [...steps, ...steps, ...steps, ...steps];
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const track = trackRef.current;
+    if (!container || !track) return;
+
+    const updateDimensions = () => {
+      if (track) {
+        const singleSet = track.scrollWidth / 4;
+        singleSetWidthRef.current = singleSet;
+        if (container.scrollLeft === 0 && singleSet > 0) {
+          container.scrollLeft = singleSet;
+        }
+      }
+    };
+
+    updateDimensions();
+    const ro = new ResizeObserver(updateDimensions);
+    ro.observe(track);
+
+    let animationFrameId: number;
+    let lastTime = performance.now();
+    const speed = 0.038; // ~38px per second (comfortable auto-scroll speed)
+
+    const tick = (now: number) => {
+      const delta = Math.min(now - lastTime, 64);
+      lastTime = now;
+
+      const el = containerRef.current;
+      const singleSet = singleSetWidthRef.current;
+
+      if (el && singleSet > 0) {
+        if (!isInteractingRef.current) {
+          el.scrollLeft += speed * delta;
+        }
+
+        // Seamless wrap without snapping or resetting to zero
+        if (el.scrollLeft >= singleSet * 2.5) {
+          el.scrollLeft -= singleSet;
+        } else if (el.scrollLeft <= singleSet * 0.5) {
+          el.scrollLeft += singleSet;
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(tick);
+    };
+
+    animationFrameId = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      ro.disconnect();
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    };
+  }, []);
+
+  const onUserTouchStart = () => {
+    isInteractingRef.current = true;
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+  };
+
+  const onUserTouchEnd = () => {
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    // Pause auto-scroll briefly while user finishes interaction / touch momentum settles
+    resumeTimerRef.current = window.setTimeout(() => {
+      isInteractingRef.current = false;
+    }, 1200);
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    isMouseDownRef.current = true;
+    isInteractingRef.current = true;
+    startXRef.current = e.pageX;
+    scrollStartRef.current = containerRef.current?.scrollLeft || 0;
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+  };
+
+  const onMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDownRef.current || !containerRef.current) return;
+    e.preventDefault();
+    const dx = e.pageX - startXRef.current;
+    containerRef.current.scrollLeft = scrollStartRef.current - dx;
+  };
+
+  const onMouseUp = () => {
+    if (isMouseDownRef.current) {
+      isMouseDownRef.current = false;
+      onUserTouchEnd();
+    }
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      onTouchStart={onUserTouchStart}
+      onTouchEnd={onUserTouchEnd}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      className="block md:hidden relative -mx-4 overflow-x-auto overflow-y-hidden py-2 px-4 select-none cursor-grab active:cursor-grabbing [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      style={{
+        WebkitOverflowScrolling: "touch",
+        maskImage: "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
+        WebkitMaskImage: "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
+      }}
+    >
+      <div ref={trackRef} className="flex items-center gap-3 w-max">
+        {items.map((item, idx) => {
+          const IconComponent = item.icon;
+          return (
+            <div key={`${item.step}-${idx}`} className="flex items-center gap-3 shrink-0">
+              <div className="w-[260px] shrink-0 rounded-2xl border border-card-border bg-card p-5 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
+                    <IconComponent className="h-4 w-4" />
+                  </span>
+                  <span className="text-xs font-extrabold text-accent bg-accent/10 px-2 py-0.5 rounded-full">{item.step}</span>
+                </div>
+                <h3 className="mt-3 font-bold text-sm text-foreground">{t(item.titleKey)}</h3>
+                <p className="mt-1 text-xs text-muted-foreground leading-relaxed line-clamp-3">{t(item.descKey)}</p>
+              </div>
+
+              {/* Arrow to next step */}
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 shadow-xs">
+                <ArrowRight className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function Landing() {
   const { t } = useT();
   const { user } = useAuth();
@@ -72,8 +225,6 @@ export function Landing() {
     const base = import.meta.env.VITE_API_URL || "";
     fetch(`${base}/api/auth/demo-accounts`, { cache: "no-store" }).catch(() => {});
   };
-
-  const carouselItems = [...howItWorksSteps, ...howItWorksSteps, ...howItWorksSteps];
 
   return (
     <div className="paper min-h-[100dvh] bg-background flex flex-col">
@@ -288,47 +439,8 @@ export function Landing() {
               })}
             </div>
 
-            {/* Mobile View: Moving in loop carousel (untuk mobile view sahaja, tanpa status & tanpa butang) */}
-            <div
-              className="block md:hidden relative -mx-4 overflow-hidden py-2 px-4 select-none"
-              style={{
-                maskImage: "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
-                WebkitMaskImage: "linear-gradient(to right, transparent, black 6%, black 94%, transparent)",
-              }}
-            >
-              <motion.div
-                className="flex items-center gap-3 w-max will-change-transform"
-                animate={{ x: ["0%", "-33.333%"] }}
-                transition={{
-                  repeat: Infinity,
-                  ease: "linear",
-                  duration: 18,
-                }}
-              >
-                {carouselItems.map((item, idx) => {
-                  const IconComponent = item.icon;
-                  return (
-                    <div key={`${item.step}-${idx}`} className="flex items-center gap-3 shrink-0">
-                      <div className="w-[260px] shrink-0 rounded-2xl border border-card-border bg-card p-5 shadow-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-xs">
-                            <IconComponent className="h-4 w-4" />
-                          </span>
-                          <span className="text-xs font-extrabold text-accent bg-accent/10 px-2 py-0.5 rounded-full">{item.step}</span>
-                        </div>
-                        <h3 className="mt-3 font-bold text-sm text-foreground">{t(item.titleKey)}</h3>
-                        <p className="mt-1 text-xs text-muted-foreground leading-relaxed line-clamp-3">{t(item.descKey)}</p>
-                      </div>
-
-                      {/* Arrow to next step */}
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary border border-primary/20 shadow-xs">
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </motion.div>
-            </div>
+            {/* Mobile View: Moving interactive loop carousel (boleh dikacau/diswipe tanpa reset) */}
+            <MobileInteractiveLoopCarousel steps={howItWorksSteps} t={t} />
           </section>
 
           {/* 4. UN SUSTAINABLE DEVELOPMENT GOALS (SDG) SHOWCASE */}
