@@ -303,9 +303,8 @@ export function Landing() {
         <main className="relative z-[1] mx-auto max-w-6xl px-4 py-8 md:px-8 md:py-14">
           {/* 2. TARGET MARKET HORIZONTAL CARDS (2x2 ON MOBILE, 4 IN A ROW ON DESKTOP) */}
           <section className="mb-14 sm:mb-18" aria-label={t("landing.marketTitle")}>
-            <div className="mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("landing.marketTitle")}</h2>
-              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t("landing.marketSub")}</p>
+            <div className="mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">{t("landing.marketTitle")}</h2>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4.5">
               {/* 1. Student / Fresh Graduate */}
@@ -405,9 +404,8 @@ export function Landing() {
 
           {/* 3. HOW IT WORKS SECTION */}
           <section className="mb-14 sm:mb-18" aria-label={t("landing.howTitle")}>
-            <div className="mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t("landing.howTitle")}</h2>
-              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">{t("landing.howSub")}</p>
+            <div className="mb-6 sm:mb-8">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">{t("landing.howTitle")}</h2>
             </div>
 
             {/* Desktop View: Static horizontal 3-column layout (tak bergerak) */}
@@ -445,13 +443,12 @@ export function Landing() {
 
           {/* 4. UN SUSTAINABLE DEVELOPMENT GOALS (SDG) SHOWCASE */}
           <section className="rounded-3xl bg-gradient-to-br from-primary via-[#65101c] to-[#450a12] p-6 text-primary-foreground sm:p-8 md:p-10 shadow-xl border border-primary/40">
-            <div className="max-w-2xl">
+            <div className="max-w-2xl mb-8">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-accent backdrop-blur-xs mb-3">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>United Nations Sustainable Development Goals</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">{t("landing.sdgTitle")}</h2>
-              <p className="mt-2 text-xs sm:text-sm text-primary-foreground/85 leading-relaxed">{t("landing.sdgSub")}</p>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">{t("landing.sdgTitle")}</h2>
             </div>
 
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5">
