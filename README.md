@@ -53,20 +53,25 @@ AI is transforming industries faster than traditional training programmes and ed
 ---
 ## ⚙️ Environment Requirements (`.env`)
 
-Before running the application locally or deploying the backend services, ensure you configure your environment variables. Create a `.env` file in the root directory of the project and populate it with the following required configuration:
+Before running the application locally or deploying backend services, ensure you configure your environment variables. Create a `.env` file in the root directory and populate it with the following configuration:
 
 ```env
-# use postgres database
+# ==========================================
+# Database Configuration (PostgreSQL)
+# ==========================================
 DATABASE_URL="your_postgres_database_url_here"
 DATABASE_URL_UNPOOLED="your_unpooled_postgres_database_url_here"
 
+# ==========================================
 # Server Configuration
+# ==========================================
 PORT=5000
 NODE_ENV=development
 LOG_LEVEL=info
 
-# Authentication & Session Security (Required)
-# set your own session
+# ==========================================
+# Authentication & Session Security
+# ==========================================
 SESSION_SECRET="your_session_secret_here"
 
 # ==========================================
@@ -74,7 +79,9 @@ SESSION_SECRET="your_session_secret_here"
 # ==========================================
 RUNPOD_API_KEY="your_runpod_api_key_here"
 RUNPOD_LLM_ENDPOINT_ID="your_runpod_llm_endpoint_id_here"
+RUNPOD_LLM_MODEL="your_runpod_llm_model_name_here"
 RUNPOD_LIGHT_ENDPOINT_ID="your_runpod_light_endpoint_id_here"
+RUNPOD_LIGHT_MODEL="your_runpod_light_model_name_here"
 
 # ==========================================
 # Google Generative AI Configuration (Gemini)
@@ -82,18 +89,24 @@ RUNPOD_LIGHT_ENDPOINT_ID="your_runpod_light_endpoint_id_here"
 GEMINI_API_KEY="your_gemini_api_key_here"
 ```
 
-| Variable Name | Description | 
-| ----- | ----- | 
-| `DATABASE_URL` | Pooled PostgreSQL connection string (Neon Serverless PostgreSQL) for database queries via Drizzle ORM. | 
-| `DATABASE_URL_UNPOOLED` | Direct (unpooled) PostgreSQL connection string used for schema migrations and direct database operations. | 
-| `PORT` | Port number on which the backend Express server runs (default: `5000`). | 
-| `NODE_ENV` | Application runtime environment (`development` or `production`). | 
-| `LOG_LEVEL` | Logging verbosity level for Pino logger (e.g., `info`, `debug`, `error`). | 
-| `SESSION_SECRET` | Secret key used to sign and encrypt user authentication session cookies (set your own secure string). | 
-| `RUNPOD_API_KEY` | Authentication key for accessing RunPod serverless GPU inference endpoints. | 
-| `RUNPOD_LLM_ENDPOINT_ID` | Primary RunPod endpoint ID for deep career reasoning, pathway synthesis, and ELI5 explanations. | 
-| `RUNPOD_LIGHT_ENDPOINT_ID` | Lightweight RunPod endpoint ID for fast inference tasks, quick validations, and low-latency queries. | 
-| `GEMINI_API_KEY` | Google Gemini API key (`@google/genai`) used for resume parsing, structured skill extraction, and multimodal reasoning. | 
+### Environment Variable Descriptions
+
+The table below describes each required variable, sorted alphabetically to align with the deployment configuration:
+
+| Variable Name | Required | Default / Example | Description |
+| :--- | :---: | :--- | :--- |
+| `DATABASE_URL` | Yes | `postgresql://user:pass@host/db?sslmode=require` | Pooled PostgreSQL connection string (Neon Serverless PostgreSQL) used for application-level data queries through Drizzle ORM. |
+| `DATABASE_URL_UNPOOLED` | Yes | `postgresql://user:pass@host/db?sslmode=require` | Direct (unpooled) PostgreSQL connection string dedicated to running database schema migrations and direct management commands. |
+| `GEMINI_API_KEY` | Yes | `AIzaSy...` | Google Gemini API key (`@google/genai`) utilized for resume parsing, document understanding, and structured skill extraction. |
+| `LOG_LEVEL` | No | `info` | Logging verbosity level for the Pino logging service (options: `fatal`, `error`, `warn`, `info`, `debug`, `trace`). |
+| `NODE_ENV` | No | `development` | Target execution runtime environment (`development`, `test`, or `production`). |
+| `PORT` | No | `5000` | Local or containerized TCP port on which the Express application server listens for incoming HTTP traffic. |
+| `RUNPOD_API_KEY` | Yes | `rpa_...` | Authentication token used to authorize requests against RunPod Serverless GPU endpoints. |
+| `RUNPOD_LIGHT_ENDPOINT_ID` | Yes | `vllm-xxxxxx` | RunPod serverless endpoint identifier designated for fast, low-latency reasoning and lighter language model tasks. |
+| `RUNPOD_LIGHT_MODEL` | Yes | `meta-llama/Llama-3.2-3B-Instruct` | Model checkpoint identifier loaded on the lightweight RunPod serverless worker. |
+| `RUNPOD_LLM_ENDPOINT_ID` | Yes | `vllm-yyyyyy` | Primary RunPod serverless endpoint identifier assigned for complex analytical reasoning, career path synthesis, and deep evaluations. |
+| `RUNPOD_LLM_MODEL` | Yes | `deepseek-ai/DeepSeek-R1-Distill-Qwen-32B` | Primary large language model checkpoint identifier deployed on the main RunPod compute worker. |
+| `SESSION_SECRET` | Yes | `generate-a-strong-random-key` | High-entropy cryptographic string used to sign, verify, and secure HTTP session cookies against tampering. |
 
 
 
