@@ -6,7 +6,7 @@ import { requireRole } from "../lib/auth";
 import { getProfileRow, canAccessProfile } from "../lib/profiles";
 import { companyData } from "../lib/company";
 import { hashInput } from "../lib/agents";
-import { chat } from "../lib/llm";
+import { AiTimeoutError, AiNotConnectedError, chat } from "../lib/llm";
 import { loadSkills } from "../lib/catalog";
 import { hasCurrentRiasec } from "../lib/riasec-scoring";
 
@@ -93,7 +93,7 @@ router.post("/enterprise/employees/:id/summary", async (req, res) => {
         policy +
           " Explain like a friendly guide to someone new to career planning. Use exactly three short headings: CV strengths, interest mix, one 10-minute activity. Describe the practical result of their work in everyday words. Do not copy CV jargon such as pipelines, containerization, MLOps, end-to-end or unexplained abbreviations. Use one relatable example connecting the fixed Holland letters to their actual CV. Describe CV claims as reported experience, not proven expertise. Suggest one specific small practice task, not vague advice to explore certifications. Under 120 words per language. Do not repeat the raw CV.",
         JSON.stringify(context),
-        { agent: "holland" },
+        { agent: "holland", timeoutMs:45_000 },
       );
       const translations = parseCompanyTranslation(out.content);
       const [saved] = await tx
@@ -116,7 +116,7 @@ router.post("/enterprise/employees/:id/summary", async (req, res) => {
       { kind: err instanceof Error ? err.name : "unknown" },
       "Enterprise analysis failed",
     );
-    res.status(503).json({ error: "ai_unavailable" });
+    res.status(503).json({ error: err instanceof AiTimeoutError ? "ai_timeout" : err instanceof AiNotConnectedError ? "ai_not_connected" : "ai_failed" });
   }
 });
 
@@ -166,9 +166,9 @@ router.post("/enterprise/future/analysis", async (req, res) => {
       const out = await chat(
         "main",
         policy +
-          " Give exactly 4 concise sections: what is changing; team learning priorities; 3 proposed measurable company KPIs with time windows; limitations and next review. Differentiate observed data from the illustrative scenario and suggested targets. Under 240 words per language.",
+          " Give exactly 4 concise sections: what is changing; team learning priorities; 3 proposed measurable company KPIs with time windows; limitations and next review. Differentiate observed data from the illustrative scenario and suggested targets. Use everyday ELI5 words; explain technical terms with a simple example. Under 180 words per language.",
         JSON.stringify(context),
-        { agent: "analyst" },
+        { agent: "analyst", timeoutMs:60_000 },
       );
       const translations = parseCompanyTranslation(out.content);
       const [saved] = await tx
@@ -192,7 +192,7 @@ router.post("/enterprise/future/analysis", async (req, res) => {
       { kind: err instanceof Error ? err.name : "unknown" },
       "Enterprise analysis failed",
     );
-    res.status(503).json({ error: "ai_unavailable" });
+    res.status(503).json({ error: err instanceof AiTimeoutError ? "ai_timeout" : err instanceof AiNotConnectedError ? "ai_not_connected" : "ai_failed" });
   }
 });
 export default router;

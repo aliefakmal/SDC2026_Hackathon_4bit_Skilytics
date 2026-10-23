@@ -17,7 +17,7 @@ export type ChatTiming = {
   endpointStartupMs: number | null;
   readyToResponseMs: number | null;
 };
-type ChatOptions = { measureEndpointStartup?: boolean; agent?: RoutedAgent };
+type ChatOptions = { measureEndpointStartup?: boolean; agent?: RoutedAgent; timeoutMs?: number };
 type ChatResult = { content: string; model: string; timing: ChatTiming };
 
 /** Accepts a bare endpoint ID or a pasted URL such as https://api.runpod.ai/v2/<id>/run. */
@@ -458,7 +458,7 @@ async function generateChat(tier: Tier, system: string, user: string, images?: C
                 ...(isJsonTask ? { responseMimeType: "application/json" } : {}),
               },
             }),
-            signal: AbortSignal.timeout(images ? 25_000 : 20_000),
+            signal: AbortSignal.timeout(Math.min(90_000, Math.max(1_000, options?.timeoutMs ?? (images ? 25_000 : 20_000)))),
           });
         } catch (err) {
           const detail = err instanceof Error ? err.message : String(err);
