@@ -3,7 +3,7 @@ import { Link, Redirect, useLocation, useParams, useSearch } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, BarChart2, Check, CheckCircle2, Compass, Copy, FileCheck, FileImage, FileText, FileUp, GraduationCap, HelpCircle, Lightbulb, Loader2, PlusCircle, Quote, RotateCw, Sparkles, Volume2, VolumeX, X,
+  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, BarChart2, Check, CheckCircle2, Compass, Copy, FileCheck, FileImage, FileText, FileUp, GraduationCap, HelpCircle, Lightbulb, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
 } from "lucide-react";
 import {
   createProfile, runProfileAgent, useGetProfile, useListProfileInsights, useListRiasecQuestions, useListRoles, useListCourses, useSubmitRiasec, useUpdateProfile, useUploadCv,
@@ -29,6 +29,7 @@ import { en } from "@/i18n/en";
 import { ms } from "@/i18n/ms";
 import { zh } from "@/i18n/zh";
 import { cn } from "@/lib/utils";
+import { MultilingualListen } from "@/components/multilingual-listen";
 import { HollandLoadingStory, HollandStoryCard, HollandTranslationNote } from "@/components/holland-story";
 
 const RIASEC = ["R", "I", "A", "S", "E", "C"] as const;
@@ -1515,7 +1516,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
   const [byLang, setByLang] = useState<Record<string, AgentInsight>>({});
   const [selectedLetter, setSelectedLetter] = useState(0);
   const [copied, setCopied] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+
   const requests = useRef(new Map<string, Promise<void>>());
   const completed = useRef(new Set<string>());
   const [pending, setPending] = useState<Record<string, number>>({});
@@ -1578,37 +1579,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
     }
   }, [hasGeneratedInsight, byLang, errors, requestExplanation]);
 
-  useEffect(() => {
-    window.speechSynthesis?.cancel();
-    setIsSpeaking(false);
-  }, [lang]);
   const selectedType = code[selectedLetter] ?? code[0];
-
-  useEffect(() => {
-    return () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
-
-  const toggleSpeech = (text: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    } else {
-      window.speechSynthesis.cancel();
-      const cleanText = text.replace(/[#*`_\[\]()]/g, " ").replace(/\s+/g, " ").trim();
-      const utter = new SpeechSynthesisUtterance(cleanText);
-      utter.lang = insight?.lang === "ms" ? "ms-MY" : insight?.lang === "zh" ? "zh-CN" : "en-US";
-      utter.rate = 0.95;
-      utter.onend = () => setIsSpeaking(false);
-      utter.onerror = () => setIsSpeaking(false);
-      window.speechSynthesis.speak(utter);
-      setIsSpeaking(true);
-    }
-  };
 
   const copySummary = (text: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -1692,20 +1663,7 @@ function ResultsStep({ p, scope, onProfileReady }: { p: Profile; scope?: string;
                 {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
                 <span>{copied ? (lang === "ms" ? "Disalin!" : lang === "zh" ? "已复制!" : "Copied!") : (lang === "ms" ? "Salin" : lang === "zh" ? "复制" : "Copy")}</span>
               </button>
-              {typeof window !== "undefined" && "speechSynthesis" in window && (
-                <button
-                  type="button"
-                  onClick={() => toggleSpeech(insight.content)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors cursor-pointer",
-                    isSpeaking ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-foreground hover:bg-muted"
-                  )}
-                  title={isSpeaking ? (lang === "ms" ? "Henti bacaan" : "Stop speech") : (lang === "ms" ? "Dengar bacaan" : "Listen aloud")}
-                >
-                  {isSpeaking ? <VolumeX className="h-3.5 w-3.5 animate-pulse" /> : <Volume2 className="h-3.5 w-3.5" />}
-                  <span>{isSpeaking ? (lang === "ms" ? "Henti" : lang === "zh" ? "停止" : "Stop") : (lang === "ms" ? "Dengar" : lang === "zh" ? "朗读" : "Listen")}</span>
-                </button>
-              )}
+              <MultilingualListen text={insight.content} language={insight.lang} />
             </div>
           )}
         </div>
