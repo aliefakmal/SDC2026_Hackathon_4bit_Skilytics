@@ -3,6 +3,7 @@ import { obZh } from "./ob";
 import type { DictKey } from "./en";
 
 export const zh: Record<DictKey, string> = {
+  "cat.Domain": "专业知识",
   ...docsZh,
   "sdg.notice": "本内容未经联合国批准，亦不代表联合国的观点。",
   "courseLanguage.English": "英语",

@@ -38,7 +38,7 @@ export const roleTitle = (r: { title: string; titleMs?: string | null; titleZh?:
   (lang === "ms" ? r.titleMs : lang === "zh" ? r.titleZh : r.title) || r.title;
 
 export const SECTOR_SDG: Record<string, string[]> = {
-  "Digital & ICT": ["4", "8", "9"], "Business Services": ["4", "8"], Creative: ["4", "8"], Finance: ["4", "8", "10"],
-  "Education & Training": ["4"], Logistics: ["4", "8", "9"], "Engineering & Manufacturing": ["4", "9", "12"],
-  "Green Economy": ["4", "7", "13"], Healthcare: ["4", "8", "10"],
+  "Digital & ICT": ["8", "9"], "Business Services": ["8"], Creative: ["8"], Finance: ["8"],
+  "Education & Training": ["4"], Logistics: ["9", "8"], "Engineering & Manufacturing": ["9", "8"],
+  "Green Economy": ["7", "12", "13"], Healthcare: ["3"],
 };

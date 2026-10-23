@@ -47,7 +47,7 @@ const DOCS: Doc[] = [
     { label: "docs.f.dataset", url: "https://www.onetcenter.org/database.html" },
     { label: "docs.f.api", url: "https://www.onetcenter.org/dl_files/database/db_31_0_csv.zip" },
     { label: "docs.f.version", k: ["docs.onet.version"] },
-    { label: "docs.f.files", ref: "essential_skills.csv, transferable_skills.csv, career_interest_types.csv, occupation_data.csv" },
+    { label: "docs.f.files", ref: "software_skills.csv, task_statements.csv, knowledge.csv, essential_skills.csv, transferable_skills.csv, career_interest_types.csv, occupation_data.csv" },
     { label: "docs.f.coverage", k: ["docs.onet.coverage"] },
     { label: "docs.f.method", k: ["docs.onet.method", "docs.onet.skills", "docs.onet.riasec", "docs.onet.provenance"] },
     { label: "docs.f.license", k: ["docs.onet.license"], url: "https://www.onetcenter.org/license_db.html" },
@@ -82,6 +82,12 @@ const DOCS: Doc[] = [
     { label: "docs.f.method", k: ["docs.huggingface.method"] },
     { label: "docs.f.limits", k: ["docs.huggingface.limits"] },
   ] },
+  { id: "openlearn", types: ["external", "static", "derived"], name: "docs.openlearn.name", rows: [
+    {label: "docs.f.publisher", ref: "The Open University · OpenLearn"},
+    {label: "docs.f.dataset", url: "https://www.open.edu/openlearn/free-courses/full-catalogue"},
+    {label: "docs.f.files", ref: "src/artifacts/api-server/src/data/openlearn.ts"},
+    {label: "docs.f.method", k: ["docs.openlearn.method"]},
+  ]},
   { id: "runpod", types: ["service", "user"], name: "sources.aiTitle", sourceIds: ["gemini", "runpod_main", "runpod_light"], ai: true, rows: [
     { label: "docs.f.publisher", ref: "Google Gemini API + RunPod Serverless (vLLM, OpenAI-compatible)" },
     { label: "docs.f.api", url: "https://ai.google.dev/gemini-api/docs/models" },
@@ -119,7 +125,7 @@ const TYPES: DocType[] = ["external", "static", "derived", "service", "demo", "u
 const CATEGORIES = [
   { key: "market", ids: ["dosm", "aei_usage", "aei_exposure"] },
   { key: "career", ids: ["onet", "riasec", "match"] },
-  { key: "learning", ids: ["courses", "freecodecamp", "githubskills", "huggingface", "sdg"] },
+  { key: "learning", ids: ["courses", "freecodecamp", "githubskills", "huggingface", "openlearn", "sdg"] },
   { key: "aiService", ids: ["runpod"] },
   { key: "privacy", ids: ["demo"] },
 ] as const;

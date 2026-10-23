@@ -40,18 +40,20 @@ export function cheapestCourseHours(skillId: number, courses: CourseView[], budg
 }
 
 export function scoreRole(profile: ProfileForScoring, role: RoleView, skills: SkillRow[], courses: CourseView[]) {
+  courses = courses.filter(c => !c.roleScope || c.roleScope.includes(role.title));
   const have = new Map(profile.skills.map((s) => [s.skillId, STATUS_CREDIT[s.status] ?? 0.6]));
   const category = new Map(skills.map((s) => [s.id, s.category]));
   const haveCategories = new Set(profile.skills.map((s) => category.get(s.skillId)));
 
-  const totalImp = role.skills.reduce((a, s) => a + s.importance, 0) || 1;
+  const weight = (s: RoleSkillView) => s.importance * (s.category === "Human" ? 1 : 2);
+  const totalImp = role.skills.reduce((a, s) => a + weight(s), 0) || 1;
   const matched: RoleSkillView[] = [];
   const gaps: RoleSkillView[] = [];
   let covered = 0;
   for (const s of role.skills) {
     const credit = have.get(s.skillId);
     if (credit) {
-      covered += s.importance * credit;
+      covered += weight(s) * credit;
       matched.push(s);
     } else gaps.push(s);
   }

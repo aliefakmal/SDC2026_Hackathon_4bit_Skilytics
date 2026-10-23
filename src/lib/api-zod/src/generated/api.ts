@@ -102,10 +102,15 @@ export const GetDashboardSummaryResponse = zod.object({
 })
 
 
+export const listProfilesQueryLimitMax = 100;
+
+
+
+
 export const ListProfilesQueryParams = zod.object({
   "segment": zod.enum(['worker', 'graduate', 'employer', 'career_centre']).optional(),
   "organization": zod.coerce.string().optional(),
-  "limit": zod.coerce.number().int().min(1).max(100).optional(),
+  "limit": zod.coerce.number().int().min(1).max(listProfilesQueryLimitMax).optional(),
   "beforeId": zod.coerce.number().int().min(1).optional()
 })
 
@@ -564,7 +569,7 @@ export const GetProfileMatchesResponseItem = zod.object({
   "sourceVersion": zod.string().nullish(),
   "officialTitle": zod.string().nullish(),
   "sourceFetchedAt": zod.string().nullish(),
-  "myColStatus": zod.enum(['unverified']).optional(),
+  "myColStatus": zod.enum(['unverified', 'verified']).optional(),
   "id": zod.number().int(),
   "socCode": zod.string(),
   "title": zod.string(),
@@ -576,7 +581,9 @@ export const GetProfileMatchesResponseItem = zod.object({
   "skillId": zod.number().int(),
   "name": zod.string(),
   "category": zod.string(),
-  "importance": zod.number().int().describe('1 (nice to have) to 3 (core)')
+  "importance": zod.number().int().describe('1 (nice to have) to 3 (core)'),
+  "courseCount": zod.number().int().optional().describe('Current catalogue courses mapped to this skill; absent if not checked'),
+  "courseUrl": zod.string().optional().describe('An actual matching provider course URL')
 })),
   "aiExposure": zod.number().nullish().describe('Observed AI exposure 0-1'),
   "aiUsagePctMy": zod.number().nullish(),
@@ -596,13 +603,17 @@ export const GetProfileMatchesResponseItem = zod.object({
   "skillId": zod.number().int(),
   "name": zod.string(),
   "category": zod.string(),
-  "importance": zod.number().int().describe('1 (nice to have) to 3 (core)')
+  "importance": zod.number().int().describe('1 (nice to have) to 3 (core)'),
+  "courseCount": zod.number().int().optional().describe('Current catalogue courses mapped to this skill; absent if not checked'),
+  "courseUrl": zod.string().optional().describe('An actual matching provider course URL')
 })),
   "gapSkills": zod.array(zod.object({
   "skillId": zod.number().int(),
   "name": zod.string(),
   "category": zod.string(),
-  "importance": zod.number().int().describe('1 (nice to have) to 3 (core)')
+  "importance": zod.number().int().describe('1 (nice to have) to 3 (core)'),
+  "courseCount": zod.number().int().optional().describe('Current catalogue courses mapped to this skill; absent if not checked'),
+  "courseUrl": zod.string().optional().describe('An actual matching provider course URL')
 })),
   "marketDemand": zod.number().nullable().describe('Unavailable until a verified Malaysian demand series is configured; AI exposure is not demand.')
 })
@@ -759,7 +770,7 @@ export const ListRolesResponseItem = zod.object({
   "sourceVersion": zod.string().nullish(),
   "officialTitle": zod.string().nullish(),
   "sourceFetchedAt": zod.string().nullish(),
-  "myColStatus": zod.enum(['unverified']).optional(),
+  "myColStatus": zod.enum(['unverified', 'verified']).optional(),
   "id": zod.number().int(),
   "socCode": zod.string(),
   "title": zod.string(),
@@ -771,7 +782,9 @@ export const ListRolesResponseItem = zod.object({
   "skillId": zod.number().int(),
   "name": zod.string(),
   "category": zod.string(),
-  "importance": zod.number().int().describe('1 (nice to have) to 3 (core)')
+  "importance": zod.number().int().describe('1 (nice to have) to 3 (core)'),
+  "courseCount": zod.number().int().optional().describe('Current catalogue courses mapped to this skill; absent if not checked'),
+  "courseUrl": zod.string().optional().describe('An actual matching provider course URL')
 })),
   "aiExposure": zod.number().nullish().describe('Observed AI exposure 0-1'),
   "aiUsagePctMy": zod.number().nullish(),
@@ -791,7 +804,7 @@ export const GetRoleResponse = zod.object({
   "sourceVersion": zod.string().nullish(),
   "officialTitle": zod.string().nullish(),
   "sourceFetchedAt": zod.string().nullish(),
-  "myColStatus": zod.enum(['unverified']).optional(),
+  "myColStatus": zod.enum(['unverified', 'verified']).optional(),
   "id": zod.number().int(),
   "socCode": zod.string(),
   "title": zod.string(),
@@ -803,7 +816,9 @@ export const GetRoleResponse = zod.object({
   "skillId": zod.number().int(),
   "name": zod.string(),
   "category": zod.string(),
-  "importance": zod.number().int().describe('1 (nice to have) to 3 (core)')
+  "importance": zod.number().int().describe('1 (nice to have) to 3 (core)'),
+  "courseCount": zod.number().int().optional().describe('Current catalogue courses mapped to this skill; absent if not checked'),
+  "courseUrl": zod.string().optional().describe('An actual matching provider course URL')
 })),
   "aiExposure": zod.number().nullish().describe('Observed AI exposure 0-1'),
   "aiUsagePctMy": zod.number().nullish(),

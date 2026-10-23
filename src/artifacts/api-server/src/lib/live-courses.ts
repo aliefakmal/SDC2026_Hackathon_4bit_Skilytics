@@ -27,14 +27,14 @@ export function courseSdg(text: string, mappedSkills: { name: string }[] = []): 
   if (/climate|carbon|global warming/i.test(t)) primary.push("13.3");
   if (/renewable|solar|photovoltaic|clean energy/i.test(t) || skillNames.has("Solar PV Systems")) primary.push("7.2");
   if (/energy efficiency|energy management|energy audit/i.test(t) || skillNames.has("Energy Management")) primary.push("7.3");
-  if (/sustainab|environmental|ecolog/i.test(t) || skillNames.has("Sustainability and ESG Reporting") || skillNames.has("Environmental Compliance")) primary.push("4.7");
+  if (/sustainab|environmental|ecolog/i.test(t) || skillNames.has("Sustainability and ESG Reporting") || skillNames.has("Environmental Compliance")) primary.push("12.6");
   if (/esg|sustainability report/i.test(t)) primary.push("12.6");
   if (/recycl|waste|circular economy/i.test(t)) primary.push("12.5");
-  if (/health|medical|patient|clinical|icd-10|nursing|hospital/i.test(t) || skillNames.has("Patient Care") || skillNames.has("Health Records and Coding") || skillNames.has("Health Informatics")) primary.push("3.c");
+  if (/healthcare|medical|patient|clinical|icd-10|nursing|hospital/i.test(t) || skillNames.has("Patient Care") || skillNames.has("Health Records and Coding") || skillNames.has("Health Informatics")) primary.push("3.c");
   if (/train the trainer|instructional design|curriculum design|teaching|pedagogy|lesson plan/i.test(t) || skillNames.has("Training Delivery") || skillNames.has("Instructional Design")) primary.push("4.c");
 
-  // 4.4 is the universal baseline target for vocational & career skilling
-  const codes = [...primary, "4.4"];
+  // Prefer subject themes. Education is a fallback, not every course's primary goal.
+  const codes = [...primary];
 
   // Secondary economic, technological, inclusion, and infrastructure targets
   if (/entrepreneur|small business|freelance|e-commerce|ecommerce|branding/i.test(t) ||
@@ -53,7 +53,7 @@ export function courseSdg(text: string, mappedSkills: { name: string }[] = []): 
       skillNames.has("Machine Learning") || skillNames.has("Data Visualisation") ||
       skillNames.has("Power BI") || skillNames.has("Software Testing") ||
       skillNames.has("HTML and CSS") || skillNames.has("JavaScript") || skillNames.has("SQL") ||
-      (skillNames.has("Python") && /data|analysis|machine|automation|web|visual/i.test(t))) {
+      skillNames.has("Python") || skillNames.has("Version Control (Git)")) {
     secondary.push("8.2");
   }
 
@@ -64,7 +64,7 @@ export function courseSdg(text: string, mappedSkills: { name: string }[] = []): 
 
   if (/cybersecurity|infosec|network|networking|firewall|tcp\/ip|cloud computing|azure|aws|gcp|codeql|secret scanning|security/i.test(t) ||
       skillNames.has("Cybersecurity") || skillNames.has("Networking") || skillNames.has("Cloud Computing")) {
-    secondary.push("9.c");
+    secondary.push("8.2");
   }
 
   if (/industrial automation|plc|scada|robotics|manufacturing|lerobot|embodied ai|factory|switchgear|erp systems|sap/i.test(t) ||
@@ -74,7 +74,7 @@ export function courseSdg(text: string, mappedSkills: { name: string }[] = []): 
 
   if (/accounting|bookkeeping|taxation|financial analysis|audit|banking|ledger|financial statements/i.test(t) ||
       skillNames.has("Bookkeeping") || skillNames.has("Financial Accounting") || skillNames.has("Taxation") || skillNames.has("Financial Analysis")) {
-    secondary.push("8.10");
+    secondary.push("8.2");
   }
 
   if (/safety and health|occupational safety|osh|hse|dosh|niosh|hirarc|labour law|employment act|workplace safety/i.test(t) ||
@@ -96,11 +96,8 @@ export function courseSdg(text: string, mappedSkills: { name: string }[] = []): 
     secondary.push("4.3");
   }
 
-  if (/open source|open-source|community|github skills|github actions|pull request/i.test(t) || skillNames.has("Version Control (Git)")) {
-    secondary.push("17.9");
-  }
-
-  return [...new Set([...codes, ...secondary])];
+  const contextual = [...new Set([...codes, ...secondary])];
+  return contextual.length ? contextual : ["4.4"];
 }
 
 function matchingSkills(text: string, skills: Skill[]): Skill[] {
@@ -414,6 +411,7 @@ export async function liveCourses(skills: Skill[]): Promise<CourseView[]> {
 
   return providers.flatMap((provider) => {
     const snapshot = snapshots.get(provider);
-    return snapshot ? snapshot.courses.map((course) => ({ ...course, catalogStale: Date.now() - snapshot.at >= TTL })) : [];
+    // Re-evaluate thematic tags for persisted snapshots after mapping changes.
+    return snapshot ? snapshot.courses.map((course) => ({ ...course, sdgCodes: courseSdg(course.title, course.skills), catalogStale: Date.now() - snapshot.at >= TTL })) : [];
   });
 }

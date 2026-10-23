@@ -213,7 +213,6 @@ export function SdgBadge({ code, title, primary = false }: { code: string; title
   return <a href={`https://sdgs.un.org/goals/goal${goal}`} target="_blank" rel="noopener noreferrer" title={label}
     className={cn("inline-flex items-center gap-1 rounded border bg-card p-1 text-xs", primary ? "border-[3px] border-primary font-bold" : "border-border")}>
     <img src={`/sdg/${goal}.png`} alt={`SDG ${goal}: ${label}`} className="h-14 w-14 object-contain" loading="lazy" />
-    <span>SDG {code}</span>
   </a>;
 }
 

@@ -1,5 +1,6 @@
 import { ROLE_TITLE_ZH } from "../data/roles-zh";
 import { liveCourses } from "./live-courses";
+import { openLearnCourses } from "../data/openlearn";
 import {
   db,
   skillsTable,
@@ -32,6 +33,7 @@ export type RoleView = {
   description: string | null;
 };
 export type CourseView = {
+  roleScope?: readonly string[];
   id: number;
   title: string;
   provider: string;
@@ -81,7 +83,8 @@ export async function loadRoles(): Promise<RoleView[]> {
 }
 
 export async function loadCourses(): Promise<CourseView[]> {
-  return liveCourses(await loadSkills());
+  const skills = await loadSkills();
+  return [...await liveCourses(skills), ...openLearnCourses(skills)];
 }
 
 export async function loadDemoCourses(): Promise<CourseView[]> {
@@ -105,7 +108,7 @@ export async function loadDemoCourses(): Promise<CourseView[]> {
     .sort((a, b) => a.costMyr - b.costMyr || a.title.localeCompare(b.title));
 }
 
-export function roleToApi(r: RoleView) {
+export function roleToApi(r: RoleView, courses?: CourseView[]) {
   return {
     id: r.id,
     sourceUrl: r.sourceUrl ?? null,
@@ -119,7 +122,11 @@ export function roleToApi(r: RoleView) {
     titleZh: ROLE_TITLE_ZH[r.title] ?? r.title,
     sector: r.sector,
     riasecCode: r.riasecCode,
-    skills: r.skills,
+    skills: r.skills.map(s => {
+      if (!courses) return s;
+      const matching = courses.filter(c => (!c.roleScope || c.roleScope.includes(r.title)) && c.skills.some(k => k.id === s.skillId));
+      return { ...s, courseCount: matching.length, ...(matching[0] ? {courseUrl: matching[0].url} : {}) };
+    }),
     aiExposure: r.aiExposure,
     aiUsagePctMy: r.aiUsagePctMy,
     aiUsagePctGlobal: r.aiUsagePctGlobal,

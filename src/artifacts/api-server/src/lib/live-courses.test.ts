@@ -19,10 +19,10 @@ test("provider courses retain stable IDs, exact destination and sourced duration
 });
 test("SDGs reflect subject matter without treating every course as climate action or innovation", () => {
   assert.deepEqual(courseSdg("Learning Python"), ["4.4"]);
-  assert.deepEqual(courseSdg("Cloud data productivity"), ["4.4", "8.2"]);
-  assert.deepEqual(courseSdg("Climate and carbon"), ["13.3", "4.4"]);
-  assert.deepEqual(courseSdg("Training accessibility"), ["4.4", "10.2"]);
-  assert.deepEqual(courseSdg("Configure a cloud development environment"), ["4.4", "8.2"]);
+  assert.deepEqual(courseSdg("Cloud data productivity"), ["8.2"]);
+  assert.deepEqual(courseSdg("Climate and carbon"), ["13.3"]);
+  assert.deepEqual(courseSdg("Training accessibility"), ["10.2"]);
+  assert.deepEqual(courseSdg("Configure a cloud development environment"), ["8.2"]);
 });
 test("current assessment requires all 30 translated activities and cannot reuse previous answers", () => {
   const answers = RIASEC_QUESTIONS.map((q) => ({ questionId: q.id, value: 3 }));
@@ -59,7 +59,7 @@ test("public course indices only admit official direct links with mapped skills"
   ], skills, "now");
   assert.equal(repos.length, 1);
   assert.equal(repos[0].durationHours, null);
-  assert.deepEqual(repos[0].sdgCodes, ["4.4"]);
+  assert.deepEqual(repos[0].sdgCodes, ["8.2"]);
   const hf = mapHuggingFaceLearn('<a href="/learn/llm-course">LLM Course</a><a href="/learn/llm-course">Duplicate</a><a href="https://evil.example/learn/python">Bad</a>',
     [{ id: 3, name: "Generative AI Tools", category: "Digital" }], "now");
   assert.equal(hf.length, 1);
@@ -94,10 +94,10 @@ test("provider refreshes independently and retains stale snapshots on failure", 
 test("SDG mapping accurately attributes specialized domains with mapped skills", () => {
   assert.ok(courseSdg("Machine learning algorithms", [{ name: "Machine Learning" }]).includes("9.5"));
   assert.ok(courseSdg("Machine learning algorithms", [{ name: "Machine Learning" }]).includes("8.2"));
-  assert.ok(courseSdg("Cybersecurity and network defenses", [{ name: "Cybersecurity" }]).includes("9.c"));
+  assert.ok(courseSdg("Cybersecurity and network defenses", [{ name: "Cybersecurity" }]).includes("8.2"));
   assert.ok(courseSdg("Industrial robotics with LeRobot", [{ name: "PLC and Industrial Automation" }]).includes("9.2"));
-  assert.ok(courseSdg("Financial accounting and bookkeeping", [{ name: "Financial Accounting" }]).includes("8.10"));
-  assert.ok(courseSdg("Version control and open source workflows", [{ name: "Version Control (Git)" }]).includes("17.9"));
+  assert.ok(courseSdg("Financial accounting and bookkeeping", [{ name: "Financial Accounting" }]).includes("8.2"));
+  assert.ok(courseSdg("Version control and open source workflows", [{ name: "Version Control (Git)" }]).includes("8.2"));
   assert.ok(courseSdg("Occupational health and safety guidelines", [{ name: "Occupational Safety and Health" }]).includes("8.8"));
   assert.ok(courseSdg("Supply chain and warehouse operations", [{ name: "Supply Chain Management" }]).includes("9.1"));
 });

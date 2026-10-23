@@ -284,6 +284,10 @@ export interface RoleSkill {
   category: string;
   /** 1 (nice to have) to 3 (core) */
   importance: number;
+  /** Current catalogue courses mapped to this skill; absent if not checked */
+  courseCount?: number;
+  /** An actual matching provider course URL */
+  courseUrl?: string;
 }
 
 export type RoleMyColStatus = typeof RoleMyColStatus[keyof typeof RoleMyColStatus];
@@ -291,6 +295,7 @@ export type RoleMyColStatus = typeof RoleMyColStatus[keyof typeof RoleMyColStatu
 
 export const RoleMyColStatus = {
   unverified: 'unverified',
+  verified: 'verified',
 } as const;
 
 export interface Role {
@@ -355,6 +360,7 @@ export interface Course {
   costMyr: number;
   costType: CostType;
   hrdcStatus: HrdcStatus;
+  /** @nullable */
   durationHours: number | null;
   catalogStale?: boolean;
   level: string;
@@ -375,7 +381,9 @@ export interface PlanItem {
   title: string;
   provider: string;
   url: string;
+  /** @nullable */
   startWeek: number | null;
+  /** @nullable */
   durationWeeks: number | null;
   costMyr: number;
   hrdcStatus: HrdcStatus;
@@ -758,7 +766,14 @@ export interface DemoAccount {
 export type ListProfilesParams = {
 segment?: Segment;
 organization?: string;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
 limit?: number;
+/**
+ * @minimum 1
+ */
 beforeId?: number;
 };
 

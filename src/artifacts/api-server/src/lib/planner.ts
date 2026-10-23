@@ -24,9 +24,12 @@ export function buildPlan(opts: {
   while (remaining.size > 0 && chosen.length < maxCourses) {
     let best: { c: CourseView; value: number } | null = null;
     const officeRole = /administrative assistant|secretar|office clerk/i.test(opts.roleTitle ?? "");
-    const eligible = courses.filter((c) => !chosen.includes(c) && personalCost(c) <= budget && c.skills.some((s) => remaining.has(s.id)) && (!officeRole || /office|microsoft 365|excel|spreadsheet|\bword\b|outlook|business communication|time management|customer|bookkeep|administrative|document management/i.test(c.title)));
-    const scheduled = eligible.filter((c) => c.durationHours !== null);
-    for (const c of scheduled.length ? scheduled : eligible) {
+    const eligible = courses.filter((c) => (!c.roleScope || c.roleScope.includes(opts.roleTitle ?? "")) && !chosen.includes(c) && personalCost(c) <= budget && c.skills.some((s) => remaining.has(s.id)) && (!officeRole || /office|microsoft 365|excel|spreadsheet|\bword\b|outlook|business communication|time management|customer|bookkeep|administrative|document management/i.test(c.title)));
+    // Prioritize role-specific gaps before courses matching only a basic skill.
+    const specific = eligible.filter(c => c.skills.some(s => remaining.has(s.id) && remaining.get(s.id)?.category !== "Human"));
+    const candidates = specific.length ? specific : eligible;
+    const scheduled = candidates.filter((c) => c.durationHours !== null);
+    for (const c of scheduled.length ? scheduled : candidates) {
       if (chosen.includes(c)) continue;
       if (personalCost(c) > budget) continue;
       const gain = c.skills.reduce((a, s) => a + (remaining.get(s.id)?.importance ?? 0), 0);
@@ -49,7 +52,7 @@ export function buildPlan(opts: {
   });
 
   // Schedule: two parallel tracks when weekly hours allow (>= 8h/week),
-  // otherwise sequential. Capped at 26 weeks per course for very long tracks.
+  // otherwise sequential. Course hours are never truncated.
   const tracks = weeklyHours >= 8 ? 2 : 1;
   const hoursPerTrack = weeklyHours / tracks;
   const trackEnd = Array.from({ length: tracks }, () => 1);

@@ -1,6 +1,7 @@
 import { docsEn } from "./docs";
 import { obEn } from "./ob";
 export const en = {
+  "cat.Domain": "Subject knowledge",
   "sdg.related": "Related SDG",
   "sdg.main": "Main SDG",
   "courses.live": "Microsoft Learn and freeCodeCamp course data refresh every six hours. Durations appear only when published by the provider. SDG links describe learning themes, not certified impact.",

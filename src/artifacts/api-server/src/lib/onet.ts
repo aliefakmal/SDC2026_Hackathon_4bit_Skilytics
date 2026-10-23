@@ -1,8 +1,11 @@
 import { inflateRawSync } from "node:zlib";
 import { db, rolesTable, skillsTable, roleSkillsTable, marketSourcesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { softwareSkills, taskSkills } from "./occupational-skills";
+import { ROLES } from "../data/roles";
 
 export const ONET_VERSION = "31.0";
+const IMPORT_VERSION = `${ONET_VERSION}-software-tasks-v4`;
 export const ONET_URL = "https://www.onetcenter.org/dl_files/database/db_31_0_csv.zip";
 
 // Read only named central-directory entries; no files extracted to disk.
@@ -40,7 +43,7 @@ export function csvRows(text: string): Record<string, string>[] {
 
 export async function ingestOnet() {
   const [state] = await db.select().from(marketSourcesTable).where(eq(marketSourcesTable.id, "onet"));
-  if (state?.version === ONET_VERSION && state.status === "ok") return;
+  if (state?.version === IMPORT_VERSION && state.status === "ok") return;
   const response = await fetch(ONET_URL, { signal: AbortSignal.timeout(90000) });
   if (!response.ok) throw new Error(`O*NET download HTTP ${response.status}`);
   if (Number(response.headers.get("content-length")) > 30 * 1024 * 1024) throw new Error("O*NET archive too large");
@@ -49,6 +52,9 @@ export async function ingestOnet() {
   const occupations = new Map(csvRows(zipMember(zip, "occupation_data.csv")).map((r) => [r["O*NET-SOC Code"], r]));
   const skills = [...csvRows(zipMember(zip, "essential_skills.csv")), ...csvRows(zipMember(zip, "transferable_skills.csv"))];
   const interests = csvRows(zipMember(zip, "career_interest_types.csv"));
+  const software = csvRows(zipMember(zip, "software_skills.csv"));
+  const knowledge = csvRows(zipMember(zip, "knowledge.csv"));
+  const tasks = csvRows(zipMember(zip, "task_statements.csv"));
   const roles = await db.select().from(rolesTable);
   let count = 0;
   await db.transaction(async (tx) => {
@@ -70,15 +76,26 @@ export async function ingestOnet() {
         riasecCode: actualInterests.slice(0, 3).map((r) => codeLetters[r["Element Name"]]).join(""),
       }).where(eq(rolesTable.id, role.id));
       await tx.delete(roleSkillsTable).where(eq(roleSkillsTable.roleId, role.id));
+      // App titles can be narrower than the .00 occupation. The editorial scope
+      // selects relevant tools, but every retained link must exist in O*NET.
+      const focus = ROLES.find(r => r.title === role.title)?.skills.map(([name]) => name) ?? [];
+      const specific = [...taskSkills(tasks, code, focus), ...softwareSkills(software, code, focus)];
+      const domain = knowledge.filter(r => r["O*NET-SOC Code"] === code && r["Scale ID"] === "IM" && r["Recommend Suppress"] !== "Y" && Number(r["Data Value"]) >= 3)
+        .sort((a,b) => Number(b["Data Value"]) - Number(a["Data Value"])).slice(0, 5);
+      for (const s of [...specific, ...domain.map(r => ({ name: r["Element Name"], category: "Domain", aliases: [] as string[], importance: Math.max(1, Math.min(3, Math.round(1 + (Number(r["Data Value"]) - 1) / 2))) }))]) {
+        const [skill] = await tx.insert(skillsTable).values({name:s.name, category:s.category, aliases:s.aliases})
+          .onConflictDoUpdate({ target: skillsTable.name, set:{category:s.category} }).returning();
+        await tx.insert(roleSkillsTable).values({roleId:role.id, skillId:skill.id, importance:s.importance}).onConflictDoNothing();
+      }
       for (const s of actualSkills) {
         const [skill] = await tx.insert(skillsTable).values({ name: s["Element Name"], category: "Human", aliases: [] })
           .onConflictDoUpdate({ target: skillsTable.name, set: { name: s["Element Name"] } }).returning();
-        await tx.insert(roleSkillsTable).values({ roleId: role.id, skillId: skill.id, importance: Math.max(1, Math.min(3, Math.round(1 + (Number(s["Data Value"]) - 1) / 2))) });
+        await tx.insert(roleSkillsTable).values({ roleId: role.id, skillId: skill.id, importance: Math.max(1, Math.min(3, Math.round(1 + (Number(s["Data Value"]) - 1) / 2))) }).onConflictDoNothing();
       }
       count++;
     }
     if (!count) throw new Error("No compatible O*NET occupations");
-    await tx.insert(marketSourcesTable).values({ id: "onet", status: "ok", version: ONET_VERSION, dataDate: "2026-08", lastFetchedAt: new Date(), recordCount: count, error: null })
-      .onConflictDoUpdate({ target: marketSourcesTable.id, set: { status: "ok", version: ONET_VERSION, dataDate: "2026-08", lastFetchedAt: new Date(), recordCount: count, error: null } });
+    await tx.insert(marketSourcesTable).values({ id: "onet", status: "ok", version: IMPORT_VERSION, dataDate: "2026-08", lastFetchedAt: new Date(), recordCount: count, error: null })
+      .onConflictDoUpdate({ target: marketSourcesTable.id, set: { status: "ok", version: IMPORT_VERSION, dataDate: "2026-08", lastFetchedAt: new Date(), recordCount: count, error: null } });
   });
 }

@@ -16,7 +16,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorBox, Rows, SdgBadge, Markdown } from "@/components/kit";
 import { useT } from "@/i18n";
-import { roleTitle, SECTOR_SDG } from "@/lib/fmt";
+import { roleTitle } from "@/lib/fmt";
+import { ChevronDown, MapPin } from "lucide-react";
+import {
+  AiExposure,
+  RoleGoals,
+  MatcherSkillMap,
+  matcherWords,
+} from "./matcher-skill-map";
 
 const words = {
   en: {
@@ -126,11 +133,10 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
   const qc = useQueryClient();
   const matches = useGetProfileMatches(p.id);
   const update = useUpdateProfile();
+  const createPlan = useCreateProfilePlan();
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(20);
-  const [selected, setSelected] = useState<number | null>(
-    p.targetRoleId ?? null,
-  );
+  const [selected, setSelected] = useState<number | null>(null);
   const [error, setError] = useState(false);
   const roles = matches.data ?? [];
   const chosen = roles.find((x) => x.role.id === selected) ?? roles[0];
@@ -145,6 +151,11 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
         data: { targetRoleId: id },
       });
       qc.setQueryData(getGetProfileQueryKey(p.id), profile);
+      const plan = await createPlan.mutateAsync({
+        id: p.id,
+        data: { roleId: id },
+      });
+      qc.setQueryData(getGetProfilePlanQueryKey(p.id), plan);
       nav(`${base}/${p.id}/pathway`);
     } catch {
       setError(true);
@@ -161,7 +172,7 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
         {roles.slice(0, 3).map((x, i) => (
           <article
             key={x.role.id}
-            className={`rounded-2xl border p-5 ${i === 0 ? "border-accent bg-[hsl(var(--gold-soft))] md:pb-10 md:order-2" : i === 1 ? "border-border bg-card md:order-1" : "border-border bg-card md:order-3"}`}
+            className={`relative rounded-2xl border p-5 motion-safe:transition-all motion-safe:duration-300 hover:shadow-lg ${chosen?.role.id === x.role.id ? "ring-2 ring-primary ring-offset-2 shadow-md" : ""} ${i === 0 ? "border-accent bg-[hsl(var(--gold-soft))] md:pb-10 md:order-2" : i === 1 ? "border-border bg-card md:order-1" : "border-border bg-card md:order-3"}`}
           >
             <span className="text-3xl font-black text-accent">#{i + 1}</span>
             <h3 className="mt-2 text-lg font-bold">
@@ -178,23 +189,31 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
                 {w.gap}: <b>{x.gapSkills.length}</b>
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
               {w.interest}: {Math.round((x.breakdown.interest / 20) * 100)}%
             </p>
+            <AiExposure role={x.role} />
             <div className="my-3 flex gap-1">
-              {(SECTOR_SDG[x.role.sector] ?? ["4", "8"]).map((code) => (
-                <SdgBadge key={code} code={code} />
-              ))}
+              <RoleGoals role={x.role} />
             </div>
             <button
-              className="mb-2 min-h-11 text-sm font-semibold text-primary underline"
+              aria-pressed={chosen?.role.id === x.role.id}
+              className={
+                "mb-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 px-3 text-sm font-bold transition-colors " +
+                (chosen?.role.id === x.role.id
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20")
+              }
               onClick={() => setSelected(x.role.id)}
             >
-              {w.map}
+              <MapPin className="h-4 w-4" /> {w.map}
+              {chosen?.role.id === x.role.id && (
+                <ChevronDown className="h-4 w-4 motion-safe:animate-bounce" />
+              )}
             </button>
             <Button
               className="w-full"
-              disabled={update.isPending}
+              disabled={update.isPending || createPlan.isPending}
               onClick={() => choose(x.role.id)}
             >
               {w.choose}
@@ -203,50 +222,18 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
         ))}
       </div>
       {error && <p role="alert">{w.fail}</p>}
-      {chosen && (
-        <section className="rounded-2xl border bg-card p-5">
-          <h3 className="font-bold">
-            {w.map} · {roleTitle(chosen.role, lang)}
-          </h3>
-          <p className="my-2 text-xs text-muted-foreground">
-            🟩 {w.known} · 🟨 {w.learn}
-          </p>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {chosen.role.skills.map((s) => {
-              const known = chosen.matchedSkills.some(
-                (k) => k.skillId === s.skillId,
-              );
-              const inferred =
-                known &&
-                (!p.skills.some((k) => k.skillId === s.skillId) ||
-                  p.skills.some(
-                    (k) => k.skillId === s.skillId && k.status === "inferred",
-                  ));
-              return (
-                <div
-                  key={s.skillId}
-                  className={`rounded-xl border px-3 py-3 text-sm ${inferred ? "border-sky-500/30 bg-sky-500/10" : known ? "border-emerald-500/30 bg-emerald-500/10" : "border-amber-500/30 bg-amber-500/10"}`}
-                >
-                  <b>{s.name}</b>
-                  <p className="mt-1 text-xs">
-                    {inferred
-                      ? lang === "ms"
-                        ? "Anggaran pengalaman"
-                        : lang === "zh"
-                          ? "根据经历推测"
-                          : "Suggested from experience"
-                      : known
-                        ? w.known
-                        : w.learn}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-          {!chosen.role.skills.length && <p>{w.empty}</p>}
-          <p className="mt-3 text-xs text-muted-foreground">{w.inferred}</p>
-        </section>
-      )}
+      <p className="text-xs text-muted-foreground">
+        {matcherWords[lang].exposureNote} {matcherWords[lang].sdg}
+      </p>
+      {chosen &&
+        roles.slice(0, 3).some((x) => x.role.id === chosen.role.id) && (
+          <MatcherSkillMap
+            key={chosen.role.id}
+            match={chosen}
+            p={p}
+            rank={roles.indexOf(chosen) + 1}
+          />
+        )}
       <section>
         <h3 className="mb-3 font-bold">{w.others}</h3>
         <Input
@@ -277,25 +264,50 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
             .map((x) => (
               <div
                 key={x.role.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-3"
+                className="overflow-hidden rounded-xl border bg-card"
               >
-                <button
-                  className="text-left font-semibold hover:text-primary"
-                  onClick={() => setSelected(x.role.id)}
-                >
-                  {roleTitle(x.role, lang)}
-                  <span className="mt-1 block text-xs font-normal text-muted-foreground">
-                    {w.have}: {x.matchedSkills.length} · {w.gap}:{" "}
-                    {x.gapSkills.length}
-                  </span>
-                </button>
-                <Button
-                  variant="outline"
-                  disabled={update.isPending}
-                  onClick={() => choose(x.role.id)}
-                >
-                  {w.choose}
-                </Button>
+                <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+                  <button
+                    className="flex min-w-40 flex-1 items-center gap-3 text-left font-semibold hover:text-primary"
+                    aria-expanded={selected === x.role.id}
+                    aria-controls={"role-map-" + x.role.id}
+                    onClick={() =>
+                      setSelected(selected === x.role.id ? null : x.role.id)
+                    }
+                  >
+                    <ChevronDown
+                      className={
+                        "h-5 w-5 shrink-0 transition-transform " +
+                        (selected === x.role.id
+                          ? "rotate-180 text-primary"
+                          : "")
+                      }
+                    />
+                    <span>
+                      {roleTitle(x.role, lang)}
+                      <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                        {w.have}: {x.matchedSkills.length} · {w.gap}:{" "}
+                        {x.gapSkills.length}
+                      </span>
+                    </span>
+                  </button>
+                  <div className="w-44">
+                    <AiExposure role={x.role} />
+                  </div>
+                  <RoleGoals role={x.role} />
+                  <Button
+                    variant="outline"
+                    disabled={update.isPending || createPlan.isPending}
+                    onClick={() => choose(x.role.id)}
+                  >
+                    {w.choose}
+                  </Button>
+                </div>
+                {selected === x.role.id && (
+                  <div id={"role-map-" + x.role.id} className="p-3 pt-0">
+                    <MatcherSkillMap match={x} p={p} />
+                  </div>
+                )}
               </div>
             ))}
         </div>

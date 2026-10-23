@@ -13,7 +13,9 @@ export interface PlanItem {
   title: string;
   provider: string;
   url: string;
+  /** @nullable */
   startWeek: number | null;
+  /** @nullable */
   durationWeeks: number | null;
   costMyr: number;
   hrdcStatus: HrdcStatus;

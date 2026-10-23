@@ -8,9 +8,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { CostBadge, DataStamp, Empty, ErrorBox, ExplainNote, HrdcBadge, Meter, PageHeader, Panel, Rows, SdgBadge, SkillBadge, catIcon } from "@/components/kit";
-import { SECTOR_SDG, roleTitle, useFmt } from "@/lib/fmt";
+import { roleTitle, useFmt } from "@/lib/fmt";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
+import { RoleGoals } from "@/components/matcher-skill-map";
 
 export function Roles() {
   const { t, tk, lang } = useT();
@@ -105,7 +106,7 @@ export function RoleDetail() {
                   <div className="flex justify-between gap-2"><dt className="text-muted-foreground">RIASEC</dt><dd className="font-semibold">{r.riasecCode}</dd></div>
                   <div className="flex justify-between gap-2"><dt className="text-muted-foreground">{t("roles.mycol")}</dt><dd className="font-semibold">{t("ob.unverified")}</dd></div>
                 </dl>
-                <div className="mt-3 flex flex-wrap gap-1">{(SECTOR_SDG[r.sector] ?? ["4", "8"]).map((g) => <SdgBadge key={g} code={g} title={tk("sdg", g)} />)}</div>
+                <div className="mt-3"><RoleGoals role={r} /></div>
                 <ExplainNote>{t("roles.mycolExplain")}</ExplainNote>
               </Panel>
             </div>

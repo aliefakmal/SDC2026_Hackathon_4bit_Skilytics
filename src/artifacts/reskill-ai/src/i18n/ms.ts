@@ -3,6 +3,7 @@ import { obMs } from "./ob";
 import type { DictKey } from "./en";
 
 export const ms: Record<DictKey, string> = {
+  "cat.Domain": "Pengetahuan bidang",
   ...docsMs,
   "sdg.notice": "Kandungan ini tidak diluluskan oleh PBB dan tidak mewakili pandangan PBB.",
   "courseLanguage.English": "Bahasa Inggeris",

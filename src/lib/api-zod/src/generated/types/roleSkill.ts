@@ -12,4 +12,8 @@ export interface RoleSkill {
   category: string;
   /** 1 (nice to have) to 3 (core) */
   importance: number;
+  /** Current catalogue courses mapped to this skill; absent if not checked */
+  courseCount?: number;
+  /** An actual matching provider course URL */
+  courseUrl?: string;
 }

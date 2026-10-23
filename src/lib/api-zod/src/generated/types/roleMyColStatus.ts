@@ -11,4 +11,5 @@ export type RoleMyColStatus = typeof RoleMyColStatus[keyof typeof RoleMyColStatu
 
 export const RoleMyColStatus = {
   unverified: 'unverified',
+  verified: 'verified',
 } as const;

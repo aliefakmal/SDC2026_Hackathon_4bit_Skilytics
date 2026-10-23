@@ -859,6 +859,8 @@ components:
         name: { type: string }
         category: { type: string }
         importance: { type: integer, description: "1 (nice to have) to 3 (core)" }
+        courseCount: { type: integer, description: "Current catalogue courses mapped to this skill; absent if not checked" }
+        courseUrl: { type: string, description: "An actual matching provider course URL" }
 
     Role:
       type: object

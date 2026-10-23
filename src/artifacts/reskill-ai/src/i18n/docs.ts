@@ -1,6 +1,8 @@
 // Data Sources documentation strings. URLs, dataset field names, file names and official
 // English titles are reference identifiers and are intentionally kept verbatim.
 export const docsEn = {
+  "docs.openlearn.name": "OpenLearn · reviewed public courses",
+  "docs.openlearn.method": "Six public Open University course pages reviewed on 23 October 2026. This is a manually maintained metadata selection, not a live API. Subject links are application-authored from course descriptions/outcomes and restricted to relevant role titles. Unknown duration stays unknown. Introductory resources do not establish full skill mastery, professional registration or qualifications. Check current details with the provider.",
   "docs.category.market": "Labour market and AI research",
   "docs.category.career": "Career and interest assessment",
   "docs.category.learning": "Learning catalogue and SDG references",
@@ -45,7 +47,7 @@ export const docsEn = {
   "docs.onet.version": "31.0 (August 2026), pinned. Moving to a new version needs a reviewed upgrade.",
   "docs.onet.coverage": "United States occupations only.",
   "docs.onet.method": "Each app role has an explicit six-digit SOC that must match an O*NET .00 occupation exactly. There is no MASCO or MyCOL equivalence. Unmatched roles show as unavailable, with no seed fallback.",
-  "docs.onet.skills": "Skills: non-suppressed ratings with importance (IM) of 3 or more, top 12 per role. Importance 1-5 is mapped to 1-3 with round(1 + (IM - 1) / 2).",
+  "docs.onet.skills": "O*NET Software Skills supplies occupation-specific tool examples mapped through explicit aliases to our glossary, scoped to each app role’s editorial skill list. In Demand tools receive app weight 3; others 2, not official O*NET ratings. Core task statements also map explicit skill aliases within that role scope (app weight 3). Knowledge adds the top five non-suppressed IM ≥ 3 subject areas; essential/transferable skills retain the top 12. Alias and course title/summary matches are application crosswalks, not course coverage certification. Matcher checks current catalogue skill IDs and links actual courses; requirements without courses remain visible separately and the planner reports uncovered gaps.",
   "docs.onet.riasec": "Role RIASEC code: the top three official interest (OI) scores on the 1-7 scale. Matched records only.",
   "docs.onet.provenance": "Every role stores its fetched timestamp, sourceUrl, sourceVersion and officialTitle. The official English title is a reference name.",
   "docs.onet.license": "CC BY 4.0 with attribution. This app's changes (selection and rescaling above) are disclosed here.",
@@ -72,11 +74,11 @@ export const docsEn = {
   "docs.riasec.scoring": "All 30 unique answers are required by the API and both assessment screens. Each area uses the average of its five answers, rounded to two decimals. Ties follow R, I, A, S, E, C.",
   "docs.riasec.limits": "Skilytics adapted the activities and translations under the O*NET Tools Developer License. Independent psychometric validation remains outstanding. USDOL/ETA has not approved, endorsed or tested the modifications. Interests are never inferred from CV text.",
 
-  "docs.match.weights": "Weights: skills 40, transferable 15, interest 20, preferences 10, feasibility 15. Additional skills may be suggested from reviewed education and experience using catalogue terms; these are inferred, not verified. RIASEC supplies interest fit, not skill evidence.",
+  "docs.match.weights": "Within skill fit, tools/subject skills count twice as much as basic Human skills. Weights: skills 40, transferable 15, interest 20, preferences 10, feasibility 15. Additional skills may be suggested from reviewed education and experience using catalogue terms; these are inferred, not verified. RIASEC supplies interest fit, not skill evidence.",
   "docs.match.demand": "Labour demand is not fabricated. Until a verified Malaysian demand source exists it is null and shown as not verified, not zero.",
   "docs.match.feasibility": "When no verified course exists, feasibility is unavailable and gets zero credit. It is not estimated from course durations.",
 
-  "docs.sdg.method": "Course titles and summaries map to ordered SDG targets: the first is the main theme, followed by related themes. Vocational learning maps to 4.4; explicit climate, energy, waste, inclusion and productivity topics receive corresponding targets. Full official UN goal icons are stored locally.",
+  "docs.sdg.method": "Course subject themes take priority: climate 13, clean energy 7, health 3, manufacturing/research 9, productivity 8 and inclusion 10. Education 4.4 is a fallback. Roles use explicit title/sector rules: health 3, education 4, engineering/logistics/research 9, green roles 7/12/13, other work 8. These application associations are not UN occupational classifications or measured impact. The first goal has a bold outline; icons are deduplicated by goal.",
   "docs.sdg.limits": "Not measured or certified impact, and not SDG statistics.",
 
   "docs.demo.org": "Employer and Educators demo accounts are tagged as dummy. Their organisations and members are not external facts.",
@@ -90,6 +92,8 @@ export const docsEn = {
 export type DocsKey = keyof typeof docsEn;
 
 export const docsMs: Record<DocsKey, string> = {
+  "docs.openlearn.name": "OpenLearn · kursus awam disemak",
+  "docs.openlearn.method": "Enam halaman kursus awam Open University disemak pada 23 Oktober 2026. Pilihan metadata ini diselenggara secara manual, bukan API live. Kaitan bidang dipetakan oleh aplikasi berdasarkan penerangan/hasil pembelajaran kursus dan dihadkan kepada peranan berkaitan. Tempoh tidak diketahui tidak direka. Kursus pengenalan tidak membuktikan penguasaan kemahiran penuh, pendaftaran profesional atau kelayakan. Semak maklumat terkini dengan penyedia.",
   "docs.category.market": "Pasaran buruh dan penyelidikan AI",
   "docs.category.career": "Kerjaya dan penilaian minat",
   "docs.category.learning": "Katalog pembelajaran dan rujukan SDG",
@@ -134,7 +138,7 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.onet.version": "31.0 (Ogos 2026), dikunci. Bertukar ke versi baharu memerlukan naik taraf yang disemak.",
   "docs.onet.coverage": "Pekerjaan Amerika Syarikat sahaja.",
   "docs.onet.method": "Setiap peranan aplikasi mempunyai SOC enam digit yang jelas dan mesti sepadan tepat dengan pekerjaan O*NET .00. Tiada kesetaraan MASCO atau MyCOL. Peranan yang tidak sepadan ditunjukkan sebagai tidak tersedia, tanpa sandaran data benih.",
-  "docs.onet.skills": "Kemahiran: penilaian tidak disekat dengan kepentingan (IM) 3 atau lebih, 12 teratas setiap peranan. Kepentingan 1-5 dipetakan ke 1-3 dengan round(1 + (IM - 1) / 2).",
+  "docs.onet.skills": "O*NET Software Skills menyediakan contoh alat khusus pekerjaan, dipadankan melalui alias jelas kepada glosari aplikasi serta skop kemahiran editorial setiap peranan. Alat In Demand diberi wajaran aplikasi 3; yang lain 2, bukan skor rasmi O*NET. Pernyataan tugasan teras turut dipadankan melalui alias dalam skop peranan (wajaran aplikasi 3). Knowledge menambah lima bidang teratas dengan IM ≥ 3 yang tidak disekat; kemahiran asas/boleh pindah mengekalkan 12 teratas. Padanan alias dan tajuk/ringkasan kursus ialah pemetaan aplikasi, bukan pengesahan liputan kursus. Matcher menyemak ID kemahiran katalog semasa dan memaut kursus sebenar; keperluan tanpa kursus diasingkan dan perancang melaporkan jurang belum diliputi.",
   "docs.onet.riasec": "Kod RIASEC peranan: tiga skor minat (OI) rasmi tertinggi pada skala 1-7. Rekod yang sepadan sahaja.",
   "docs.onet.provenance": "Setiap peranan menyimpan cap masa pengambilan, sourceUrl, sourceVersion dan officialTitle. Tajuk rasmi bahasa Inggeris ialah nama rujukan.",
   "docs.onet.license": "CC BY 4.0 dengan atribusi. Perubahan aplikasi ini (pemilihan dan penskalaan semula di atas) didedahkan di sini.",
@@ -161,11 +165,11 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.riasec.scoring": "Semua 30 jawapan unik diwajibkan oleh API dan kedua-dua skrin ujian. Setiap kategori menggunakan purata lima jawapan, dibundarkan kepada dua perpuluhan. Seri mengikut susunan R, I, A, S, E, C.",
   "docs.riasec.limits": "Skilytics mengadaptasi aktiviti dan terjemahan di bawah O*NET Tools Developer License. Pengesahan psikometrik bebas belum dijalankan. USDOL/ETA tidak meluluskan, menyokong atau menguji perubahan ini. Minat tidak disimpulkan daripada teks CV.",
 
-  "docs.match.weights": "Pemberat: kemahiran 40, boleh pindah 15, minat 20, keutamaan 10, kebolehlaksanaan 15. Kemahiran tambahan boleh dicadangkan daripada pendidikan dan pengalaman yang disemak menggunakan istilah katalog; ini anggaran, bukan pengesahan. RIASEC memberi padanan minat, bukan bukti kemahiran.",
+  "docs.match.weights": "Dalam padanan kemahiran, alat/kemahiran bidang diberi nilai dua kali kemahiran asas Human. Pemberat: kemahiran 40, boleh pindah 15, minat 20, keutamaan 10, kebolehlaksanaan 15. Kemahiran tambahan boleh dicadangkan daripada pendidikan dan pengalaman yang disemak menggunakan istilah katalog; ini anggaran, bukan pengesahan. RIASEC memberi padanan minat, bukan bukti kemahiran.",
   "docs.match.demand": "Permintaan buruh tidak direka. Sehingga sumber permintaan Malaysia yang disahkan wujud, ia null dan ditunjukkan sebagai belum disahkan, bukan sifar.",
   "docs.match.feasibility": "Jika tiada kursus disahkan, kebolehlaksanaan tidak tersedia dan diberi kredit sifar. Ia tidak dianggarkan daripada tempoh kursus.",
 
-  "docs.sdg.method": "Tajuk dan ringkasan kursus dipetakan kepada sasaran SDG mengikut susunan: tema utama dahulu, kemudian tema berkaitan. Pembelajaran vokasional dipetakan kepada 4.4; topik khusus iklim, tenaga, sisa, keterangkuman dan produktiviti menerima sasaran berkaitan. Ikon rasmi PBB lengkap disimpan secara tempatan.",
+  "docs.sdg.method": "Tema kursus diutamakan: iklim 13, tenaga bersih 7, kesihatan 3, pembuatan/penyelidikan 9, produktiviti 8 dan keterangkuman 10. Pendidikan 4.4 menjadi sandaran. Peranan mengikut aturan tajuk/sektor jelas: kesihatan 3, pendidikan 4, kejuruteraan/logistik/penyelidikan 9, peranan hijau 7/12/13, kerja lain 8. Kaitan aplikasi ini bukan pengelasan pekerjaan PBB atau impak diukur. Matlamat pertama mempunyai bingkai tebal; ikon tidak diulang bagi matlamat sama.",
   "docs.sdg.limits": "Bukan impak yang diukur atau diperakui, dan bukan statistik SDG.",
 
   "docs.demo.org": "Akaun demo Majikan dan Pendidik ditandakan sebagai contoh. Organisasi, pekerja dan pelajar ialah data contoh.",
@@ -177,6 +181,8 @@ export const docsMs: Record<DocsKey, string> = {
 };
 
 export const docsZh: Record<DocsKey, string> = {
+  "docs.openlearn.name": "OpenLearn · 已审核公开课程",
+  "docs.openlearn.method": "六个 Open University 公开课程页面于 2026 年 10 月 23 日审核。此为人工维护的元数据选集，并非实时 API。主题关联由应用根据课程介绍及学习成果编制，并限定至相关职位。未知时长保留为未知。入门资源不代表全面掌握技能、专业注册或取得执业资格。最新详情请向机构确认。",
   "docs.category.market": "劳动力市场与 AI 研究",
   "docs.category.career": "职业与兴趣评估",
   "docs.category.learning": "学习目录与 SDG 参考",
@@ -221,7 +227,7 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.onet.version": "31.0（2026 年 8 月），已固定。升级到新版本需要经过审核。",
   "docs.onet.coverage": "仅限美国职业。",
   "docs.onet.method": "每个应用职位都有明确的六位 SOC，必须与 O*NET .00 职业完全匹配。不存在与 MASCO 或 MyCOL 的对等关系。未匹配的职位显示为不可用，不使用种子数据替代。",
-  "docs.onet.skills": "技能：选取未被抑制、重要度（IM）不低于 3 的评分，每个职位前 12 项。重要度 1-5 按 round(1 + (IM - 1) / 2) 映射为 1-3。",
+  "docs.onet.skills": "O*NET Software Skills 提供各职业的工具示例，通过明确别名映射到技能词表，并按应用职位的编辑技能清单限定范围。In Demand 工具的应用权重为 3，其他为 2，并非 O*NET 评分。核心任务也在该职位范围内通过别名映射（应用权重 3）。Knowledge 补充未被抑制且 IM ≥ 3 的前五项专业知识；基础及可迁移技能保留前十二项。别名及课程名称/简介匹配属于应用映射，并非课程覆盖认证。Matcher 检查当前目录技能 ID 并链接真实课程；尚无课程的要求单列，规划器报告未覆盖的差距。",
   "docs.onet.riasec": "职位 RIASEC 代码：官方兴趣（OI）1-7 分中最高的三项。仅限已匹配记录。",
   "docs.onet.provenance": "每个职位都保存获取时间戳、sourceUrl、sourceVersion 与 officialTitle。英文官方职称是参考名称。",
   "docs.onet.license": "CC BY 4.0，需署名。本应用的改动（上述筛选与重新标度）在此披露。",
@@ -248,11 +254,11 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.riasec.scoring": "API 及两个评估页面均要求回答全部 30 道不同题目。各领域取五题平均值，保留两位小数。平分时依次按 R、I、A、S、E、C 排序。",
   "docs.riasec.limits": "Skilytics 按 O*NET Tools Developer License 改编活动与译文，尚未完成独立心理测量验证。USDOL/ETA 未批准、认可或测试这些修改。兴趣绝不从简历文本推断。",
 
-  "docs.match.weights": "权重：技能 40、可迁移 15、兴趣 20、偏好 10、可行性 15。根据已核对的学历和经历，使用技能目录术语推测额外技能；这些推测尚未核实。RIASEC 用于兴趣匹配，不作为技能证据。",
+  "docs.match.weights": "在技能匹配内，工具及专业技能的权重为基础 Human 技能的两倍。权重：技能 40、可迁移 15、兴趣 20、偏好 10、可行性 15。根据已核对的学历和经历，使用技能目录术语推测额外技能；这些推测尚未核实。RIASEC 用于兴趣匹配，不作为技能证据。",
   "docs.match.demand": "劳动力需求不会被编造。在有经核实的马来西亚需求来源之前，该值为空，并显示为未核实，而非为零。",
   "docs.match.feasibility": "没有经核实的课程时，可行性不可用，得分为零。不会根据课程时长估算。",
 
-  "docs.sdg.method": "课程名称及简介映射至有序 SDG 目标：先列主要主题，再列相关主题。职业学习对应 4.4；明确涉及气候、能源、废弃物、包容性及生产力的内容映射至对应目标。完整官方联合国图标保存在本地。",
+  "docs.sdg.method": "课程优先按主题关联：气候 13、清洁能源 7、健康 3、制造/科研 9、生产力 8、包容性 10。教育 4.4 仅作后备。职业采用明确的名称/行业规则：医疗 3、教育 4、工程/物流/科研 9、绿色职业 7/12/13、其他工作 8。这是应用关联，并非联合国职业分类或实测影响。首个目标采用粗边框，同一目标图标不重复。",
   "docs.sdg.limits": "并非经测量或认证的影响，也不是 SDG 统计数据。",
 
   "docs.demo.org": "雇主与教育工作者演示账户已标注为示例。其机构与成员并非外部事实。",

@@ -344,7 +344,7 @@ async function computeMatches(p: ProfileRow) {
   const [roles, skills, courses] = await Promise.all([loadRoles(), loadSkills(), loadCourses()]);
   const candidate = { ...p, skills: profileSkills(p, skills) };
   return roles
-    .map((role) => ({ role: roleToApi(role), ...scoreRole(candidate, role, skills, courses) }))
+    .map((role) => ({ role: roleToApi(role, courses), ...scoreRole(candidate, role, skills, courses) }))
     .sort((a, b) => b.score - a.score || a.gapSkills.length - b.gapSkills.length);
 }
 

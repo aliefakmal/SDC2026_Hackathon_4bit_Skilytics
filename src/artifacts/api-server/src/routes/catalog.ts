@@ -8,7 +8,7 @@ const router: IRouter = Router();
 router.get("/roles", async (req, res) => {
   const q = ListRolesQueryParams.parse(req.query);
   const roles = await loadRoles();
-  res.json(roles.filter((r) => !q.sector || r.sector === q.sector).map(roleToApi));
+  res.json(roles.filter((r) => !q.sector || r.sector === q.sector).map(r => roleToApi(r)));
 });
 
 router.get("/roles/:id", async (req, res) => {
