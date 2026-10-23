@@ -51,7 +51,7 @@ export const en = {
   "auth.pwHint": "At least 8 characters.",
   "auth.pwShort": "Password must be at least 8 characters.",
   "auth.register": "Sign up",
-  "auth.registerSub": "Save your profiles and plans across devices. Individuals only.",
+  "auth.registerSub": "Create an individual account with email and password. No email verification is required for this prototype.",
   "auth.registerTitle": "Create your account",
   "auth.useDemo": "Use",
   "auth.welcome": "Welcome, {name}",

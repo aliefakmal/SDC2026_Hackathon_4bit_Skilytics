@@ -52,7 +52,7 @@ export const ms: Record<DictKey, string> = {
   "auth.pwHint": "Sekurang-kurangnya 8 aksara.",
   "auth.pwShort": "Kata laluan mesti sekurang-kurangnya 8 aksara.",
   "auth.register": "Daftar",
-  "auth.registerSub": "Simpan profil dan pelan anda merentas peranti. Untuk individu sahaja.",
+  "auth.registerSub": "Daftar akaun individu dengan email dan kata laluan. Prototaip ini tidak memerlukan pengesahan email.",
   "auth.registerTitle": "Cipta akaun anda",
   "auth.useDemo": "Guna",
   "auth.welcome": "Selamat datang, {name}",

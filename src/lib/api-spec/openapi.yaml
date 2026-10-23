@@ -1307,7 +1307,7 @@ components:
 
     RegisterInput:
       type: object
-      required: [name, email, password]
+      required: [email, password]
       properties:
         name: { type: string, minLength: 1 }
         email: { type: string, format: email }

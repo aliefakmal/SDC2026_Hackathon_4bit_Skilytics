@@ -52,7 +52,7 @@ export const zh: Record<DictKey, string> = {
   "auth.pwHint": "至少 8 个字符。",
   "auth.pwShort": "密码至少需要 8 个字符。",
   "auth.register": "注册",
-  "auth.registerSub": "跨设备保存你的资料和计划。仅限个人用户。",
+  "auth.registerSub": "使用电子邮箱和密码创建个人账户。此原型无需验证邮箱。",
   "auth.registerTitle": "创建账户",
   "auth.useDemo": "使用",
   "auth.welcome": "欢迎，{name}",

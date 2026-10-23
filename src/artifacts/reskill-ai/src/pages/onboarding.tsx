@@ -1734,7 +1734,7 @@ function SaveStep({ p, scope, onProfileReady }: { p: Profile; scope: string; onP
       setObProfile(scope, null);
     } catch { /* shown */ }
   };
-  const next = encodeURIComponent("/onboarding/save");
+  const next = encodeURIComponent(`/onboarding/save?pid=${p.id}`);
   return (
     <>
       <StepHead title={t("ob.save.title")} sub={user ? t("ob.save.subUser", { name: user.name }) : t("ob.save.subGuest")} />
@@ -1746,7 +1746,7 @@ function SaveStep({ p, scope, onProfileReady }: { p: Profile; scope: string; onP
         <div className="grid gap-3 sm:grid-cols-2">
           <Link href={`/register?next=${next}&seg=${seg}`} className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-primary px-5 font-semibold text-primary-foreground hover:bg-primary/90" data-testid="link-save-register">{t("ob.save.register")}<ArrowRight className="h-4 w-4" /></Link>
           <Link href={`/login?role=individual&next=${next}`} className="flex min-h-14 items-center justify-center rounded-2xl border border-border bg-background px-5 font-semibold hover:border-primary" data-testid="link-save-login">{t("ob.save.login")}</Link>
-          <Link href={`/me/profiles/${p.id}/intake`} className="flex min-h-11 items-center justify-center text-sm text-muted-foreground hover:text-primary sm:col-span-2" data-testid="link-save-guest">{t("ob.save.guestKeep")}</Link>
+          <Button type="button" variant="ghost" disabled={upd.isPending} onClick={finish} className="min-h-11 text-sm text-muted-foreground hover:text-primary sm:col-span-2" data-testid="link-save-guest">{upd.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{t("ob.save.guestKeep")}</Button>
           <p className="text-center text-xs text-muted-foreground sm:col-span-2">{t("ob.save.guestNote")}</p>
         </div>
       )}

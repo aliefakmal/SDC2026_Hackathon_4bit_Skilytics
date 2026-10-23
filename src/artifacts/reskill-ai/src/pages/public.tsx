@@ -191,14 +191,14 @@ export function Login() {
 
   return (
     <AuthFrame title={t("auth.loginTitle")} sub={t("auth.loginSub")}>
-      <div className="grid grid-cols-3 gap-1 rounded-xl bg-muted p-1" role="tablist">
+      {!next?.startsWith("/onboarding/") && <div className="grid grid-cols-3 gap-1 rounded-xl bg-muted p-1" role="tablist">
         {ROLES.map(({ r, icon: Icon, label }) => (
           <button key={r} type="button" role="tab" aria-selected={role === r} onClick={() => setRole(r)} data-testid={`button-role-${r}`}
             className={cn("flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1.5 text-xs font-semibold transition-colors", role === r ? "bg-card text-primary shadow-xs" : "text-muted-foreground")}>
             <Icon className="h-4 w-4" /><span className="w-full truncate whitespace-nowrap text-center">{t(label)}</span>
           </button>
         ))}
-      </div>
+      </div>}
       <form onSubmit={submit} className="mt-5 space-y-4">
         <div className="space-y-1.5"><Label htmlFor="email">{t("auth.email")}</Label>
           <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="min-h-11" placeholder={t("auth.emailPh")} data-testid="input-email" /></div>
@@ -253,7 +253,6 @@ export function Register() {
   const [, nav] = useLocation();
   const { signIn } = useAuth();
   const { toast } = useToast();
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -262,7 +261,7 @@ export function Register() {
     e.preventDefault();
     setErr(null);
     if (password.length < 8) { setErr(t("auth.pwShort")); return; }
-    reg.mutate({ data: { name: name.trim(), email: email.trim(), password } }, {
+    reg.mutate({ data: { email: email.trim(), password } }, {
       onSuccess: async (s) => {
         moveGuestObToUser(s.user.id);
         await signIn(s);
@@ -279,13 +278,11 @@ export function Register() {
         <div className="rounded-xl border border-dashed border-accent/60 p-3">
           <Button type="button" variant="outline" className="min-h-11 w-full" data-testid="button-fill-dummy" onClick={() => {
             const sfx = dummySuffix();
-            setName(t(kind === "student" ? "auth.dummyStudent" : "auth.dummyWorker"));
             setEmail(`${kind}-${sfx}@example.invalid`);
             setPassword(`demo-${sfx}`);
           }}>{t("auth.fillDummy")}</Button>
           <p className="mt-1.5 text-[11px] text-muted-foreground">{t("auth.dummyNote")}</p>
         </div>
-        <div className="space-y-1.5"><Label htmlFor="name">{t("auth.name")}</Label><Input id="name" required value={name} onChange={(e) => setName(e.target.value)} className="min-h-11" autoComplete="name" data-testid="input-name" /></div>
         <div className="space-y-1.5"><Label htmlFor="email">{t("auth.email")}</Label><Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="min-h-11" autoComplete="email" placeholder={t("auth.emailPh")} data-testid="input-email" /></div>
         <div className="space-y-1.5"><Label htmlFor="pw">{t("auth.password")}</Label><Input id="pw" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className="min-h-11" autoComplete="new-password" data-testid="input-password" />
           <p className="text-[11px] text-muted-foreground">{t("auth.pwHint")}</p></div>

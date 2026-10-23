@@ -48,8 +48,10 @@ router.post("/auth/register", async (req, res) => {
   }
   const [u] = await db
     .insert(usersTable)
-    .values({ email, name: body.name.trim(), role: "individual", organization: null, passwordHash: await hashPassword(body.password) })
+    .values({ email, name: body.name?.trim() || email.split("@")[0], role: "individual", organization: null, passwordHash: await hashPassword(body.password) })
+    .onConflictDoNothing({ target: usersTable.email })
     .returning();
+  if (!u) { res.status(409).json({ error: "email_taken" }); return; }
   const claimed = await claimGuestData(u.id, req.guestToken);
   req.log.info({ userId: u.id, claimed }, "Individual registered");
   res.status(201).json({ token: issueToken(u.id), user: userToApi(u), claimedProfiles: claimed });

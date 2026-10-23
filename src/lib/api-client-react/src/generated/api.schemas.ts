@@ -742,7 +742,7 @@ export interface LoginInput {
 
 export interface RegisterInput {
   /** @minLength 1 */
-  name: string;
+  name?: string;
   email: string;
   /** @minLength 8 */
   password: string;
