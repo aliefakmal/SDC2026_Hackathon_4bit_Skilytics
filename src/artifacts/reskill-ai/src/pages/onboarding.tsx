@@ -3,7 +3,7 @@ import { Link, Redirect, useLocation, useParams, useSearch } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, BarChart2, Check, CheckCircle2, Compass, Copy, FileCheck, FileImage, FileText, FileUp, GraduationCap, HelpCircle, Lightbulb, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
+  AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, BarChart2, Check, CheckCircle2, Compass, Copy, ExternalLink, Eye, FileCheck, FileImage, FileText, FileUp, GraduationCap, HelpCircle, Lightbulb, Loader2, PlusCircle, Quote, RotateCw, Sparkles, X,
 } from "lucide-react";
 import {
   customFetch, createProfile, runProfileAgent, useGetProfile, useListProfileInsights, useListRiasecQuestions, useListRoles, useListCourses, useSubmitRiasec, useUpdateProfile, useUploadCv,
@@ -483,6 +483,45 @@ function CvStep({
   const lastFile = useRef<File | null>(null);
   const [showAtsNotice, setShowAtsNotice] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [previewDemo, setPreviewDemo] = useState<{
+    id: number;
+    title: string;
+    file: string;
+    type: string;
+    mime: "pdf" | "jpeg";
+    person: string;
+    icon: typeof FileText;
+  } | null>(null);
+
+  const demoItems = useMemo(() => [
+    {
+      id: 1,
+      title: "Demo 1",
+      file: "/demo/demo-cv-1.pdf",
+      type: lang === "ms" ? "PDF imbasan" : lang === "zh" ? "扫描 PDF" : "Scanned PDF",
+      mime: "pdf" as const,
+      person: "Ungku Babas bin Ungku Samad",
+      icon: FileText,
+    },
+    {
+      id: 2,
+      title: "Demo 2",
+      file: "/demo/demo-cv-2.jpeg",
+      type: lang === "ms" ? "Gambar CV (JPEG)" : lang === "zh" ? "简历照片 (JPEG)" : "CV photo (JPEG)",
+      mime: "jpeg" as const,
+      person: "FOO WEI CHONG",
+      icon: FileImage,
+    },
+    {
+      id: 3,
+      title: "Demo 3",
+      file: "/demo/demo-cv-3.pdf",
+      type: lang === "ms" ? "PDF teks" : lang === "zh" ? "文字 PDF" : "Text PDF",
+      mime: "pdf" as const,
+      person: "Karthik A/L Subramaniam",
+      icon: FileText,
+    },
+  ], [lang]);
 
   const handleAtsConfirm = () => {
     setConsent(true);
@@ -727,58 +766,132 @@ function CvStep({
             : lang === "zh" ? "直接填写示例资料，不调用 AI。上传自己的简历仍由 AI 读取。" : "Fill sample details instantly, without AI. Your own CV upload still uses AI."}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={up.isPending || demoBusy}
-            onClick={() => loadDemoCv(1)}
-            className="h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left bg-background/90 hover:bg-background border-border/80 hover:border-primary transition-all shadow-xs"
-            data-testid="button-demo-cv-1"
-          >
-            <span className="font-semibold text-primary flex items-center gap-1.5 text-xs">
-              <FileText className="h-3.5 w-3.5" /> Demo 1
-            </span>
-            <span className="whitespace-normal text-[10px] text-muted-foreground font-medium">
-              {lang === "ms" ? "PDF imbasan" : lang === "zh" ? "扫描 PDF" : "Scanned PDF"}
-            </span>
-          </Button>
+          {demoItems.map((demo) => {
+            const Icon = demo.icon;
+            return (
+              <div
+                key={demo.id}
+                className="group relative flex items-stretch rounded-xl border border-border/80 bg-background/90 hover:border-primary/80 hover:bg-background transition-all shadow-xs overflow-hidden"
+              >
+                {/* Main card button: Click to load demo and advance to next step */}
+                <button
+                  type="button"
+                  disabled={up.isPending || demoBusy}
+                  onClick={() => loadDemoCv(demo.id)}
+                  className="flex-1 py-2.5 pl-3 pr-1.5 flex flex-col items-start gap-1 text-left cursor-pointer transition-colors hover:bg-primary/[0.04] disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none"
+                  data-testid={`button-demo-cv-${demo.id}`}
+                  title={lang === "ms" ? `Gunakan ${demo.title} & teruskan` : `Use ${demo.title} & proceed`}
+                >
+                  <span className="font-semibold text-primary flex items-center gap-1.5 text-xs">
+                    <Icon className="h-3.5 w-3.5 shrink-0" /> {demo.title}
+                  </span>
+                  <span className="whitespace-normal text-[10px] text-muted-foreground font-medium line-clamp-1">
+                    {demo.type}
+                  </span>
+                </button>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={up.isPending || demoBusy}
-            onClick={() => loadDemoCv(2)}
-            className="h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left bg-background/90 hover:bg-background border-border/80 hover:border-primary transition-all shadow-xs"
-            data-testid="button-demo-cv-2"
-          >
-            <span className="font-semibold text-primary flex items-center gap-1.5 text-xs">
-              <FileImage className="h-3.5 w-3.5" /> Demo 2
-            </span>
-            <span className="whitespace-normal text-[10px] text-muted-foreground font-medium">
-              {lang === "ms" ? "Gambar CV (JPEG)" : lang === "zh" ? "简历照片 (JPEG)" : "CV photo (JPEG)"}
-            </span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={up.isPending || demoBusy}
-            onClick={() => loadDemoCv(3)}
-            className="h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left bg-background/90 hover:bg-background border-border/80 hover:border-primary transition-all shadow-xs"
-            data-testid="button-demo-cv-3"
-          >
-            <span className="font-semibold text-primary flex items-center gap-1.5 text-xs">
-              <FileText className="h-3.5 w-3.5" /> Demo 3
-            </span>
-            <span className="whitespace-normal text-[10px] text-muted-foreground font-medium">
-              {lang === "ms" ? "PDF teks" : lang === "zh" ? "文字 PDF" : "Text PDF"}
-            </span>
-          </Button>
+                {/* Eye icon: click to preview original document in special modal */}
+                <button
+                  type="button"
+                  disabled={up.isPending || demoBusy}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPreviewDemo(demo);
+                  }}
+                  className="px-2.5 flex items-center justify-center text-muted-foreground/70 hover:text-primary hover:bg-primary/10 border-l border-border/50 transition-colors disabled:opacity-50"
+                  title={lang === "ms" ? `Pratonton dokumen asal ${demo.title}` : `Preview original ${demo.title} document`}
+                  aria-label={`Preview ${demo.title}`}
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
+
+      {/* Modal Khas: Pratonton Dokumen Asal Demo CV */}
+      <Dialog open={!!previewDemo} onOpenChange={(open) => { if (!open) setPreviewDemo(null); }}>
+        <DialogContent className="sm:max-w-3xl max-h-[92vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-3 border-b border-border/60 bg-muted/20">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                {previewDemo?.mime === "pdf" ? <FileText className="h-5 w-5" /> : <FileImage className="h-5 w-5" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="text-sm font-bold flex flex-wrap items-center gap-2">
+                  <span>{previewDemo?.title}: {previewDemo?.type}</span>
+                  <span className="text-xs font-normal text-muted-foreground">({previewDemo?.person})</span>
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground truncate">
+                  {lang === "ms"
+                    ? "Pratonton dokumen contoh asal. Anda boleh klik 'Pilih & Teruskan' untuk melangkah ke langkah seterusnya."
+                    : "Preview of original document fixture. Click 'Select & Proceed' to advance to the next step."}
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto bg-neutral-900/90 dark:bg-black/90 p-2 sm:p-4 flex items-center justify-center min-h-[380px] max-h-[62vh]">
+            {previewDemo?.mime === "pdf" ? (
+              <iframe
+                src={`${previewDemo.file}#toolbar=0&navpanes=0`}
+                title={previewDemo.title}
+                className="w-full h-[520px] rounded-md bg-white border-0 shadow-lg"
+              />
+            ) : previewDemo?.mime === "jpeg" ? (
+              <div className="w-full max-h-[520px] overflow-auto flex items-center justify-center">
+                <img
+                  src={previewDemo.file}
+                  alt={previewDemo.title}
+                  className="max-h-[500px] w-auto object-contain rounded-md shadow-2xl border border-white/10"
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <DialogFooter className="p-3 sm:p-4 border-t border-border/60 bg-background flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <a
+                href={previewDemo?.file}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 hover:text-primary underline underline-offset-2 transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                {lang === "ms" ? "Buka fail penuh di tab baru" : "Open full file in new tab"}
+              </a>
+            </div>
+
+            <div className="flex items-center gap-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPreviewDemo(null)}
+              >
+                {lang === "ms" ? "Tutup" : "Close"}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={demoBusy || up.isPending}
+                onClick={() => {
+                  if (previewDemo) {
+                    const id = previewDemo.id;
+                    setPreviewDemo(null);
+                    loadDemoCv(id);
+                  }
+                }}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+              >
+                <FileCheck className="h-4 w-4 mr-1.5" />
+                {lang === "ms" ? "Pilih & Teruskan" : "Select & Proceed"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showAtsNotice} onOpenChange={(open) => { if (!open) handleAtsCancel(); else setShowAtsNotice(true); }}>
         <DialogContent className="sm:max-w-md">
