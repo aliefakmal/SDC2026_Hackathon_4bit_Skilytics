@@ -376,7 +376,7 @@ router.post("/profiles/:id/plan", async (req, res) => {
     return;
   }
   const { gapSkills } = scoreRole({ ...p, skills: profileSkills(p, skills) }, role, skills, courses);
-  const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: req.user?.role === "hr" && p.hrdcEligible });
+  const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: req.user?.role === "hr" && p.hrdcEligible, roleTitle: role.title });
   const [row] = await db
     .insert(plansTable)
     .values({ profileId: id, roleId, roleTitle: role.title, ...plan })

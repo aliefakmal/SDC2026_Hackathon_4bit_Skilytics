@@ -11,6 +11,7 @@ export function buildPlan(opts: {
   weeklyHours: number;
   hrdcEligible: boolean;
   maxCourses?: number;
+  roleTitle?: string;
 }) {
   const { courses, weeklyHours, hrdcEligible } = opts;
   const maxCourses = opts.maxCourses ?? 6;
@@ -22,7 +23,8 @@ export function buildPlan(opts: {
 
   while (remaining.size > 0 && chosen.length < maxCourses) {
     let best: { c: CourseView; value: number } | null = null;
-    const eligible = courses.filter((c) => !chosen.includes(c) && personalCost(c) <= budget && c.skills.some((s) => remaining.has(s.id)));
+    const officeRole = /administrative assistant|secretar|office clerk/i.test(opts.roleTitle ?? "");
+    const eligible = courses.filter((c) => !chosen.includes(c) && personalCost(c) <= budget && c.skills.some((s) => remaining.has(s.id)) && (!officeRole || /office|microsoft 365|excel|spreadsheet|\bword\b|outlook|business communication|time management|customer|bookkeep|administrative|document management/i.test(c.title)));
     const scheduled = eligible.filter((c) => c.durationHours !== null);
     for (const c of scheduled.length ? scheduled : eligible) {
       if (chosen.includes(c)) continue;

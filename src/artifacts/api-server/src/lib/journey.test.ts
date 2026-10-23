@@ -56,4 +56,5 @@ test("timeline respects long course hours and the training budget", () => {
     buildPlan({ ...opts, weeklyHours: 10 }).items[0].durationWeeks,
     60,
   );
+  assert.equal(buildPlan({ ...opts, roleTitle: "Administrative Assistant", courses: [{ ...course, title: "Monitor AI workloads on Azure" }] }).items.length, 0);
 });
