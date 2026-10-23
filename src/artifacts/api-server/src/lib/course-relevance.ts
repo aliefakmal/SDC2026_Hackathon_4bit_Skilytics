@@ -25,10 +25,12 @@ export function teachesSkill(
     return /\bexcel\b|spreadsheet|pivot table|vlookup|power query/i.test(title);
   if (skill.name === "Office Administration")
     return (
-      /office|microsoft 365|\bword\b|outlook|clerical|administrative|document management/i.test(
+      /office administration|office management|\bword\b|outlook|clerical|administrative|filing|scheduling|business communication|document management/i.test(
         title,
       ) &&
-      !/fabric|azure|kubernetes|sql server|cloud infrastructure/i.test(title)
+      !/fabric|azure|kubernetes|sql server|cloud infrastructure|tenant|agent administration/i.test(
+        title,
+      )
     );
   if (skill.category === "Human")
     return (

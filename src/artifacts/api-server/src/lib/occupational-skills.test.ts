@@ -158,3 +158,20 @@ test("industrial automation is distinct from automating a software workflow", ()
     false,
   );
 });
+
+test("office administration means clerical work rather than administering an AI service", () => {
+  assert.equal(
+    teachesSkill("Explore Microsoft 365 Copilot agent administration", {
+      name: "Office Administration",
+      category: "Business",
+    }),
+    false,
+  );
+  assert.equal(
+    teachesSkill("Office administration and document management", {
+      name: "Office Administration",
+      category: "Business",
+    }),
+    true,
+  );
+});
