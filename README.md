@@ -47,28 +47,16 @@ AI is transforming industries faster than traditional training programmes and ed
 * **📡 Live AI-Trend Signal Layer & Market Pulse:** Integrates real-time, citable public data sources—displaying unemployment & participation rates, labour force trends, AI usage by role, and most AI-exposed roles.
 * **🎯 Explainable Future-Role Matching & Skill Mapping:** Ranks best-fit future roles with transparent match scores, visual radar skill maps, and handling of future uncertainty (modelling moderate vs. fast AI disruption scenarios).
 * **🗺️ Personalised Reskilling Pathways:** Generates ordered, time-bound learning plans tailored to the user's weekly study hours and budget constraints, utilizing accessible online courses and HRD Corp-claimable programmes.
-* **🌍 Meaningful UN SDG Mapping:** Tags every recommended role and skill to relevant UN Sustainable Development Goals (**SDG 4** Quality Education, **SDG 5** Gender Equality, **SDG 8** Decent Work & Economic Growth, **SDG 9** Industry, Innovation & Infrastructure, and **SDG 10** Reduced Inequalities).
+* **🌍 Meaningful UN SDG Mapping:** Tags every recommended role and skill to relevant UN Sustainable Development Goals (**SDG 4** Quality Education,**SDG 8** Decent Work & Economic Growth, **SDG 9** Industry and Innovation & Infrastructure.
 * **🏆 Gamified Workspace & Certification:** Tracks learning milestones, awards skill badges/achievements, and generates a verifiable **Certificate of Accomplishment** upon course completion.
 
 ---
+
 ## ⚙️ Environment Requirements (`.env`)
 
-Before running the application locally or deploying the backend services, ensure you configure your environment variables. Create a `.env` file in the root directory of the project and populate it with the following required configuration:
+Before running the application locally or deploying the backend services, ensure you configure your environment variables. Create a `.env` file in the root directory of the project and populate it with the following required API keys and endpoints:
 
 ```env
-# use postgres database
-DATABASE_URL="your_postgres_database_url_here"
-DATABASE_URL_UNPOOLED="your_unpooled_postgres_database_url_here"
-
-# Server Configuration
-PORT=5000
-NODE_ENV=development
-LOG_LEVEL=info
-
-# Authentication & Session Security (Required)
-# set your own session
-SESSION_SECRET="your_session_secret_here"
-
 # ==========================================
 # AI & LLM Inference Configuration (RunPod)
 # ==========================================
@@ -82,20 +70,16 @@ RUNPOD_LIGHT_ENDPOINT_ID="your_runpod_light_endpoint_id_here"
 GEMINI_API_KEY="your_gemini_api_key_here"
 ```
 
-| Variable Name | Description | 
-| ----- | ----- | 
-| `DATABASE_URL` | Pooled PostgreSQL connection string (Neon Serverless PostgreSQL) for database queries via Drizzle ORM. | 
-| `DATABASE_URL_UNPOOLED` | Direct (unpooled) PostgreSQL connection string used for schema migrations and direct database operations. | 
-| `PORT` | Port number on which the backend Express server runs (default: `5000`). | 
-| `NODE_ENV` | Application runtime environment (`development` or `production`). | 
-| `LOG_LEVEL` | Logging verbosity level for Pino logger (e.g., `info`, `debug`, `error`). | 
-| `SESSION_SECRET` | Secret key used to sign and encrypt user authentication session cookies (set your own secure string). | 
-| `RUNPOD_API_KEY` | Authentication key for accessing RunPod serverless GPU inference endpoints. | 
-| `RUNPOD_LLM_ENDPOINT_ID` | Primary RunPod endpoint ID for deep career reasoning, pathway synthesis, and ELI5 explanations. | 
-| `RUNPOD_LIGHT_ENDPOINT_ID` | Lightweight RunPod endpoint ID for fast inference tasks, quick validations, and low-latency queries. | 
-| `GEMINI_API_KEY` | Google Gemini API key (`@google/genai`) used for resume parsing, structured skill extraction, and multimodal reasoning. | 
+| Variable Name | Description |
+| :--- | :--- |
+| `RUNPOD_API_KEY` | Authentication key for accessing RunPod serverless GPU inference endpoints. |
+| `RUNPOD_LLM_ENDPOINT_ID` | Primary RunPod endpoint ID for deep career reasoning, pathway synthesis, and ELI5 explanations. |
+| `RUNPOD_LIGHT_ENDPOINT_ID` | Lightweight RunPod endpoint ID for fast inference tasks, quick validations, and low-latency queries. |
+| `GEMINI_API_KEY` | Google Gemini API key (`@google/genai`) used for resume parsing, structured skill extraction, and multimodal reasoning. |
 
+*(Optional: Ensure your PostgreSQL `DATABASE_URL` is configured if running local Drizzle ORM migrations against Neon Serverless PostgreSQL).*
 
+---
 
 ## 🧭 How to Use Skilytics (Step-by-Step Guide)
 
