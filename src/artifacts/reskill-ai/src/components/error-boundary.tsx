@@ -51,7 +51,11 @@ function DefaultFallback({ error, resetError }: ErrorFallbackProps) {
         ) : null}
         <button
           type="button"
-          onClick={resetError}
+          onClick={() => {
+            if (/Failed to fetch dynamically imported module|Importing a module script failed|Loading chunk.*failed|Failed to load module script/i.test(error.message)) {
+              window.location.reload();
+            } else resetError();
+          }}
           className="mt-4 min-h-11 rounded bg-primary px-4 py-2 text-sm text-primary-foreground hover:opacity-90"
         >
           {t('common.retry')}
