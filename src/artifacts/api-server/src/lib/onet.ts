@@ -5,7 +5,7 @@ import { softwareSkills, taskSkills } from "./occupational-skills";
 import { ROLES } from "../data/roles";
 
 export const ONET_VERSION = "31.0";
-const IMPORT_VERSION = `${ONET_VERSION}-software-tasks-v4`;
+const IMPORT_VERSION = `${ONET_VERSION}-software-tasks-v5`;
 export const ONET_URL = "https://www.onetcenter.org/dl_files/database/db_31_0_csv.zip";
 
 // Read only named central-directory entries; no files extracted to disk.

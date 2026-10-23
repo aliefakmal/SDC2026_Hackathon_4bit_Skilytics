@@ -1,7 +1,7 @@
 {
-  "version": "self-directed-v1",
+  "version": "self-directed-v2",
   "reviewedAt": "2026-10-23",
-  "method": "Application scope review, not an official O*NET classification or a promise of employment. Include desk-based roles with practical self-paced online learning pathways and at least one role-specific skill covered by the current public catalogue. Exclude clinical, licensed/professional-signoff, research-scientist crosswalks and physical trades requiring supervised practice. Advanced digital roles may need prior knowledge; online courses do not replace employer entry requirements.",
+  "method": "Application scope, not an official occupation classification. No fixed role-count allowlist. Require current O*NET references and a role-specific skill with an actual public catalogue course. Exclude clinical, professional signoff, research-scientist crosswalks and supervised physical trades. Desk-based HR, training, project, supply-chain and language directions are eligible when relevant course coverage exists; prior qualifications, experience and employer requirements still apply. Narrow app career directions share the referenced broad SOC occupation; statistics are not separate estimates for each specialisation.",
   "sources": [
     "https://www.onetcenter.org/database.html",
     "https://learn.microsoft.com/en-us/training/career-paths/",
@@ -13,32 +13,10 @@
     "https://academy.hubspot.com/courses/digital-marketing",
     "https://academy.hubspot.com/courses/content-marketing"
   ],
-  "included": [
-    "Data Analyst",
-    "Data Scientist",
-    "Software Developer",
-    "Web Developer",
-    "Cybersecurity Analyst",
-    "Network and Cloud Administrator",
-    "IT Support Specialist",
-    "Digital Marketing Specialist",
-    "Graphic Designer",
-    "UX / UI Designer",
-    "Content Writer",
-    "Bookkeeping and Accounts Clerk",
-    "Customer Service Representative",
-    "Administrative Assistant",
-    "Sales Representative"
-  ],
   "excluded": {
     "AI / Machine Learning Engineer": "The current SOC 15-1221 crosswalk describes computer research scientists, not an online-only AI application pathway.",
-    "Translator and Interpreter": "Professional interpreting and specialised translation competence are not established by this catalogue.",
     "Accountant": "Professional accounting/audit/tax signoff requires credentials beyond this catalogue.",
     "Financial Analyst": "Formal/regulated financial practice is outside this online learning prototype.",
-    "Human Resources Specialist": "Employment-law/compliance responsibilities need professional context not established by this catalogue.",
-    "Training and Development Specialist": "The available catalogue does not establish full trainer readiness.",
-    "Project Management Specialist": "Professional delivery experience is not replaced by online coursework.",
-    "Logistics and Supply Chain Executive": "Operational workplace competence is not established by online coursework alone.",
     "Electrical Engineer": "Formal engineering education and supervised professional practice.",
     "Mechanical Engineer": "Formal engineering education and supervised professional practice.",
     "Electrical and Electronics Technician": "Practical equipment training and supervised work.",
@@ -46,9 +24,9 @@
     "Production Operator": "Practical equipment operation and workplace safety training.",
     "Quality Control Inspector": "On-site inspection competence and equipment practice.",
     "Solar PV Installer": "Site installation, electrical safety and supervised practical training; not assumed to require a degree in every jurisdiction.",
-    "Sustainability and ESG Executive": "Specialised reporting context beyond current catalogue coverage.",
     "Registered Nurse": "Clinical education, supervised placements and professional registration.",
-    "Medical Records and Health Information Specialist": "Specialised healthcare administration and coding requirements beyond this catalogue."
+    "Medical Records and Health Information Specialist": "Specialised healthcare administration and coding requirements beyond this catalogue.",
+    "Mechatronics / Automation Engineer": "Engineering equipment design and supervised physical practice are outside this online pathway scope."
   },
   "coreSkills": {
     "Data Analyst": [
@@ -114,6 +92,30 @@
     "Sales Representative": [
       "Sales and Negotiation",
       "CRM Systems"
+    ],
+    "Translator and Interpreter": [
+      "Translation"
+    ],
+    "Human Resources Specialist": [
+      "Human Resource Management",
+      "Personnel and Human Resources"
+    ],
+    "Training and Development Specialist": [
+      "Instructional Design",
+      "Training Delivery",
+      "Education and Training"
+    ],
+    "Project Management Specialist": [
+      "Project Management"
+    ],
+    "Logistics and Supply Chain Executive": [
+      "Supply Chain Management",
+      "Logistics and Warehousing",
+      "ERP Systems"
+    ],
+    "Sustainability and ESG Executive": [
+      "Sustainability and ESG Reporting",
+      "Environmental Compliance"
     ]
   }
 }

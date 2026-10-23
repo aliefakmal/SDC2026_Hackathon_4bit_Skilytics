@@ -14,10 +14,9 @@ type Row = { label: DictKey; k?: DictKey[]; ref?: string; url?: string };
 type Doc = { id: string; types: DocType[]; name: DictKey; sourceIds?: string[]; ai?: boolean; rows: Row[] };
 
 const DOCS: Doc[] = [
-  {id:"hubspot",types:["external","static","derived"],name:"src.hubspot_catalogue.name",sourceIds:["hubspot_catalogue"],rows:[
+  {id:"hubspot",types:["external","derived"],name:"src.hubspot_catalogue.name",sourceIds:["hubspot_catalogue"],rows:[
     {label:"docs.f.publisher",ref:"HubSpot Academy"},
-    {label:"docs.f.dataset",url:"https://academy.hubspot.com/courses/digital-marketing"},
-    {label:"docs.f.dataset",url:"https://academy.hubspot.com/courses/content-marketing"},
+    {label:"docs.f.dataset",url:"https://academy.hubspot.com/courses"},
     {label:"docs.f.method",k:["docs.hubspot.method"]},
   ]},
   {id:"career_news",types:["external","derived"],name:"docs.news.name",sourceIds:["gdelt_career_news","career_news_rss"],rows:[

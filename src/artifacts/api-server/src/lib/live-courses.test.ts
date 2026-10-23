@@ -72,6 +72,7 @@ test("provider refreshes independently and retains stale snapshots on failure", 
   globalThis.fetch = async (input) => {
     calls++;
     const url = String(input);
+    if (url.includes("PublicSearchService/search")) return Response.json({type:"data",data:{total:1,hasMore:false,results:[{id:1,contentType:"TRACK",name:"Generative AI Tools",pagePath:"ai-tools",duration:3600,language:"EN",visibleOnLoggedOutPage:true}]}});
     if (url.includes("/api/catalog/")) return new Response(JSON.stringify({ learningPaths: [path] }), { status: 200 });
     if (url.includes("api.github.com/orgs/skills")) return new Response(JSON.stringify([{ name: "learn-python", html_url: "https://github.com/skills/learn-python", topics: ["skills-course"], is_template: true, description: "Python exercises" }]), { status: 200 });
     if (url.includes("huggingface.co/learn")) return new Response('<a href="/learn/llm-course">LLM Course</a>', { status: 200 });
@@ -80,14 +81,14 @@ test("provider refreshes independently and retains stale snapshots on failure", 
   };
   try {
     const [a,b] = await Promise.all([liveCourses(skills), liveCourses(skills)]);
-    assert.equal(calls, 5); assert.equal(a.length, 4); assert.deepEqual(a,b);
+    assert.equal(calls, 6); assert.equal(a.length, 5); assert.deepEqual(a,b);
     clock += 6 * 3600000 + 1;
     globalThis.fetch = async () => { calls++; throw new Error("offline"); };
     const stale = await liveCourses(skills);
-    assert.equal(stale.length, 4);
+    assert.equal(stale.length, 5);
     assert.ok(stale.every((course) => course.catalogStale));
     await new Promise((resolve) => setTimeout(resolve, 0));
-    assert.equal(calls, 10);
+    assert.equal(calls, 12);
   } finally { globalThis.fetch = originalFetch; Date.now = originalNow; }
 });
 

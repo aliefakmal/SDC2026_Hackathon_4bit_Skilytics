@@ -1,5 +1,4 @@
 import blsSnapshot from "../data/bls-projections.json";
-import { HUBSPOT } from "../data/hubspot";
 import {
   db,
   marketSourcesTable,
@@ -30,7 +29,7 @@ const HF_DATASET = "Anthropic/EconomicIndex";
 
 // Consumer keys are translated in the frontend.
 export const SOURCES: SourceDef[] = [
-  {id:"hubspot_catalogue",name:"HubSpot Academy · reviewed public course metadata",kind:"catalogue",url:"https://academy.hubspot.com/courses",description:"Two public self-paced marketing course pages, reviewed 23 October 2026. Free Academy account required for enrolment; manual metadata selection, not a live API.",refreshCadence:"reviewed_snapshot",consumers:["pathway","role_matcher"]},
+  {id:"hubspot_catalogue",name:"HubSpot Academy · public course catalogue",kind:"catalogue",url:"https://academy.hubspot.com/courses",description:"Unauthenticated public website catalogue search, paginated full English courses only. Refreshed every six hours; free Academy account required for learning. Public metadata is not an open-content licence or a documented developer API.",refreshCadence:"links_6h",consumers:["pathway","role_matcher"]},
   { id: "gdelt_career_news", name: "GDELT · career news API", kind: "dataset", url: GDELT_DOCS, description: "Public keyless news metadata API, filtered to careers and workplace skills in Malaysia and globally. News is context, not a hiring forecast.", refreshCadence: "news_6h", consumers: ["market", "predictions"] },
   { id: "career_news_rss", name: "Google News · public career RSS", kind: "dataset", url: newsUrl("rss", "my"), description: "Public RSS metadata fallback for Malaysia and global career news. No private API key; original publisher rights still apply.", refreshCadence: "news_6h", consumers: ["market", "predictions"] },
   {id:"bls_projections",name:"BLS occupational projections · reviewed public snapshot",kind:"dataset",url:blsSnapshot.url,description:"US 2025–2035 employment growth and annual openings matched by SOC. Reviewed 23 October 2026; not a live feed or Malaysian demand forecast.",refreshCadence:"reviewed_snapshot",consumers:["market","predictions"]},
@@ -280,14 +279,14 @@ async function ingestUsage(force: boolean): Promise<void> {
 
 export async function checkCourseLinks(): Promise<void> {
   const courses = await loadCourses();
-  for (const [id, provider] of [["course_catalogue", "Microsoft Learn"], ["freecodecamp_catalogue", "freeCodeCamp"], ["githubskills_catalogue", "GitHub Skills"], ["huggingface_catalogue", "Hugging Face Learn"]] as const) {
+  for (const [id, provider] of [["course_catalogue", "Microsoft Learn"], ["freecodecamp_catalogue", "freeCodeCamp"], ["githubskills_catalogue", "GitHub Skills"], ["huggingface_catalogue", "Hugging Face Learn"], ["hubspot_catalogue", "HubSpot Academy"]] as const) {
     const available = courses.filter((c) => c.provider === provider);
     const latest = available[0];
     await setSource(id, {
       status: available.length > 0 ? "ok" : "error",
       lastFetchedAt: latest ? new Date(latest.lastVerified) : undefined,
       dataDate: latest?.lastVerified.slice(0, 10) ?? null,
-      version: provider === "Microsoft Learn" ? "microsoft-learn-public" : provider === "freeCodeCamp" ? "freecodecamp-curriculum-main" : provider === "GitHub Skills" ? "github-skills-public" : "huggingface-learn-public",
+      version: provider === "Microsoft Learn" ? "microsoft-learn-public" : provider === "freeCodeCamp" ? "freecodecamp-curriculum-main" : provider === "GitHub Skills" ? "github-skills-public" : provider === "HubSpot Academy" ? "hubspot-public-search-tracks-v1" : "huggingface-learn-public",
       recordCount: available.length,
       detail: latest ? "Public provider metadata. Direct course URLs; SDG associations are editorial." : null,
       error: latest?.catalogStale ? "provider_refresh_failed_using_last_snapshot" : available.length > 0 ? null : "course_catalogue_unavailable",
@@ -340,11 +339,11 @@ export async function listSources() {
   const rows = await db.select().from(marketSourcesTable);
   const byId = new Map(rows.map((r) => [r.id, r]));
   return SOURCES.map((s) => {
-    const r = s.id === "hubspot_catalogue" ? {version:"reviewed-2026-10-23",lastFetchedAt:new Date("2026-10-23T00:00:00Z"),status:"ok",detail:"Manual public metadata selection; free account required for learning and certification.",dataDate:"2026-10-23",recordCount:HUBSPOT.length,error:null} : s.id === "bls_projections" ? {version:blsSnapshot.period,lastFetchedAt:new Date(blsSnapshot.reviewedAt+"T00:00:00Z"),status:"ok",detail:blsSnapshot.method,dataDate:blsSnapshot.period,recordCount:blsSnapshot.rows.length,error:null} : byId.get(s.id);
+    const r = s.id === "bls_projections" ? {version:blsSnapshot.period,lastFetchedAt:new Date(blsSnapshot.reviewedAt+"T00:00:00Z"),status:"ok",detail:blsSnapshot.method,dataDate:blsSnapshot.period,recordCount:blsSnapshot.rows.length,error:null} : byId.get(s.id);
     return {
       ...s,
       version: r?.version ?? null,
-      stale: !["bls_projections","hubspot_catalogue"].includes(s.id) && !!r?.lastFetchedAt && Date.now() - r.lastFetchedAt.getTime() > 12 * 3600000,
+      stale: !["bls_projections"].includes(s.id) && !!r?.lastFetchedAt && Date.now() - r.lastFetchedAt.getTime() > 12 * 3600000,
       status: (r?.status ?? "pending") as "ok" | "error" | "pending" | "not_configured",
       detail: r?.detail ?? null,
       lastFetchedAt: r?.lastFetchedAt ? r.lastFetchedAt.toISOString() : null,
@@ -362,15 +361,15 @@ export function startMarketScheduler(): void {
     const courseCatRows = await db
       .select()
       .from(marketSourcesTable)
-      .where(inArray(marketSourcesTable.id, ["course_catalogue", "freecodecamp_catalogue", "githubskills_catalogue", "huggingface_catalogue"]));
-    if (courseCatRows.length < 4 || courseCatRows.some((r) => r.status !== "ok" || (r.recordCount ?? 0) === 0)) {
+      .where(inArray(marketSourcesTable.id, ["course_catalogue", "freecodecamp_catalogue", "githubskills_catalogue", "huggingface_catalogue", "hubspot_catalogue"]));
+    if (courseCatRows.length < 5 || courseCatRows.some((r) => r.status !== "ok" || (r.recordCount ?? 0) === 0)) {
       await checkCourseLinks().catch((err) => logger.error({ err }, "Initial course catalogue check failed"));
     }
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(marketSourcesTable)
       .where(eq(marketSourcesTable.status, "ok"));
-    if (count < SOURCES.filter(s=>!["bls_projections", "hubspot_catalogue", "gdelt_career_news", "career_news_rss"].includes(s.id)).length) await refreshAll();
+    if (count < SOURCES.filter(s=>!["bls_projections", "gdelt_career_news", "career_news_rss"].includes(s.id)).length) await refreshAll();
     else logger.info("Market data present; next check in 6 hours");
   })().catch((err) => logger.error({ err }, "Initial market refresh failed"));
   setInterval(() => {

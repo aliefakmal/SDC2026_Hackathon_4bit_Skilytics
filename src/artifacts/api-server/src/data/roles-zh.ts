@@ -1,5 +1,17 @@
 // Simplified Chinese role titles, keyed by the canonical English title.
 export const ROLE_TITLE_ZH: Record<string, string> = {
+  "SEO Specialist": "搜索引擎优化专员",
+  "Social Media Specialist": "社交媒体专员",
+  "Email Marketing Specialist": "电子邮件营销专员",
+  "Marketing Operations Specialist": "营销运营专员",
+  "Content Marketing Specialist": "内容营销专员",
+  "Technical Writer": "技术文档撰稿人",
+  "Front-end Developer": "前端开发人员",
+  "Back-end Developer": "后端开发人员",
+  "Software QA Tester": "软件质量测试员",
+  "Database Administrator": "数据库管理员",
+  "AI Application Developer": "AI 应用开发人员",
+  "Cloud Application Developer": "云应用开发人员",
   "Data Analyst": "数据分析师",
   "Data Scientist": "数据科学家",
   "AI / Machine Learning Engineer": "人工智能 / 机器学习工程师",

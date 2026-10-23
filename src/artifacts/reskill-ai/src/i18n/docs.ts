@@ -1,10 +1,10 @@
 // Data Sources documentation strings. URLs, dataset field names, file names and official
 // English titles are reference identifiers and are intentionally kept verbatim.
 export const docsEn = {
-  "src.hubspot_catalogue.name": "HubSpot Academy · reviewed public courses",
-  "src.hubspot_catalogue.desc": "Two self-paced marketing courses from public publisher metadata; reviewed 23 October 2026. Free account needed for enrolment.",
-  "docs.hubspot.method": "Manual metadata selection: Digital Marketing (3 hours 24 minutes) and Content Marketing (8 hours 23 minutes), reviewed 23 October 2026. Public titles, URLs, duration and free certification status come from HubSpot Academy. A free Academy account is required to learn and certify. Skill and SDG 8 associations are app-authored from learning outcomes. Not a live catalogue or an open licence to republish course content.",
-  "docs.onet.scope": "Individual Roles, Matcher, new Pathways and Market use the versioned self-directed-v1 scope review (23 October 2026): 15 desk-based career directions with at least one core skill supported by a current public online course. Clinical, licensed/professional-signoff and physical trades are excluded from new suggestions. Solar installation needs practical site training, not necessarily a degree. The AI/ML Engineer SOC crosswalk refers to research scientists and is excluded. Advanced digital paths can require prior skills; courses do not guarantee employment or replace employer requirements. Original public O*NET skills/interest codes, SOC-linked AI exposure and existing learning records are retained. This is an app scope policy, not an official dataset classification.",
+  "src.hubspot_catalogue.name": "HubSpot Academy · public catalogue",
+  "src.hubspot_catalogue.desc": "Full English courses from public metadata, refreshed every six hours. Free account required to learn.",
+  "docs.hubspot.method": "Public website search without login or API keys. Paginate TRACK records; exclude lessons and short videos. Titles, direct URLs, duration (seconds), level and award status come from the publisher. Skills derive from subjects/categories; SDGs are app thematic associations. Refresh every six hours; retain last good snapshot on failure. This undocumented website endpoint is not a supported developer API or an open-content licence. Learning requires a free Academy account; some software certifications need paid product access or practical exercises. Course titles retain the original English.",
+  "docs.onet.scope": "Self-directed-v2 removes the fixed 15-role limit for Roles, Matcher, new Pathways and Market. Each career needs O*NET references and a core skill with actual current course coverage. Exclude clinical, professional signoff and supervised physical trades. Desk-based HR, training, projects and supply chains can qualify with relevant courses. Narrow career directions share their broad SOC reference, interests and AI statistics, not separate occupation estimates. Online learning does not replace employer requirements or guarantee employment.",
 
   "docs.news.failure": "Provider errors are shown separately. Retain the last snapshot or use the alternate feed; mark stale when needed. If unavailable, AI uses statistics only. News does not change scenario formulas.",
   "docs.news.license": "GDELT datasets are free with attribution and a GDELT link. Google News RSS is a public feed, not a documented API or an open licence for publisher articles. Article rights remain with publishers. Only headline metadata and links are used, never full text.",
@@ -118,10 +118,10 @@ export const docsEn = {
 export type DocsKey = keyof typeof docsEn;
 
 export const docsMs: Record<DocsKey, string> = {
-  "src.hubspot_catalogue.name": "HubSpot Academy · kursus awam disemak",
-  "src.hubspot_catalogue.desc": "Dua kursus pemasaran kendiri daripada metadata penerbit awam; disemak 23 Oktober 2026. Akaun percuma diperlukan untuk mendaftar.",
-  "docs.hubspot.method": "Pilihan metadata manual: Digital Marketing (3 jam 24 minit) dan Content Marketing (8 jam 23 minit), disemak 23 Oktober 2026. Tajuk, URL, tempoh dan status pensijilan percuma datang daripada HubSpot Academy. Akaun Academy percuma diperlukan untuk belajar dan memperoleh sijil. Padanan kemahiran dan SDG 8 ditulis aplikasi daripada hasil pembelajaran. Bukan katalog langsung atau lesen terbuka menerbitkan semula kandungan kursus.",
-  "docs.onet.scope": "Roles individu, Matcher, Pathway baharu dan Market menggunakan semakan skop self-directed-v1 (23 Oktober 2026): 15 hala tuju kerja digital/pejabat dengan sekurang-kurangnya satu kemahiran teras disokong kursus dalam talian awam semasa. Kerja klinikal, profesion berlesen/pengesahan profesional dan kerja fizikal khusus dikecualikan daripada cadangan baharu. Pemasangan solar memerlukan latihan praktikal tapak, bukan semestinya degree. Padanan SOC AI/ML Engineer merujuk saintis penyelidikan dan dikecualikan. Laluan digital lanjutan mungkin memerlukan kemahiran awal; kursus tidak menjamin pekerjaan atau menggantikan syarat majikan. Kemahiran/kod minat O*NET asal, pendedahan AI berasaskan SOC dan rekod pembelajaran sedia ada dikekalkan. Ini dasar skop aplikasi, bukan klasifikasi dataset rasmi.",
+  "src.hubspot_catalogue.name": "HubSpot Academy · katalog awam",
+  "src.hubspot_catalogue.desc": "Kursus penuh Inggeris daripada metadata awam, dikemas kini setiap enam jam. Akaun percuma diperlukan untuk belajar.",
+  "docs.hubspot.method": "Carian laman awam tanpa login atau kunci API. Baca semua halaman TRACK; kecualikan pelajaran dan video pendek. Tajuk, URL tepat, tempoh (saat), tahap dan status sijil datang daripada penerbit. Kemahiran dipadankan daripada subjek/kategori; SDG ialah kaitan tema aplikasi. Muat semula setiap enam jam; simpan snapshot terakhir jika gagal. Endpoint laman ini bukan API pembangun rasmi atau lesen terbuka kandungan. Pembelajaran perlu akaun Academy percuma; sesetengah sijil perisian perlu akses produk berbayar atau latihan praktikal. Tajuk kursus Inggeris asal dikekalkan.",
+  "docs.onet.scope": "Self-directed-v2 membuang had tetap 15 kerjaya untuk Roles, Matcher, Pathway baharu dan Market. Setiap kerjaya perlu rujukan O*NET dan kemahiran teras dengan kursus sebenar semasa. Kecualikan klinikal, pengesahan profesional dan kerja fizikal terselia. HR, latihan, projek dan rantaian bekalan pejabat boleh layak dengan kursus relevan. Pengkhususan berkongsi rujukan SOC, minat dan statistik AI pekerjaan induk, bukan anggaran pekerjaan berasingan. Kursus bukan pengganti syarat majikan atau jaminan pekerjaan.",
 
   "docs.news.failure": "Ralat penyedia dipaparkan berasingan. Snapshot terakhir atau feed gantian digunakan; label lapuk ditunjukkan jika perlu. Jika tiada, AI hanya menggunakan statistik. Berita tidak mengubah formula senario.",
   "docs.news.license": "Dataset GDELT percuma dengan atribusi dan pautan GDELT. RSS Google News ialah feed awam, bukan API berdokumentasi atau lesen terbuka artikel penerbit. Hak artikel kekal milik penerbit. Hanya metadata tajuk dan pautan digunakan, tanpa teks penuh.",
@@ -233,10 +233,10 @@ export const docsMs: Record<DocsKey, string> = {
 };
 
 export const docsZh: Record<DocsKey, string> = {
-  "src.hubspot_catalogue.name": "HubSpot Academy · 已审核公开课程",
-  "src.hubspot_catalogue.desc": "两门自学营销课程，采用公开机构元数据，2026 年 10 月 23 日审核。报名需免费账户。",
-  "docs.hubspot.method": "人工选择元数据：Digital Marketing（3 小时 24 分钟）及 Content Marketing（8 小时 23 分钟），2026 年 10 月 23 日审核。公开标题、URL、时长和免费认证状态来自 HubSpot Academy。学习与认证需免费 Academy 账户。技能及 SDG 8 关联由应用根据学习成果编写。非实时目录，亦非转载课程内容的开放许可。",
-  "docs.onet.scope": "个人职业、匹配、新学习路径及市场采用 self-directed-v1 范围审核（2026 年 10 月 23 日）：15 个数字/办公职业方向，每个至少有一项核心技能由当前公开在线课程支持。新推荐排除临床、须执照/专业签署及现场实操工种。太阳能安装需现场实践，并非一定需要学位。AI/ML Engineer 当前 SOC 对应研究科学家，因此排除。进阶数字路径可能需要已有技能；课程不保证就业或取代雇主要求。保留 O*NET 原技能/兴趣代码、SOC 对应 AI 参与度及已有学习记录。这是应用范围政策，非官方数据分类。",
+  "src.hubspot_catalogue.name": "HubSpot Academy · 公开目录",
+  "src.hubspot_catalogue.desc": "公开元数据中的完整英文课程，每六小时刷新。学习需免费账户。",
+  "docs.hubspot.method": "网站公开搜索无需登录或 API 密钥。分页读取 TRACK，排除课节及短视频。标题、直达链接、时长（秒）、级别及认证来自机构。技能按主题与分类映射；SDG 为应用主题关联。每六小时刷新，失败保留上次成功快照。此未经文档支持的网站端点并非官方开发者 API 或内容开放许可。学习需免费 Academy 账户，部分软件认证需付费产品或实践。保留英文原始课程名。",
+  "docs.onet.scope": "Self-directed-v2 取消职业、匹配、新路径及市场的固定 15 职业限制。每个方向需 O*NET 参考及当前课程支持的核心技能。排除临床、专业签署与需监督实操的工种。办公室人力资源、培训、项目及供应链可按实际课程覆盖入选。细分方向共享广义 SOC 的参考、兴趣与 AI 统计，并非独立职业估计。在线学习不取代雇主要求或保证就业。",
 
   "docs.news.failure": "分别显示提供方错误。保留最近快照或使用备用源，必要时标记过期。均不可用时 AI 只参考统计。新闻不改变情景公式。",
   "docs.news.license": "GDELT 数据集免费使用，须署名并链接 GDELT。Google News RSS 是公开源，并非有文档的 API 或出版商文章开放许可。版权归原出版商。仅使用标题元数据及链接，不转载正文。",

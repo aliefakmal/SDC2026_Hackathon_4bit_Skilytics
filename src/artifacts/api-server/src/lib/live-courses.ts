@@ -1,3 +1,4 @@
+import { fetchHubSpotTracks, mapHubSpotTracks } from "./hubspot-catalogue";
 import { createHash } from "node:crypto";
 import type { CourseView } from "./catalog";
 import { SKILLS } from "../data/skills";
@@ -11,8 +12,8 @@ export const HF_LEARN_URL = "https://huggingface.co/learn";
 
 const TTL = 6 * 60 * 60 * 1000;
 type Skill = { id: number; name: string; category: string };
-type Provider = "microsoft" | "freecodecamp" | "githubskills" | "huggingface";
-const providers: Provider[] = ["microsoft", "freecodecamp", "githubskills", "huggingface"];
+type Provider = "microsoft" | "freecodecamp" | "githubskills" | "huggingface" | "hubspot";
+const providers: Provider[] = ["microsoft", "freecodecamp", "githubskills", "huggingface", "hubspot"];
 const snapshots = new Map<Provider, { at: number; courses: CourseView[] }>();
 const pending = new Map<Provider, Promise<void>>();
 const retryAfter = new Map<Provider, number>();
@@ -40,7 +41,7 @@ export function courseSdg(text: string, mappedSkills: { name: string }[] = []): 
   // Secondary economic, technological, inclusion, and infrastructure targets
   if (/entrepreneur|small business|freelance|e-commerce|ecommerce|branding/i.test(t) ||
       skillNames.has("Digital Marketing") || skillNames.has("Content Writing") || skillNames.has("Graphic Design") ||
-      skillNames.has("Video Editing") || skillNames.has("Search Engine Optimisation") || skillNames.has("Social Media Management")) {
+      skillNames.has("Sales and Negotiation") || skillNames.has("Video Editing") || skillNames.has("Search Engine Optimisation") || skillNames.has("Social Media Management")) {
     secondary.push("8.3");
   }
 
@@ -52,7 +53,7 @@ export function courseSdg(text: string, mappedSkills: { name: string }[] = []): 
       /programming|developer|automation|full-stack|frontend|backend/i.test(t) ||
       skillNames.has("Cloud Computing") || skillNames.has("Generative AI Tools") ||
       skillNames.has("Machine Learning") || skillNames.has("Data Visualisation") ||
-      skillNames.has("Power BI") || skillNames.has("Software Testing") ||
+      skillNames.has("CRM Systems") || skillNames.has("Power BI") || skillNames.has("Software Testing") ||
       skillNames.has("HTML and CSS") || skillNames.has("JavaScript") || skillNames.has("SQL") ||
       skillNames.has("Python") || skillNames.has("Version Control (Git)")) {
     secondary.push("8.2");
@@ -354,6 +355,8 @@ async function refresh(provider: Provider, skills: Skill[]) {
         const res = await fetch(GITHUB_SKILLS_URL, { headers, signal: AbortSignal.timeout(8000) });
         if (!res.ok) throw new Error(`GitHub Skills HTTP ${res.status}`);
         courses = mapGitHubSkills((await res.json()) as SkillsRepo[], skills, fetchedAt);
+      } else if (provider === "hubspot") {
+        courses = mapHubSpotTracks(await fetchHubSpotTracks(), skills, fetchedAt);
       } else {
         const res = await fetch(HF_LEARN_URL, { signal: AbortSignal.timeout(8000) });
         if (!res.ok) throw new Error(`Hugging Face Learn HTTP ${res.status}`);
@@ -414,7 +417,7 @@ export async function liveCourses(skills: Skill[]): Promise<CourseView[]> {
     const snapshot = snapshots.get(provider);
     // Re-evaluate thematic tags for persisted snapshots after mapping changes.
     return snapshot ? snapshot.courses.flatMap((course) => {
-      const mapped = course.skills.filter(s => teachesSkill(course.title,s));
+      const mapped = provider === "hubspot" ? course.skills.filter(s=>skills.some(k=>k.id === s.id)) : course.skills.filter(s => teachesSkill(course.title,s));
       return mapped.length ? [{ ...course, skills: mapped, sdgCodes: courseSdg(course.title, mapped), catalogStale: Date.now() - snapshot.at >= TTL }] : [];
     }) : [];
   });
