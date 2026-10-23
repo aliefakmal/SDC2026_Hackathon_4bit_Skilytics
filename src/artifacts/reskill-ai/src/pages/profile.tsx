@@ -30,6 +30,7 @@ import { useAuth } from "@/lib/auth";
 import { SECTOR_SDG, roleTitle, setActiveProfile, useFmt } from "@/lib/fmt";
 import { errStatus, useErrText, useT, type DictKey } from "@/i18n";
 import { cn } from "@/lib/utils";
+import { IndividualMatcher, IndividualPathway } from "@/components/individual-journey";
 
 const MODULES = ["intake", "radar", "matcher", "pathway", "agents"] as const;
 type Module = (typeof MODULES)[number];
@@ -52,7 +53,7 @@ function useRefreshProfile(pid: number) {
 export default function ProfileWorkspace({ base, listHref }: { base: string; listHref: string }) {
   const params = useParams<{ id: string; module?: string }>();
   const pid = Number(params.id);
-  const mod: Module = (MODULES as readonly string[]).includes(params.module ?? "") ? (params.module as Module) : "intake";
+  const requestedMod: Module = (MODULES as readonly string[]).includes(params.module ?? "") ? (params.module as Module) : "intake";
   const { t, tk } = useT();
   const [, nav] = useLocation();
   const qc = useQueryClient();
@@ -84,6 +85,8 @@ export default function ProfileWorkspace({ base, listHref }: { base: string; lis
     </div>
   );
   const p = q.data;
+  const individual = base === "/me/profiles";
+  const mod = individual && requestedMod === "radar" ? "matcher" : requestedMod;
   const seg = p.segment === "graduate" ? "graduate" : "worker";
   return (
     <>
@@ -105,7 +108,7 @@ export default function ProfileWorkspace({ base, listHref }: { base: string; lis
       </header>
 
       <nav className="-mx-4 mb-5 flex gap-1 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0" aria-label={t("profile.modules")}>
-        {MODULES.map((m, i) => (
+        {MODULES.filter((m) => !individual || m !== "radar").map((m, i) => (
           <Link key={m} href={`${base}/${p.id}/${m}`} data-testid={`tab-module-${m}`}
             className={cn("inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 text-sm font-medium transition-colors",
               mod === m ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-primary hover:text-primary")}>
@@ -116,12 +119,12 @@ export default function ProfileWorkspace({ base, listHref }: { base: string; lis
       </nav>
 
       {!user && p.isGuest && <div className="mb-4"><GuestBanner compact /></div>}
-      {mod !== "agents" && <p className="mb-4 rounded-xl border-l-4 border-accent bg-card px-3 py-2 text-sm text-muted-foreground">{tk(`tip.${seg}`, mod)}</p>}
+      {!individual && mod !== "agents" && <p className="mb-4 rounded-xl border-l-4 border-accent bg-card px-3 py-2 text-sm text-muted-foreground">{tk(`tip.${seg}`, mod)}</p>}
 
-      {mod === "intake" && <Intake p={p} />}
+      {mod === "intake" && (individual ? <div className="rounded-2xl border bg-card p-5"><SavedReviewPanel p={p} /><div className="mt-4 flex flex-wrap gap-3"><Link className="inline-flex min-h-11 items-center rounded-xl border px-4 font-semibold" href={`/onboarding/review?pid=${p.id}`}>{t("common.edit")} · {t("nav.intake")}</Link><Link className="inline-flex min-h-11 items-center rounded-xl bg-primary px-4 font-semibold text-primary-foreground" href={`${base}/${p.id}/matcher`}>{t("nav.matcher")} →</Link></div></div> : <Intake p={p} />)}
       {mod === "radar" && <RadarModule p={p} base={base} />}
-      {mod === "matcher" && <Matcher p={p} base={base} />}
-      {mod === "pathway" && <Pathway p={p} base={base} />}
+      {mod === "matcher" && (individual ? <IndividualMatcher p={p} base={base} /> : <Matcher p={p} base={base} />)}
+      {mod === "pathway" && (individual ? <IndividualPathway p={p} base={base} /> : <Pathway p={p} base={base} />)}
       {mod === "agents" && (
         <div className="grid gap-3 lg:grid-cols-2">{AGENTS.map((a) => <AgentCard key={a} profile={p} agent={a} roleId={p.targetRoleId} />)}</div>
       )}

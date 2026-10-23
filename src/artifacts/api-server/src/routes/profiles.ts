@@ -16,6 +16,7 @@ import { loadCourses, loadRoles, loadSkills, roleToApi } from "../lib/catalog";
 import { extractCvDocument, extractSkills, CvError, isCvImageFile, validateCvImage, recognizeCvImage, type CvDocumentPage } from "../lib/cv";
 import { RIASEC_QUESTIONS } from "../data/riasec";
 import { scoreRiasec } from "../lib/riasec-scoring";
+import { profileSkills } from "../lib/profile-skills";
 import { agentRoutes } from "../lib/agent-routing";
 import { scoreRole } from "../lib/scoring";
 import { buildPlan } from "../lib/planner";
@@ -341,9 +342,10 @@ router.post("/profiles/:id/riasec", async (req, res) => {
 
 async function computeMatches(p: ProfileRow) {
   const [roles, skills, courses] = await Promise.all([loadRoles(), loadSkills(), loadCourses()]);
+  const candidate = { ...p, skills: profileSkills(p, skills) };
   return roles
-    .map((role) => ({ role: roleToApi(role), ...scoreRole(p, role, skills, courses) }))
-    .sort((a, b) => b.score - a.score);
+    .map((role) => ({ role: roleToApi(role), ...scoreRole(candidate, role, skills, courses) }))
+    .sort((a, b) => b.score - a.score || a.gapSkills.length - b.gapSkills.length);
 }
 
 router.get("/profiles/:id/matches", async (req, res) => {
@@ -373,7 +375,7 @@ router.post("/profiles/:id/plan", async (req, res) => {
     res.status(404).json({ error: "role_not_found" });
     return;
   }
-  const { gapSkills } = scoreRole(p, role, skills, courses);
+  const { gapSkills } = scoreRole({ ...p, skills: profileSkills(p, skills) }, role, skills, courses);
   const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: req.user?.role === "hr" && p.hrdcEligible });
   const [row] = await db
     .insert(plansTable)

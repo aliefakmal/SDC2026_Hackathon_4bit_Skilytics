@@ -44,7 +44,7 @@ function useNav(): NavSet {
   const modMatch = (k: string) => (l: string) => !!pid && (l === `/me/profiles/${pid}/${k}` || (k === "intake" && l === `/me/profiles/${pid}`));
   const primary: Item[] = [
     { href: mod("intake"), label: "nav.intake", icon: FileText, match: modMatch("intake") },
-    { href: mod("radar"), label: "nav.radar", icon: Activity, match: modMatch("radar") },
+
     { href: mod("matcher"), label: "nav.matcher", icon: Briefcase, match: modMatch("matcher") },
     { href: mod("pathway"), label: "nav.pathway", icon: Map, match: modMatch("pathway") },
   ];

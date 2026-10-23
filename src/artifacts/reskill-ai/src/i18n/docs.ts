@@ -72,7 +72,7 @@ export const docsEn = {
   "docs.riasec.scoring": "All 30 unique answers are required by the API and both assessment screens. Each area uses the average of its five answers, rounded to two decimals. Ties follow R, I, A, S, E, C.",
   "docs.riasec.limits": "Skilytics adapted the activities and translations under the O*NET Tools Developer License. Independent psychometric validation remains outstanding. USDOL/ETA has not approved, endorsed or tested the modifications. Interests are never inferred from CV text.",
 
-  "docs.match.weights": "Weights: skills 40, transferable 15, interest 20, preferences 10, feasibility 15.",
+  "docs.match.weights": "Weights: skills 40, transferable 15, interest 20, preferences 10, feasibility 15. Additional skills may be suggested from reviewed education and experience using catalogue terms; these are inferred, not verified. RIASEC supplies interest fit, not skill evidence.",
   "docs.match.demand": "Labour demand is not fabricated. Until a verified Malaysian demand source exists it is null and shown as not verified, not zero.",
   "docs.match.feasibility": "When no verified course exists, feasibility is unavailable and gets zero credit. It is not estimated from course durations.",
 
@@ -161,7 +161,7 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.riasec.scoring": "Semua 30 jawapan unik diwajibkan oleh API dan kedua-dua skrin ujian. Setiap kategori menggunakan purata lima jawapan, dibundarkan kepada dua perpuluhan. Seri mengikut susunan R, I, A, S, E, C.",
   "docs.riasec.limits": "Skilytics mengadaptasi aktiviti dan terjemahan di bawah O*NET Tools Developer License. Pengesahan psikometrik bebas belum dijalankan. USDOL/ETA tidak meluluskan, menyokong atau menguji perubahan ini. Minat tidak disimpulkan daripada teks CV.",
 
-  "docs.match.weights": "Pemberat: kemahiran 40, boleh pindah 15, minat 20, keutamaan 10, kebolehlaksanaan 15.",
+  "docs.match.weights": "Pemberat: kemahiran 40, boleh pindah 15, minat 20, keutamaan 10, kebolehlaksanaan 15. Kemahiran tambahan boleh dicadangkan daripada pendidikan dan pengalaman yang disemak menggunakan istilah katalog; ini anggaran, bukan pengesahan. RIASEC memberi padanan minat, bukan bukti kemahiran.",
   "docs.match.demand": "Permintaan buruh tidak direka. Sehingga sumber permintaan Malaysia yang disahkan wujud, ia null dan ditunjukkan sebagai belum disahkan, bukan sifar.",
   "docs.match.feasibility": "Jika tiada kursus disahkan, kebolehlaksanaan tidak tersedia dan diberi kredit sifar. Ia tidak dianggarkan daripada tempoh kursus.",
 
@@ -248,7 +248,7 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.riasec.scoring": "API 及两个评估页面均要求回答全部 30 道不同题目。各领域取五题平均值，保留两位小数。平分时依次按 R、I、A、S、E、C 排序。",
   "docs.riasec.limits": "Skilytics 按 O*NET Tools Developer License 改编活动与译文，尚未完成独立心理测量验证。USDOL/ETA 未批准、认可或测试这些修改。兴趣绝不从简历文本推断。",
 
-  "docs.match.weights": "权重：技能 40、可迁移 15、兴趣 20、偏好 10、可行性 15。",
+  "docs.match.weights": "权重：技能 40、可迁移 15、兴趣 20、偏好 10、可行性 15。根据已核对的学历和经历，使用技能目录术语推测额外技能；这些推测尚未核实。RIASEC 用于兴趣匹配，不作为技能证据。",
   "docs.match.demand": "劳动力需求不会被编造。在有经核实的马来西亚需求来源之前，该值为空，并显示为未核实，而非为零。",
   "docs.match.feasibility": "没有经核实的课程时，可行性不可用，得分为零。不会根据课程时长估算。",
 

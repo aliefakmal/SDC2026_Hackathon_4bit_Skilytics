@@ -1729,11 +1729,18 @@ function SaveStep({ p, scope, onProfileReady }: { p: Profile; scope: string; onP
   const seg = p.segment === "graduate" ? "student" : "worker";
   const finish = async () => {
     try {
-      await go("complete", {}, `/me/profiles/${p.id}/intake`);
+      await go("complete", {}, `/me/profiles/${p.id}/matcher`);
       clearDraft(scope, p.id);
       setObProfile(scope, null);
     } catch { /* shown */ }
   };
+  const finishing = useRef(false);
+  useEffect(() => {
+    if (user && !finishing.current) {
+      finishing.current = true;
+      void finish();
+    }
+  }, [user?.id]);
   const next = encodeURIComponent(`/onboarding/save?pid=${p.id}`);
   return (
     <>

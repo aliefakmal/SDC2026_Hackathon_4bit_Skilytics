@@ -59,7 +59,7 @@ export function buildPlan(opts: {
       skills: c.skills.map((s) => s.name).filter((n) => gapNames.has(n)), sdgCodes: c.sdgCodes,
     };
     const t = trackEnd.indexOf(Math.min(...trackEnd));
-    const durationWeeks = Math.min(26, Math.max(1, Math.ceil(c.durationHours / Math.max(hoursPerTrack, 1))));
+    const durationWeeks = Math.max(1, Math.ceil(c.durationHours / Math.max(hoursPerTrack, 1)));
     const startWeek = trackEnd[t];
     trackEnd[t] = startWeek + durationWeeks;
     return {
