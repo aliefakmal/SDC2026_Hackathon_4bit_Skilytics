@@ -306,23 +306,20 @@ export function Landing() {
             <div className="mb-6 sm:mb-8">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">{t("landing.marketTitle")}</h2>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4.5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
               {/* 1. Student & Grads */}
               <Link
                 href="/onboarding/cv?seg=graduate&new=1"
                 onMouseEnter={prewarm}
                 data-testid="card-market-graduate"
-                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
+                className="rise group flex flex-col items-center justify-center text-center rounded-2xl border border-card-border bg-card p-3.5 sm:p-4.5 shadow-xs transition-all duration-200 hover:-translate-y-1.5 hover:scale-[1.02] hover:border-primary/80 hover:bg-primary/[0.02] hover:shadow-md hover:shadow-primary/5 active:scale-[0.98] cursor-pointer"
               >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
-                  </div>
-                  <h3 className="mt-4 sm:mt-5 font-bold text-sm sm:text-base lg:text-lg text-foreground leading-snug">{t("landing.targetStudents")}</h3>
-                </div>
+                <span className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-200 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-xs">
+                  <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-200 group-hover:scale-105" />
+                </span>
+                <h3 className="mt-2.5 sm:mt-3 font-bold text-xs sm:text-sm lg:text-base text-foreground leading-snug group-hover:text-primary transition-colors">
+                  {t("landing.targetStudents")}
+                </h3>
               </Link>
 
               {/* 2. Publics */}
@@ -330,54 +327,45 @@ export function Landing() {
                 href="/onboarding/cv?seg=worker&new=1"
                 onMouseEnter={prewarm}
                 data-testid="card-market-worker"
-                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-primary hover:shadow-md cursor-pointer"
+                className="rise group flex flex-col items-center justify-center text-center rounded-2xl border border-card-border bg-card p-3.5 sm:p-4.5 shadow-xs transition-all duration-200 hover:-translate-y-1.5 hover:scale-[1.02] hover:border-primary/80 hover:bg-primary/[0.02] hover:shadow-md hover:shadow-primary/5 active:scale-[0.98] cursor-pointer"
                 style={{ animationDelay: "60ms" }}
               >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <Users className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
-                  </div>
-                  <h3 className="mt-4 sm:mt-5 font-bold text-sm sm:text-base lg:text-lg text-foreground leading-snug">{t("landing.targetPublics")}</h3>
-                </div>
+                <span className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-200 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground group-hover:shadow-xs">
+                  <Users className="h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-200 group-hover:scale-105" />
+                </span>
+                <h3 className="mt-2.5 sm:mt-3 font-bold text-xs sm:text-sm lg:text-base text-foreground leading-snug group-hover:text-primary transition-colors">
+                  {t("landing.targetPublics")}
+                </h3>
               </Link>
 
               {/* 3. Enterprise */}
               <Link
                 href="/login?role=hr"
                 data-testid="card-market-hr"
-                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
+                className="rise group flex flex-col items-center justify-center text-center rounded-2xl border border-card-border bg-card p-3.5 sm:p-4.5 shadow-xs transition-all duration-200 hover:-translate-y-1.5 hover:scale-[1.02] hover:border-accent/80 hover:bg-accent/[0.02] hover:shadow-md hover:shadow-accent/5 active:scale-[0.98] cursor-pointer"
                 style={{ animationDelay: "120ms" }}
               >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
-                      <Building2 className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-accent" />
-                  </div>
-                  <h3 className="mt-4 sm:mt-5 font-bold text-sm sm:text-base lg:text-lg text-foreground leading-snug">{t("landing.targetEnterprise")}</h3>
-                </div>
+                <span className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent transition-all duration-200 group-hover:scale-110 group-hover:bg-accent group-hover:text-accent-foreground group-hover:shadow-xs">
+                  <Building2 className="h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-200 group-hover:scale-105" />
+                </span>
+                <h3 className="mt-2.5 sm:mt-3 font-bold text-xs sm:text-sm lg:text-base text-foreground leading-snug group-hover:text-accent transition-colors">
+                  {t("landing.targetEnterprise")}
+                </h3>
               </Link>
 
               {/* 4. Educators */}
               <Link
                 href="/login?role=tvet"
                 data-testid="card-market-tvet"
-                className="rise group flex flex-col justify-between rounded-2xl border border-card-border bg-card p-4 sm:p-5 shadow-xs transition-all hover:-translate-y-1 hover:border-accent hover:shadow-md cursor-pointer"
+                className="rise group flex flex-col items-center justify-center text-center rounded-2xl border border-card-border bg-card p-3.5 sm:p-4.5 shadow-xs transition-all duration-200 hover:-translate-y-1.5 hover:scale-[1.02] hover:border-accent/80 hover:bg-accent/[0.02] hover:shadow-md hover:shadow-accent/5 active:scale-[0.98] cursor-pointer"
                 style={{ animationDelay: "180ms" }}
               >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent">
-                      <School className="h-5 w-5 sm:h-6 sm:w-6" />
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-accent" />
-                  </div>
-                  <h3 className="mt-4 sm:mt-5 font-bold text-sm sm:text-base lg:text-lg text-foreground leading-snug">{t("landing.targetEducators")}</h3>
-                </div>
+                <span className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-[hsl(var(--gold-soft))] text-accent transition-all duration-200 group-hover:scale-110 group-hover:bg-accent group-hover:text-accent-foreground group-hover:shadow-xs">
+                  <School className="h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-200 group-hover:scale-105" />
+                </span>
+                <h3 className="mt-2.5 sm:mt-3 font-bold text-xs sm:text-sm lg:text-base text-foreground leading-snug group-hover:text-accent transition-colors">
+                  {t("landing.targetEducators")}
+                </h3>
               </Link>
             </div>
           </section>
