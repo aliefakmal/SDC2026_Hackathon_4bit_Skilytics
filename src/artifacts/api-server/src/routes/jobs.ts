@@ -159,6 +159,17 @@ router.get("/profiles/:id/jobs", async (req, res) => {
           location: j.jobGeo,
           url: j.url,
           posted: j.pubDate,
+          skillsMatchPct: required.length
+            ? Math.round((matched.length / required.length) * 100)
+            : null,
+          aiExposure: role?.n ? role.r.aiExposure : null,
+          exposureRole: role?.n
+            ? {
+                title: role.r.title,
+                sector: role.r.sector,
+                sourceUrl: role.r.sourceUrl ?? null,
+              }
+            : null,
           matched: matched.map(
             (s) => skills.find((k) => k.id === s.skillId)!.name,
           ),

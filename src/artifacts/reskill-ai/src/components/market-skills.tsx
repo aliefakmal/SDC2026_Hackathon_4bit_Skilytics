@@ -22,7 +22,7 @@ export const jobWords = {
     now: "Baseline index",
     next: "Scenario index",
     jobs: "Find a job",
-    apply: "View job / apply",
+    apply: "Apply",
     matched: "Skills you can bring",
     missing: "Skills to check",
     jobNote:
@@ -44,7 +44,7 @@ export const jobWords = {
     now: "Indeks asas",
     next: "Indeks senario",
     jobs: "Cari pekerjaan",
-    apply: "Lihat kerja / mohon",
+    apply: "Mohon",
     matched: "Kemahiran yang anda bawa",
     missing: "Kemahiran untuk disemak",
     jobNote:
@@ -64,7 +64,7 @@ export const jobWords = {
     now: "基准指数",
     next: "情景指数",
     jobs: "寻找工作",
-    apply: "查看职位 / 申请",
+    apply: "申请",
     matched: "您具备的相关技能",
     missing: "需要核对的技能",
     jobNote:
