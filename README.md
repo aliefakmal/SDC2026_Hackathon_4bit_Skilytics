@@ -36,7 +36,7 @@
 
 ### Problem
 
-AI is transforming industries faster than traditional training programmes and educational curricula can adapt. While over 56% of professionals in Malaysia already use AI tools at work, only 26% have received formal training, leaving more than 600,000 workers in need of reskilling within the next three to five years. Workers are unsure which skills to learn, employers struggle to identify which roles to train their teams for, and static learning lists quickly become obsolete.
+Driven by the rapid advancement of AI, industry skill demands now shift within months while academic and TVET syllabuses take years to adapt. This "curriculum lag" restricts access to market-aligned education (**SDG 4.3**) and leaves graduates and job seekers entering the workforce with outdated qualifications rather than the relevant technical and professional skills required by current employers (**SDG 4.4**). The resulting disconnect affects the entire job ecosystem: working individuals face job displacement without flexible reskilling pathways, career centers lack real-time labor market data to mentor students effectively, and high-growth industries suffer from severe talent shortages alongside rising graduate unemployment and job fragility. If not addressed, these enduring skill gaps negatively impact workforce productivity and technological innovation (**SDG 8.2**) and undermine full and productive employment (**SDG 8.5**). This forces students to choose between static curricula and an AI-driven economy without a real-time bridge to live industry expectations.
 
 ### Solution
 
