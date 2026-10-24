@@ -634,6 +634,7 @@ export const GetProfilePlanResponse = zod.union([zod.object({
   "totalCostMyr": zod.number().nullable(),
   "uncoveredSkills": zod.array(zod.string()),
   "items": zod.array(zod.object({
+  "compulsory": zod.boolean().optional().describe('Institution-required course for TVET learners'),
   "courseId": zod.number().int(),
   "title": zod.string(),
   "provider": zod.string(),
@@ -671,6 +672,7 @@ export const CreateProfilePlanResponse = zod.object({
   "totalCostMyr": zod.number().nullable(),
   "uncoveredSkills": zod.array(zod.string()),
   "items": zod.array(zod.object({
+  "compulsory": zod.boolean().optional().describe('Institution-required course for TVET learners'),
   "courseId": zod.number().int(),
   "title": zod.string(),
   "provider": zod.string(),

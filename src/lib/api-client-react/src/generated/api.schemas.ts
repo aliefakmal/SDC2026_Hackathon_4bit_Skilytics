@@ -377,6 +377,8 @@ export interface SdgTarget {
 }
 
 export interface PlanItem {
+  /** Institution-required course for TVET learners */
+  compulsory?: boolean;
   courseId: number;
   title: string;
   provider: string;

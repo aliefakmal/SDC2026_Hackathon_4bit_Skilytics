@@ -2,6 +2,7 @@ import { inflateRawSync } from "node:zlib";
 import { db, rolesTable, skillsTable, roleSkillsTable, marketSourcesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { softwareSkills, taskSkills } from "./occupational-skills";
+import { loadCourses } from "./catalog";
 import { ROLES } from "../data/roles";
 
 export const ONET_VERSION = "31.0";
@@ -43,8 +44,15 @@ export function csvRows(text: string): Record<string, string>[] {
 
 export async function ingestOnet() {
   const [state] = await db.select().from(marketSourcesTable).where(eq(marketSourcesTable.id, "onet"));
-  if (state?.version === IMPORT_VERSION && state.status === "ok") return;
-  const response = await fetch(ONET_URL, { signal: AbortSignal.timeout(90000) });
+  if (state?.status === "ok" && state.lastFetchedAt && Date.now()-state.lastFetchedAt.getTime()<86400000 && state.version?.includes("discovery-v1")) return;
+  const page=await fetch("https://www.onetcenter.org/database.html",{signal:AbortSignal.timeout(20000)});
+  if(!page.ok)throw Error("O*NET release check failed");
+  const html=await page.text();
+  const paths=[...html.matchAll(/(?:https:\/\/www\.onetcenter\.org)?\/dl_files\/database\/db_(\d+)_(\d+)_csv\.zip/g)].sort((a,b)=>Number(b[1])-Number(a[1])||Number(b[2])-Number(a[2]));
+  const latest=paths[0];const url=latest?`https://www.onetcenter.org/dl_files/database/db_${latest[1]}_${latest[2]}_csv.zip`:ONET_URL;
+  const version=latest?`${latest[1]}.${latest[2]}`:ONET_VERSION;
+  const importVersion=`${version}-discovery-v1`;
+  const response = await fetch(url, { signal: AbortSignal.timeout(90000) });
   if (!response.ok) throw new Error(`O*NET download HTTP ${response.status}`);
   if (Number(response.headers.get("content-length")) > 30 * 1024 * 1024) throw new Error("O*NET archive too large");
   const zip = Buffer.from(await response.arrayBuffer());
@@ -55,6 +63,19 @@ export async function ingestOnet() {
   const software = csvRows(zipMember(zip, "software_skills.csv"));
   const knowledge = csvRows(zipMember(zip, "knowledge.csv"));
   const tasks = csvRows(zipMember(zip, "task_statements.csv"));
+  const courses=await loadCourses();const teachable=new Set(courses.flatMap(c=>c.skills.map(s=>s.name)));
+  const focus=[...teachable];
+  const existingSoc=new Set((await db.select({socCode:rolesTable.socCode}).from(rolesTable)).map(r=>r.socCode));
+  // Conservative desk-based discovery; no automatic admission of regulated or supervised physical professions.
+  for(const [code,occupation] of occupations){
+    if(existingSoc.has(code.slice(0,-3)))continue;
+    if(!/developer|software quality|software tester|web designer|graphic designer|digital|computer support|database|data scientist|business intelligence|market research|search marketing|technical writer|editor|translator|interpreter|logistician|project management|training and development/i.test(occupation.Title)||!/\.00$/.test(code))continue;
+    const links=[...softwareSkills(software,code,focus),...taskSkills(tasks,code,focus)].filter(s=>teachable.has(s.name));
+    if(!links.length)continue;
+    const oi=interests.filter(r=>r["O*NET-SOC Code"]===code&&r["Scale ID"]==="OI").sort((a,b)=>Number(b["Data Value"])-Number(a["Data Value"]));if(oi.length!==6)continue;
+    const letters:Record<string,string>={Realistic:"R",Investigative:"I",Artistic:"A",Social:"S",Enterprising:"E",Conventional:"C"};
+    await db.insert(rolesTable).values({socCode:code.slice(0,-3),title:occupation.Title,titleMs:occupation.Title,sector:/design|writer|editor|translator/i.test(occupation.Title)?"Creative":"Digital & ICT",riasecCode:oi.slice(0,3).map(r=>letters[r["Element Name"]]).join(""),description:occupation.Description,sourceUrl:`https://www.onetonline.org/link/summary/${code}`,officialTitle:occupation.Title}).onConflictDoNothing();
+  }
   const roles = await db.select().from(rolesTable);
   let count = 0;
   await db.transaction(async (tx) => {
@@ -71,14 +92,14 @@ export async function ingestOnet() {
       const codeLetters: Record<string, string> = { Realistic: "R", Investigative: "I", Artistic: "A", Social: "S", Enterprising: "E", Conventional: "C" };
       await tx.update(rolesTable).set({
         officialTitle: occupation.Title, description: occupation.Description,
-        sourceUrl: `https://www.onetonline.org/link/summary/${code}`, sourceVersion: ONET_VERSION,
+        sourceUrl: `https://www.onetonline.org/link/summary/${code}`, sourceVersion: version,
         sourceFetchedAt: new Date().toISOString(), myColCritical: false,
         riasecCode: actualInterests.slice(0, 3).map((r) => codeLetters[r["Element Name"]]).join(""),
       }).where(eq(rolesTable.id, role.id));
       await tx.delete(roleSkillsTable).where(eq(roleSkillsTable.roleId, role.id));
       // App titles can be narrower than the .00 occupation. The editorial scope
       // selects relevant tools, but every retained link must exist in O*NET.
-      const focus = ROLES.find(r => r.title === role.title)?.skills.map(([name]) => name) ?? [];
+      const focus = ROLES.find(r => r.title === role.title)?.skills.map(([name]) => name) ?? [...teachable];
       const specific = [...taskSkills(tasks, code, focus), ...softwareSkills(software, code, focus)];
       const domain = knowledge.filter(r => r["O*NET-SOC Code"] === code && r["Scale ID"] === "IM" && r["Recommend Suppress"] !== "Y" && Number(r["Data Value"]) >= 3)
         .sort((a,b) => Number(b["Data Value"]) - Number(a["Data Value"])).slice(0, 5);
@@ -95,7 +116,7 @@ export async function ingestOnet() {
       count++;
     }
     if (!count) throw new Error("No compatible O*NET occupations");
-    await tx.insert(marketSourcesTable).values({ id: "onet", status: "ok", version: IMPORT_VERSION, dataDate: "2026-08", lastFetchedAt: new Date(), recordCount: count, error: null })
-      .onConflictDoUpdate({ target: marketSourcesTable.id, set: { status: "ok", version: IMPORT_VERSION, dataDate: "2026-08", lastFetchedAt: new Date(), recordCount: count, error: null } });
+    await tx.insert(marketSourcesTable).values({ id: "onet", status: "ok", version: importVersion, dataDate: version===ONET_VERSION?"2026-08":null, lastFetchedAt: new Date(), recordCount: count, error: null })
+      .onConflictDoUpdate({ target: marketSourcesTable.id, set: { status: "ok", version: importVersion, dataDate: version===ONET_VERSION?"2026-08":null, lastFetchedAt: new Date(), recordCount: count, error: null } });
   });
 }

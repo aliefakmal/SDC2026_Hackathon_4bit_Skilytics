@@ -77,7 +77,7 @@ function useNav(): NavSet {
         match: (l) => l === "/tvet",
       },
       { href: "/tvet/students", label: "nav.students", icon: GraduationCap },
-      { href: "/tvet/programmes", label: "nav.programmes", icon: School },
+      { href: "/tvet/courses", label: "nav.courses", icon: BookOpen },
       { href: "/tvet/market", label: "nav.gradMarket", icon: BarChart3 },
     ];
     const more: Item[] = [

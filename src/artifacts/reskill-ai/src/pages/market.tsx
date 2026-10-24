@@ -1,3 +1,7 @@
+import { InstitutionFuture } from "@/components/institution-portal";
+import { AiRoutingPanel } from "@/components/ai-routing-panel";
+import {SourceAccess,SourceAccessAudit,auditedSourceDescription} from "@/components/source-access";
+import { MarketExplore } from "@/components/market-skills";
 import { CompanyFuture } from "@/components/company-future";
 import { PageGuide, guides, guideSteps } from "@/components/page-guide";
 import { useEffect, useMemo, useState } from "react";
@@ -190,7 +194,7 @@ function PairBars({
 
 export function Market() {
   const { user } = useAuth();
-  if (!user || user.role === "individual") return <MarketOutlook />;
+  if (!user || user.role === "individual") return <MarketExplore />;
   if (user.role === "hr") return <CompanyFuture/>;
   return <ObservedMarket />;
 }
@@ -379,7 +383,8 @@ function ObservedMarket() {
   );
 }
 
-export function TvetMarket() {
+export function TvetMarket() {return <InstitutionFuture/>;}
+function LegacyTvetMarket() {
   const { t, tk, lang } = useT();
   const f = useFmt();
   const ov = useGetMarketOverview({
@@ -702,6 +707,7 @@ export function Sources() {
           {t("sources.coldStart")} {t("docs.ai.cold")}
         </p>
       </Panel>
+      <SourceAccessAudit/>
       {src.isLoading ? (
         <Rows n={5} h="h-28" />
       ) : src.isError ? (
@@ -712,7 +718,7 @@ export function Sources() {
         <div className="space-y-6">
           {KINDS.map((k) => {
             const items = src.data!.filter((s) => s.kind === k);
-            if (!items.length) return null;
+            if (!items.length && k !== "catalogue") return null;
             const Icon = KIND_ICON[k];
             return (
               <section key={k}>
@@ -723,6 +729,7 @@ export function Sources() {
                     ({items.length})
                   </span>
                 </h2>
+                {k === "ai_endpoint" && <AiRoutingPanel/>}
                 <div className="grid gap-3 lg:grid-cols-2">
                   {items.map((s) => {
                     const name = tk("src", `${s.id}.name`);
@@ -748,11 +755,12 @@ export function Sources() {
                               <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                             </a>
                             <p className="mt-0.5 text-xs text-muted-foreground">
-                              {desc === `${s.id}.desc` ? s.description : desc}
+                              {desc === `${s.id}.desc` ? auditedSourceDescription(s.id,lang)??s.description : desc}
                             </p>
                           </div>
                           <StatusPill s={s.status} />
                         </div>
+                        <SourceAccess id={s.id}/>
                         <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs sm:grid-cols-4">
                           <div>
                             <dt className="text-muted-foreground">

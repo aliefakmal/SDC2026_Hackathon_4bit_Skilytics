@@ -387,7 +387,7 @@ export function RoleDetail() {
   );
 }
 
-export function Courses({ hr }: { hr?: boolean }) {
+export function Courses({ hr, hideHeader=false }: { hr?: boolean;hideHeader?: boolean }) {
   const { t, tk, lang } = useT();
   const f = useFmt();
   const [provider, setProvider] = useState("all");
@@ -408,7 +408,7 @@ export function Courses({ hr }: { hr?: boolean }) {
     );
   return (
     <>
-      <PageHeader
+      {!hideHeader && <PageHeader
         help={
           <PageGuide
             title={guides[lang].title}
@@ -417,7 +417,7 @@ export function Courses({ hr }: { hr?: boolean }) {
         }
         title={hr ? t("courses.hrTitle") : t("courses.title")}
         sub={t("courses.sub")}
-      />
+      />}
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <Select value={provider} onValueChange={setProvider}>
           <SelectTrigger

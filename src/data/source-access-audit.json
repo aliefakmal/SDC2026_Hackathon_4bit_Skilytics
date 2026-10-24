@@ -1,0 +1,452 @@
+{
+  "reviewedAt": "2026-10-23T22:53:34.278Z",
+  "method": "Code inventory + official publisher documentation + unauthenticated public URL probe. HTTP result describes the checked URL only, not every API operation or a legal certification. Service probes check public documentation only.",
+  "candidates": {
+    "directory": "https://github.com/public-apis/public-apis#jobs",
+    "selected": "RemoteOK",
+    "notSelected": [
+      "Adzuna, Jooble, Reed, USAJOBS, Findwork: API key required",
+      "Upwork, Arbeitsamt: OAuth required",
+      "Arbeitnow, DevITjobs UK: predominantly Europe/UK; not treated as Malaysian vacancies"
+    ]
+  },
+  "rows": [
+    {
+      "id": "himalayas_jobs",
+      "name": "Himalayas",
+      "category": "catalogue",
+      "access": "jobs",
+      "note": {
+        "en": "Public keyless vacancy API. Preserve attribution, original application links and location/expiry restrictions. Public access is not unrestricted redistribution permission.",
+        "ms": "API vacancy awam tanpa kunci. Kekalkan atribusi, pautan permohonan asal serta had lokasi/tarikh luput. Akses awam bukan izin pengedaran semula tanpa had.",
+        "zh": "无需密钥的公开招聘API。保留来源、原申请链接、地点及到期限制。公开访问不代表可无限制再分发。"
+      },
+      "licence": "Himalayas API terms: original applicationLink, attribution, remove expired jobs; no onward syndication",
+      "documentation": "https://himalayas.app/api",
+      "checkedAt": "2026-10-23T22:53:18.402Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://himalayas.app/api",
+        "error": null
+      }
+    },
+    {
+      "id": "remotive_jobs",
+      "name": "Remotive",
+      "category": "catalogue",
+      "access": "jobs",
+      "note": {
+        "en": "Public keyless vacancy API. Preserve attribution, original application links and location/expiry restrictions. Public access is not unrestricted redistribution permission.",
+        "ms": "API vacancy awam tanpa kunci. Kekalkan atribusi, pautan permohonan asal serta had lokasi/tarikh luput. Akses awam bukan izin pengedaran semula tanpa had.",
+        "zh": "无需密钥的公开招聘API。保留来源、原申请链接、地点及到期限制。公开访问不代表可无限制再分发。"
+      },
+      "licence": "Remotive API terms: attribution and original link; 24h delay; no onward syndication; cache daily",
+      "documentation": "https://github.com/remotive-com/remote-jobs-api",
+      "checkedAt": "2026-10-23T22:53:19.038Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://github.com/remotive-com/remote-jobs-api",
+        "error": null
+      }
+    },
+    {
+      "id": "remoteok_jobs",
+      "name": "RemoteOK",
+      "category": "catalogue",
+      "access": "jobs",
+      "note": {
+        "en": "Public keyless vacancy API. Preserve attribution, original application links and location/expiry restrictions. Public access is not unrestricted redistribution permission.",
+        "ms": "API vacancy awam tanpa kunci. Kekalkan atribusi, pautan permohonan asal serta had lokasi/tarikh luput. Akses awam bukan izin pengedaran semula tanpa had.",
+        "zh": "无需密钥的公开招聘API。保留来源、原申请链接、地点及到期限制。公开访问不代表可无限制再分发。"
+      },
+      "licence": "RemoteOK API notice: follow link and attribution; no logo without permission",
+      "documentation": "https://remoteok.com/api",
+      "checkedAt": "2026-10-23T22:53:20.154Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://remoteok.com/api",
+        "error": null
+      }
+    },
+    {
+      "id": "dosm_jmi_skills",
+      "name": "DOSM JMI Q4 2025 · selected occupation snapshot",
+      "category": "dataset",
+      "access": "reference",
+      "note": {
+        "en": "Public reference material. Respect publisher rights; app mappings are editorial, not measured outcomes.",
+        "ms": "Bahan rujukan awam. Hormati hak penerbit; pemetaan aplikasi bersifat editorial, bukan hasil terukur.",
+        "zh": "公开参考资料。遵守发布者权利；应用映射由编辑制定，并非实测结果。"
+      },
+      "licence": "Publisher terms apply; public availability alone does not establish an open-content licence",
+      "documentation": "https://www.dosm.gov.my/uploads/release-content/file_20260525094010.pdf",
+      "checkedAt": "2026-10-23T22:53:20.328Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://www.dosm.gov.my/uploads/release-content/file_20260525094010.pdf",
+        "error": null
+      }
+    },
+    {
+      "id": "onet_interest_profiler",
+      "name": "Holland / O*NET Interest Profiler",
+      "category": "dataset",
+      "access": "reference",
+      "note": {
+        "en": "Public reference material. Respect publisher rights; app mappings are editorial, not measured outcomes.",
+        "ms": "Bahan rujukan awam. Hormati hak penerbit; pemetaan aplikasi bersifat editorial, bukan hasil terukur.",
+        "zh": "公开参考资料。遵守发布者权利；应用映射由编辑制定，并非实测结果。"
+      },
+      "licence": "O*NET Tools Developer License · adapted items, not validated Mini-IP",
+      "documentation": "https://www.onetcenter.org/dl_files/Mini-IP.pdf",
+      "checkedAt": "2026-10-23T22:53:21.865Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://www.onetcenter.org/dl_files/Mini-IP.pdf",
+        "error": null
+      }
+    },
+    {
+      "id": "onet_content_model",
+      "name": "O*NET Content Model · CV skill references",
+      "category": "dataset",
+      "access": "reference",
+      "note": {
+        "en": "Public reference material. Respect publisher rights; app mappings are editorial, not measured outcomes.",
+        "ms": "Bahan rujukan awam. Hormati hak penerbit; pemetaan aplikasi bersifat editorial, bukan hasil terukur.",
+        "zh": "公开参考资料。遵守发布者权利；应用映射由编辑制定，并非实测结果。"
+      },
+      "licence": "O*NET attribution; app reference subset",
+      "documentation": "https://www.onetcenter.org/content.html",
+      "checkedAt": "2026-10-23T22:53:23.077Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://www.onetcenter.org/content.html",
+        "error": null
+      }
+    },
+    {
+      "id": "openlearn_catalogue",
+      "name": "OpenLearn · reviewed public courses",
+      "category": "catalogue",
+      "access": "metadata",
+      "note": {
+        "en": "Public metadata without an API key. This is not a blanket open-content licence. Learning accounts, tools, credentials or exams may require payment or sign-in.",
+        "ms": "Metadata awam tanpa kunci API. Ini bukan lesen kandungan terbuka menyeluruh. Akaun belajar, alat, sijil atau peperiksaan mungkin memerlukan bayaran atau log masuk.",
+        "zh": "无需密钥的公开元数据，不代表全部内容均为开放许可。学习账号、工具、证书或考试可能收费或需要登录。"
+      },
+      "licence": "OpenLearn content-specific licence; only selected metadata ingested",
+      "documentation": "https://www.open.edu/openlearn/",
+      "checkedAt": "2026-10-23T22:53:23.206Z",
+      "probe": {
+        "status": 403,
+        "finalUrl": "https://www.open.edu/openlearn/",
+        "error": null
+      }
+    },
+    {
+      "id": "sdg_framework",
+      "name": "United Nations · Sustainable Development Goals",
+      "category": "dataset",
+      "access": "reference",
+      "note": {
+        "en": "Public reference material. Respect publisher rights; app mappings are editorial, not measured outcomes.",
+        "ms": "Bahan rujukan awam. Hormati hak penerbit; pemetaan aplikasi bersifat editorial, bukan hasil terukur.",
+        "zh": "公开参考资料。遵守发布者权利；应用映射由编辑制定，并非实测结果。"
+      },
+      "licence": "Publisher terms apply; public availability alone does not establish an open-content licence",
+      "documentation": "https://sdgs.un.org/goals",
+      "checkedAt": "2026-10-23T22:53:23.562Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://sdgs.un.org/goals",
+        "error": null
+      }
+    },
+    {
+      "id": "hubspot_catalogue",
+      "name": "HubSpot Academy · public course catalogue",
+      "category": "catalogue",
+      "access": "metadata",
+      "note": {
+        "en": "Public metadata without an API key. This is not a blanket open-content licence. Learning accounts, tools, credentials or exams may require payment or sign-in.",
+        "ms": "Metadata awam tanpa kunci API. Ini bukan lesen kandungan terbuka menyeluruh. Akaun belajar, alat, sijil atau peperiksaan mungkin memerlukan bayaran atau log masuk.",
+        "zh": "无需密钥的公开元数据，不代表全部内容均为开放许可。学习账号、工具、证书或考试可能收费或需要登录。"
+      },
+      "licence": "Publisher terms apply; public availability alone does not establish an open-content licence",
+      "documentation": "https://academy.hubspot.com/courses",
+      "checkedAt": "2026-10-23T22:53:23.921Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://academy.hubspot.com/courses",
+        "error": null
+      }
+    },
+    {
+      "id": "gdelt_career_news",
+      "name": "GDELT · career news API",
+      "category": "dataset",
+      "access": "news",
+      "note": {
+        "en": "Public news metadata only, not full articles. Publisher copyright still applies; a rate-limit or timeout does not imply authentication is required.",
+        "ms": "Metadata berita awam sahaja, bukan artikel penuh. Hak cipta penerbit kekal; had kadar atau timeout tidak bermakna auth diperlukan.",
+        "zh": "仅使用公开新闻元数据，不包含全文。发布者版权仍适用；限流或超时不表示必须认证。"
+      },
+      "licence": "Publisher terms apply; public availability alone does not establish an open-content licence",
+      "documentation": "https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/",
+      "checkedAt": "2026-10-23T22:53:24.270Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/",
+        "error": null
+      }
+    },
+    {
+      "id": "career_news_rss",
+      "name": "Google News · public career RSS",
+      "category": "dataset",
+      "access": "news",
+      "note": {
+        "en": "Public news metadata only, not full articles. Publisher copyright still applies; a rate-limit or timeout does not imply authentication is required.",
+        "ms": "Metadata berita awam sahaja, bukan artikel penuh. Hak cipta penerbit kekal; had kadar atau timeout tidak bermakna auth diperlukan.",
+        "zh": "仅使用公开新闻元数据，不包含全文。发布者版权仍适用；限流或超时不表示必须认证。"
+      },
+      "licence": "Publisher terms apply; public availability alone does not establish an open-content licence",
+      "documentation": "https://news.google.com/rss/search?q=%28upskilling+OR+reskilling+OR+%22workforce+skills%22+OR+%22AI+workplace%22+OR+%22hiring+demand%22%29+Malaysia+when%3A30d&hl=en-MY&gl=MY&ceid=MY%3Aen",
+      "checkedAt": "2026-10-23T22:53:24.672Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://news.google.com/rss/search?q=%28upskilling+OR+reskilling+OR+%22workforce+skills%22+OR+%22AI+workplace%22+OR+%22hiring+demand%22%29+Malaysia+when%3A30d&hl=en-MY&gl=MY&ceid=MY%3Aen",
+        "error": null
+      }
+    },
+    {
+      "id": "bls_projections",
+      "name": "BLS occupational projections · reviewed public snapshot",
+      "category": "dataset",
+      "access": "reference",
+      "note": {
+        "en": "Public reference material. Respect publisher rights; app mappings are editorial, not measured outcomes.",
+        "ms": "Bahan rujukan awam. Hormati hak penerbit; pemetaan aplikasi bersifat editorial, bukan hasil terukur.",
+        "zh": "公开参考资料。遵守发布者权利；应用映射由编辑制定，并非实测结果。"
+      },
+      "licence": "US BLS public data; reviewed US snapshot",
+      "documentation": "https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm",
+      "checkedAt": "2026-10-23T22:53:25.095Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://www.bls.gov/emp/tables/occupational-projections-and-characteristics.htm",
+        "error": null
+      }
+    },
+    {
+      "id": "onet",
+      "name": "O*NET occupation references",
+      "category": "catalogue",
+      "access": "open",
+      "note": {
+        "en": "Public downloadable data; no API key. Keep attribution and the publisher's release licence.",
+        "ms": "Data awam boleh dimuat turun tanpa kunci API. Kekalkan atribusi dan lesen keluaran penerbit.",
+        "zh": "公开可下载数据，无需密钥；保留署名并遵守发布版本的许可。"
+      },
+      "licence": "O*NET Database · CC BY 4.0",
+      "documentation": "https://www.onetcenter.org/database.html",
+      "checkedAt": "2026-10-23T22:53:28.159Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://www.onetcenter.org/database.html",
+        "error": null
+      }
+    },
+    {
+      "id": "dosm_lfs_month",
+      "name": "DOSM Labour Force Survey (monthly)",
+      "category": "dataset",
+      "access": "open",
+      "note": {
+        "en": "Public downloadable data; no API key. Keep attribution and the publisher's release licence.",
+        "ms": "Data awam boleh dimuat turun tanpa kunci API. Kekalkan atribusi dan lesen keluaran penerbit.",
+        "zh": "公开可下载数据，无需密钥；保留署名并遵守发布版本的许可。"
+      },
+      "licence": "data.gov.my publisher licence and attribution",
+      "documentation": "https://data.gov.my/data-catalogue/lfs_month",
+      "checkedAt": "2026-10-23T22:53:28.534Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://data.gov.my/data-catalogue/lfs_month",
+        "error": null
+      }
+    },
+    {
+      "id": "aei_usage",
+      "name": "Anthropic Economic Index: AI usage by occupation",
+      "category": "dataset",
+      "access": "open",
+      "note": {
+        "en": "Public downloadable data; no API key. Keep attribution and the publisher's release licence.",
+        "ms": "Data awam boleh dimuat turun tanpa kunci API. Kekalkan atribusi dan lesen keluaran penerbit.",
+        "zh": "公开可下载数据，无需密钥；保留署名并遵守发布版本的许可。"
+      },
+      "licence": "Hugging Face dataset card/release licence (currently MIT); retain attribution",
+      "documentation": "https://huggingface.co/datasets/Anthropic/EconomicIndex",
+      "checkedAt": "2026-10-23T22:53:28.889Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://huggingface.co/datasets/Anthropic/EconomicIndex",
+        "error": null
+      }
+    },
+    {
+      "id": "aei_exposure",
+      "name": "Anthropic Economic Index: observed AI exposure",
+      "category": "dataset",
+      "access": "open",
+      "note": {
+        "en": "Public downloadable data; no API key. Keep attribution and the publisher's release licence.",
+        "ms": "Data awam boleh dimuat turun tanpa kunci API. Kekalkan atribusi dan lesen keluaran penerbit.",
+        "zh": "公开可下载数据，无需密钥；保留署名并遵守发布版本的许可。"
+      },
+      "licence": "Hugging Face dataset card/release licence (currently MIT); retain attribution",
+      "documentation": "https://huggingface.co/datasets/Anthropic/EconomicIndex/tree/main/labor_market_impacts",
+      "checkedAt": "2026-10-23T22:53:29.459Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://huggingface.co/datasets/Anthropic/EconomicIndex/tree/main/labor_market_impacts",
+        "error": null
+      }
+    },
+    {
+      "id": "course_catalogue",
+      "name": "Microsoft Learn live catalogue",
+      "category": "catalogue",
+      "access": "metadata",
+      "note": {
+        "en": "The legacy Learn catalogue URL used by this app was tested without credentials. The newer Microsoft Learn Platform API requires authenticated onboarding; it is a different interface. Public course metadata does not make exams, tools or course content unrestricted.",
+        "ms": "URL katalog Learn legasi yang digunakan aplikasi diuji tanpa kelayakan. Microsoft Learn Platform API yang baharu memerlukan onboarding dengan auth; ia antara muka berbeza. Metadata kursus awam tidak bermakna peperiksaan, alat atau kandungan boleh digunakan tanpa sekatan.",
+        "zh": "本应用使用的旧版Learn目录URL已无凭证测试。新版Microsoft Learn Platform API需要认证注册，两者是不同接口。公开课程元数据不代表考试、工具及内容可无限制使用。"
+      },
+      "licence": "Microsoft API/content terms; legacy public catalogue distinct from authenticated Learn Platform API",
+      "documentation": "https://learn.microsoft.com/api/catalog/?locale=en-us&type=learningPaths",
+      "checkedAt": "2026-10-23T22:53:29.648Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://learn.microsoft.com/api/catalog/?locale=en-us&type=learningPaths",
+        "error": null
+      }
+    },
+    {
+      "id": "freecodecamp_catalogue",
+      "name": "freeCodeCamp public curriculum",
+      "category": "catalogue",
+      "access": "open",
+      "note": {
+        "en": "Public downloadable data; no API key. Keep attribution and the publisher's release licence.",
+        "ms": "Data awam boleh dimuat turun tanpa kunci API. Kekalkan atribusi dan lesen keluaran penerbit.",
+        "zh": "公开可下载数据，无需密钥；保留署名并遵守发布版本的许可。"
+      },
+      "licence": "Repository licence applies to metadata; curriculum has separate content terms",
+      "documentation": "https://github.com/freeCodeCamp/freeCodeCamp/blob/main/curriculum/structure/curriculum.json",
+      "checkedAt": "2026-10-23T22:53:30.227Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://github.com/freeCodeCamp/freeCodeCamp/blob/main/curriculum/structure/curriculum.json",
+        "error": null
+      }
+    },
+    {
+      "id": "githubskills_catalogue",
+      "name": "GitHub Skills public exercises",
+      "category": "catalogue",
+      "access": "open",
+      "note": {
+        "en": "Public downloadable data; no API key. Keep attribution and the publisher's release licence.",
+        "ms": "Data awam boleh dimuat turun tanpa kunci API. Kekalkan atribusi dan lesen keluaran penerbit.",
+        "zh": "公开可下载数据，无需密钥；保留署名并遵守发布版本的许可。"
+      },
+      "licence": "Each exercise repository's own licence",
+      "documentation": "https://api.github.com/orgs/skills/repos?per_page=100&type=public",
+      "checkedAt": "2026-10-23T22:53:31.177Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://api.github.com/orgs/skills/repos?per_page=100&type=public",
+        "error": null
+      }
+    },
+    {
+      "id": "huggingface_catalogue",
+      "name": "Hugging Face Learn",
+      "category": "catalogue",
+      "access": "metadata",
+      "note": {
+        "en": "Public metadata without an API key. This is not a blanket open-content licence. Learning accounts, tools, credentials or exams may require payment or sign-in.",
+        "ms": "Metadata awam tanpa kunci API. Ini bukan lesen kandungan terbuka menyeluruh. Akaun belajar, alat, sijil atau peperiksaan mungkin memerlukan bayaran atau log masuk.",
+        "zh": "无需密钥的公开元数据，不代表全部内容均为开放许可。学习账号、工具、证书或考试可能收费或需要登录。"
+      },
+      "licence": "Publisher terms apply; public availability alone does not establish an open-content licence",
+      "documentation": "https://huggingface.co/learn",
+      "checkedAt": "2026-10-23T22:53:31.487Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://huggingface.co/learn",
+        "error": null
+      }
+    },
+    {
+      "id": "gemini",
+      "name": "Google Gemini API",
+      "category": "ai_endpoint",
+      "access": "service",
+      "note": {
+        "en": "Authenticated AI service, not a public dataset. API key, provider limits and possible costs apply. No keys appear in this audit.",
+        "ms": "Perkhidmatan AI dengan auth, bukan dataset awam. Memerlukan kunci API, tertakluk kepada had dan kemungkinan kos. Audit ini tidak memaparkan kunci.",
+        "zh": "需要认证的AI服务，不是公开数据集。需要密钥，可能有配额和费用。本审核不显示密钥。"
+      },
+      "licence": "Publisher terms apply; public availability alone does not establish an open-content licence",
+      "documentation": "https://ai.google.dev/gemini-api/docs/models",
+      "checkedAt": "2026-10-23T22:53:32.581Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://ai.google.dev/gemini-api/docs/models",
+        "error": null
+      }
+    },
+    {
+      "id": "runpod_main",
+      "name": "RunPod main model endpoint",
+      "category": "ai_endpoint",
+      "access": "disabled",
+      "note": {
+        "en": "Disabled authenticated AI placeholder, not a public dataset. Enabling it requires private credentials and may incur costs.",
+        "ms": "Placeholder AI ber-auth yang dimatikan, bukan dataset awam. Pengaktifan memerlukan kelayakan peribadi dan mungkin berkos.",
+        "zh": "已禁用的认证AI预留服务，不是公开数据集。启用需要私有凭证并可能产生费用。"
+      },
+      "licence": "Publisher terms apply; public availability alone does not establish an open-content licence",
+      "documentation": "https://www.runpod.io/console/serverless",
+      "checkedAt": "2026-10-23T22:53:33.590Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://console.runpod.io/serverless",
+        "error": null
+      }
+    },
+    {
+      "id": "runpod_light",
+      "name": "RunPod light model endpoint",
+      "category": "ai_endpoint",
+      "access": "disabled",
+      "note": {
+        "en": "Disabled authenticated AI placeholder, not a public dataset. Enabling it requires private credentials and may incur costs.",
+        "ms": "Placeholder AI ber-auth yang dimatikan, bukan dataset awam. Pengaktifan memerlukan kelayakan peribadi dan mungkin berkos.",
+        "zh": "已禁用的认证AI预留服务，不是公开数据集。启用需要私有凭证并可能产生费用。"
+      },
+      "licence": "Publisher terms apply; public availability alone does not establish an open-content licence",
+      "documentation": "https://www.runpod.io/console/serverless",
+      "checkedAt": "2026-10-23T22:53:34.278Z",
+      "probe": {
+        "status": 200,
+        "finalUrl": "https://console.runpod.io/serverless",
+        "error": null
+      }
+    }
+  ]
+}

@@ -20,13 +20,19 @@
   padding: 28px 52px 24px;
 }
 .certificate-brand {
-  display: flex;
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: center;
   gap: 12px;
   color: #7a1523;
-  font-size: 30px;
+  font-size: 32px;
   font-weight: 700;
-  margin-bottom: 15px;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-top: 16px;
+  margin-bottom: 18px;
 }
 .certificate-sheet h2 {
   font-family: Georgia, "Microsoft YaHei", serif;
@@ -97,3 +103,4 @@
   line-height: 1.6;
   margin: 18px 0 0;
 }
+

@@ -103,8 +103,8 @@ export function PageHeader({
   help?: ReactNode;
 }) {
   return (
-    <header className={cn("rise mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between",help && "md:flex-col md:items-stretch")}>
-      <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+    <header className={cn("rise relative mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between",help && "md:flex-col md:items-stretch")}>
+      <div className={cn("flex min-w-0 flex-1 items-start justify-between gap-3",help && "pr-16")}>
         <div className="min-w-0">
           {eyebrow && (
             <div className="mb-1 truncate whitespace-nowrap text-xs font-semibold uppercase tracking-[0.12em] text-accent">
@@ -121,10 +121,10 @@ export function PageHeader({
             <div className="mt-1 text-sm text-muted-foreground">{sub}</div>
           )}
         </div>
-        {help}
       </div>
+      {help && <div className="absolute right-0 top-0">{help}</div>}
       {actions && (
-        <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>
+        <div className={cn("flex shrink-0 flex-wrap gap-2",help && "justify-end")}>{actions}</div>
       )}
     </header>
   );

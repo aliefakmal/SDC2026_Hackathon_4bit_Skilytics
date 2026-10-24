@@ -1,6 +1,10 @@
 // Data Sources documentation strings. URLs, dataset field names, file names and official
 // English titles are reference identifiers and are intentionally kept verbatim.
 export const docsEn = {
+  "docs.tvet.synthetic": "TVET synthetic graduate outcomes and institution requirements",
+  "docs.tvet.coverage": "Fictional aggregate outcomes for 2024–2026, nine programme/year rows. This reference template is shown for demonstration, not as the signed-in institution’s actual employment performance. Real student learning records remain separate.",
+  "docs.tvet.method": "Employment = employed within six months / all graduates. Further study is excluded from employment; unknown outcomes remain in the denominator. The 1–10-year scenario adds an assumed 2 percentage points each year, capped at 100%. The original src JSON is copied unchanged to the public download and root synthetic data folder, alongside the three fictional demo CVs.",
+  "docs.tvet.policy": "Institution-required courses are saved within the TVET organisation. New and rebuilt pathways include compulsory and personalised learning. Added requirements extend unfinished timelines while preserving check-ins and dates; completed pathways retain their awards. Unknown duration courses cannot be required. Costs remain in each student’s budget; there is no HRD feature in TVET. The Analyst and Advisor routes are reused for Grads Future, with synthetic inputs explicitly identified.",
   "docs.live.staticNote": "Bundled reference reviewed by the app. Refresh does not download a new version.",
   "docs.live.staticTitle": "Reference snapshot",
   "docs.live.checked": "Last checked",
@@ -108,7 +112,7 @@ export const docsEn = {
   "docs.ai.cold": "RunPod generation and health checks are disabled during Gemini-only testing. Enabling hybrid routing and generation may wake a paid worker.",
   "docs.ai.ids": "Endpoint IDs are not public secrets. API keys are never shown.",
   "docs.ai.configured": "Provider, model and health come from the live AI status. If the API key is missing, the service shows as not configured.",
-  "docs.ai.privacy": "With your consent, CV text and images go to Gemini. All seven agents use Gemini during testing; RunPod is a disabled placeholder. Original files are discarded; extracted text and evidence stay with your profile. Guest profiles are kept for 7 days. Employer employee summaries combine saved CV facts and fixed Holland results into English, Malay and Mandarin in one request, stored by input fingerprint. Company Future uses organisation-scoped learning and exposure data; its AI button caches the three-language analysis for each input and horizon. KPI targets are suggestions, not measured outcomes.",
+  "docs.ai.privacy": "With your consent, CV text and images go to Gemini. All eight routed AI roles use Gemini during testing; RunPod is a disabled placeholder. Original files are discarded; extracted text and evidence stay with your profile. Guest profiles are kept for 7 days. Employer employee summaries combine saved CV facts and fixed Holland results into English, Malay and Mandarin in one request, stored by input fingerprint. Company Future uses organisation-scoped learning and exposure data; its AI button caches the three-language analysis for each input and horizon. KPI targets are suggestions, not measured outcomes. Company/Institution Advisor retrieves this account’s organisation snapshot, saved analysis, up to six recent conversation turns and relevant catalogue references. Answers and references are saved in all three languages. A changed horizon or company snapshot requires a fresh analysis; it cannot take autonomous actions.",
 
   "docs.riasec.items": "30 workplace activities adapted from O*NET Interest Profiler domains, with English, Malay and Mandarin wording. Five items per RIASEC area; response scale 1–5. This adaptation is not the validated Mini-IP.",
   "docs.riasec.scoring": "All 30 unique answers are required by the API and both assessment screens. Each area uses the average of its five answers, rounded to two decimals. Ties follow R, I, A, S, E, C.",
@@ -132,6 +136,10 @@ export const docsEn = {
 export type DocsKey = keyof typeof docsEn;
 
 export const docsMs: Record<DocsKey, string> = {
+  "docs.tvet.synthetic": "Hasil graduan sintetik TVET dan keperluan institusi",
+  "docs.tvet.coverage": "Hasil agregat rekaan 2024–2026, sembilan baris program/tahun. Templat rujukan ini untuk demo, bukan prestasi pekerjaan sebenar institusi yang log masuk. Rekod pembelajaran pelajar sebenar kekal berasingan.",
+  "docs.tvet.method": "Pekerjaan = bekerja dalam enam bulan / semua graduan. Pengajian lanjut tidak dikira bekerja; hasil tidak diketahui kekal dalam pembahagi. Senario 1–10 tahun menambah andaian 2 mata peratus setahun, sehingga 100%. JSON asal src disalin tanpa perubahan ke muat turun awam dan folder synthetic data di root bersama tiga demo CV rekaan.",
+  "docs.tvet.policy": "Kursus wajib disimpan dalam organisasi TVET. Pathway baharu dan dibina semula merangkumi pembelajaran wajib dan peribadi. Keperluan tambahan memanjangkan timeline belum lengkap sambil mengekalkan kemajuan dan tarikh; pathway lengkap mengekalkan sijil. Kursus tanpa tempoh diterbitkan tidak boleh diwajibkan. Kos termasuk dalam bajet pelajar; tiada HRD dalam TVET. Laluan Analyst dan Advisor digunakan semula untuk Grads Future dengan input sintetik berlabel.",
   "docs.live.staticNote": "Rujukan disertakan dan disemak aplikasi. Refresh tidak memuat turun versi baharu.",
   "docs.live.staticTitle": "Snapshot rujukan",
   "docs.live.checked": "Semakan terakhir",
@@ -239,7 +247,7 @@ export const docsMs: Record<DocsKey, string> = {
   "docs.ai.cold": "Penjanaan dan semakan kesihatan RunPod dimatikan semasa ujian Gemini sahaja. Mengaktifkan laluan hibrid dan penjanaan mungkin membangunkan pekerja berbayar.",
   "docs.ai.ids": "ID titik akhir bukan rahsia awam. Kunci API tidak pernah ditunjukkan.",
   "docs.ai.configured": "Penyedia, model dan kesihatan datang daripada status AI langsung. Jika kunci API tiada, perkhidmatan ditunjukkan sebagai belum dikonfigurasi.",
-  "docs.ai.privacy": "Dengan persetujuan anda, teks dan imej CV dihantar kepada Gemini. Ketujuh-tujuh ejen menggunakan Gemini semasa ujian; RunPod ialah placeholder yang dimatikan. Fail asal dibuang; teks dan bukti disimpan bersama profil. Profil tetamu disimpan selama 7 hari. Ringkasan pekerja mengaitkan CV dan keputusan Holland tetap, menjana dan menyimpan tiga bahasa dalam satu permintaan. Company Future menggunakan data syarikat sendiri; analisis AI disimpan mengikut input dan tempoh. Sasaran KPI ialah cadangan, bukan hasil terukur.",
+  "docs.ai.privacy": "Dengan persetujuan anda, teks dan imej CV dihantar kepada Gemini. Lapan peranan AI menggunakan Gemini semasa ujian; RunPod ialah placeholder yang dimatikan. Fail asal dibuang; teks dan bukti disimpan bersama profil. Profil tetamu disimpan selama 7 hari. Ringkasan pekerja mengaitkan CV dan keputusan Holland tetap, menjana dan menyimpan tiga bahasa dalam satu permintaan. Company Future menggunakan data syarikat sendiri; analisis AI disimpan mengikut input dan tempoh. Sasaran KPI ialah cadangan, bukan hasil terukur. Penasihat Syarikat/Institusi merujuk snapshot organisasi akaun ini, analisis disimpan, sehingga enam giliran chat terkini dan rujukan kursus berkaitan. Jawapan dan rujukan disimpan dalam tiga bahasa. Perubahan tahun atau data syarikat memerlukan analisis baharu; AI ini tidak mengambil tindakan sendiri.",
 
   "docs.riasec.items": "30 aktiviti kerja diadaptasi daripada domain O*NET Interest Profiler dalam English, Bahasa Melayu dan Mandarin. Lima item bagi setiap kategori RIASEC; skala jawapan 1–5. Adaptasi ini bukan Mini-IP yang telah divalidasi.",
   "docs.riasec.scoring": "Semua 30 jawapan unik diwajibkan oleh API dan kedua-dua skrin ujian. Setiap kategori menggunakan purata lima jawapan, dibundarkan kepada dua perpuluhan. Seri mengikut susunan R, I, A, S, E, C.",
@@ -261,6 +269,10 @@ export const docsMs: Record<DocsKey, string> = {
 };
 
 export const docsZh: Record<DocsKey, string> = {
+  "docs.tvet.synthetic": "TVET合成毕业生结果及机构要求",
+  "docs.tvet.coverage": "2024–2026年的虚构汇总结果，共九条专业/年份记录。此参考模板用于演示，并非登录机构的实际就业表现。真实学生学习记录保持独立。",
+  "docs.tvet.method": "就业率为六个月内就业人数除以全部毕业生。继续升学不计入就业，未知结果仍计入分母。1–10年情景假设每年增加2个百分点，最高100%。src原JSON不变地复制至公开下载和根目录synthetic data文件夹，并附三份虚构演示简历。",
+  "docs.tvet.policy": "必修课程按TVET机构保存。新建或重建路径包括必修与个性化学习。新增要求延长未完成的时间线，保留进度与日期；已完成路径保留证书。未公布时长的课程不能设为必修，费用计入学生预算。TVET没有HRD功能。毕业生未来复用Analyst和Advisor路线，明确标注合成输入。",
   "docs.live.staticNote": "应用内置并审核的参考资料，刷新不会下载新版本。",
   "docs.live.staticTitle": "参考快照",
   "docs.live.checked": "最近检查",
@@ -368,7 +380,7 @@ export const docsZh: Record<DocsKey, string> = {
   "docs.ai.cold": "仅使用 Gemini 测试期间，RunPod 生成功能和健康检查均已关闭。启用混合路由与生成后，可能唤醒付费工作节点。",
   "docs.ai.ids": "接口 ID 不是公开机密。API 密钥从不显示。",
   "docs.ai.configured": "服务商、模型与健康状况来自实时 AI 状态。若缺少 API 密钥，服务会显示为未配置。",
-  "docs.ai.privacy": "经你同意，简历文字和图像发送至 Gemini。测试期间全部七个智能体使用 Gemini；RunPod 是已禁用的预留配置。原文件不保留，提取的文字和依据随档案保存；访客档案保留 7 天。员工摘要结合简历及固定霍兰德结果，一次生成并保存三种语言。公司未来分析仅使用所属公司的学习与暴露数据，按输入和年数缓存。KPI目标是建议，并非实测结果。",
+  "docs.ai.privacy": "经你同意，简历文字和图像发送至 Gemini。测试期间全部八个AI角色使用 Gemini；RunPod 是已禁用的预留配置。原文件不保留，提取的文字和依据随档案保存；访客档案保留 7 天。员工摘要结合简历及固定霍兰德结果，一次生成并保存三种语言。公司未来分析仅使用所属公司的学习与暴露数据，按输入和年数缓存。KPI目标是建议，并非实测结果。公司/机构顾问检索本账号的机构快照、已保存分析、最多六轮近期对话和相关课程资料，三语回答及参考资料一起保存。年份或公司数据更改后需要重新分析；它不会自主执行操作。",
 
   "docs.riasec.items": "根据 O*NET Interest Profiler 领域改编的 30 项工作活动，提供英语、马来语和中文。每个 RIASEC 领域五题，评分为 1–5。本改编版本并非已验证的 Mini-IP。",
   "docs.riasec.scoring": "API 及两个评估页面均要求回答全部 30 道不同题目。各领域取五题平均值，保留两位小数。平分时依次按 R、I、A、S、E、C 排序。",

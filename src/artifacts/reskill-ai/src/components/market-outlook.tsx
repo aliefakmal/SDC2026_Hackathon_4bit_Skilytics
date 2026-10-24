@@ -1,3 +1,4 @@
+import { ChangingValue, HorizonSlider } from "./projection-feedback";
 import { GuideButton } from "./page-guide";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -88,7 +89,15 @@ function Goals({ role }: { role: Candidate }) {
     </div>
   );
 }
-export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = {}) {
+export function MarketOutlook({
+  selectedMode,
+  hideGuide = false,
+  hideHeader = false,
+}: {
+  selectedMode?: "ai" | "demand";
+  hideGuide?: boolean;
+  hideHeader?: boolean;
+} = {}) {
   const { lang } = useT(),
     w = marketWords[lang];
   const qc = useQueryClient();
@@ -102,7 +111,9 @@ export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = 
   const [mode, setMode] = useState<"ai" | "demand">(
     search.get("view") === "demand" ? "demand" : "ai",
   );
-  useEffect(()=>{if(selectedMode)setMode(selectedMode);},[selectedMode]);
+  useEffect(() => {
+    if (selectedMode) setMode(selectedMode);
+  }, [selectedMode]);
   const [visible, setVisible] = useState(5);
   const [guide, setGuide] = useState(false),
     [step, setStep] = useState(0);
@@ -178,19 +189,23 @@ export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = 
   );
   return (
     <div className="space-y-5">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold sm:text-3xl">{w.title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{w.sub}</p>
-        </div>
-        <GuideButton
-          label={w.guide}
-          onClick={() => {
-            setStep(0);
-            setGuide(true);
-          }}
-        />
-      </header>
+      {!hideHeader && (
+        <header className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-extrabold sm:text-3xl">{w.title}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{w.sub}</p>
+          </div>
+          {!hideGuide && (
+            <GuideButton
+              label={w.guide}
+              onClick={() => {
+                setStep(0);
+                setGuide(true);
+              }}
+            />
+          )}
+        </header>
+      )}
       <section
         className="min-w-0 rounded-2xl border bg-card p-4 sm:p-6"
         aria-label={w.trend}
@@ -205,35 +220,14 @@ export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = 
             {w.scenario}
           </span>
         </div>
-        <div className="my-5 rounded-xl bg-background p-4">
-          <label
-            htmlFor="market-years"
-            className="flex items-center justify-between gap-3 text-sm font-semibold"
-          >
-            <span>{w.years}</span>
-            <output
-              htmlFor="market-years"
-              className="rounded-lg bg-primary px-3 py-1 text-primary-foreground"
-            >
-              +{horizon} {yearWord(horizon)} · {year}
-            </output>
-          </label>
-          <input
+        <div className="my-5">
+          <HorizonSlider
             id="market-years"
-            data-testid="market-year-slider"
-            type="range"
-            min={1}
-            max={10}
-            step={1}
-            value={horizon}
-            aria-valuetext={`${horizon} ${yearWord(horizon)}, ${year}`}
-            onChange={(e) => setHorizon(Number(e.target.value))}
-            className="mt-3 h-8 w-full cursor-pointer accent-primary"
+            years={horizon}
+            onChange={setHorizon}
+            baseYear={data?.baseYear}
+            label={w.years}
           />
-          <div className="flex justify-between text-[10px] text-muted-foreground">
-            <span>1 {yearWord(1)}</span>
-            <span>10 {w.year}</span>
-          </div>
         </div>
         {q.isLoading ? (
           <Rows n={1} h="h-52" />
@@ -317,7 +311,10 @@ export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = 
                   <span className="min-w-0 flex-1 break-words">
                     #{i + 1} {roleTitle(r, lang)}
                   </span>
-                  <b>{metric(r)}</b>
+                  <ChangingValue
+                    value={metric(r)}
+                    className="font-bold text-primary"
+                  />
                 </div>
               ))}
             </div>
@@ -343,7 +340,9 @@ export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = 
                         {roleTitle(r, lang)}
                       </th>
                       <td className="pr-2">{metric(r, 0)}</td>
-                      <td>{metric(r)}</td>
+                      <td>
+                        <ChangingValue value={metric(r)} />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -355,31 +354,33 @@ export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = 
           {mode === "ai" ? w.aiAssumption : w.demandAssumption}
         </p>
       </section>
-      {!selectedMode && <div
-        className="flex w-fit max-w-full rounded-xl bg-muted p-1"
-        role="tablist"
-        aria-label={w.title}
-      >
-        {(["ai", "demand"] as const).map((m) => (
-          <button
-            key={m}
-            role="tab"
-            aria-selected={mode === m}
-            onClick={() => {
-              setMode(m);
-              setVisible(5);
-            }}
-            className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-xs font-semibold sm:text-sm ${mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
-          >
-            {m === "ai" ? (
-              <Cpu className="h-4 w-4 shrink-0" />
-            ) : (
-              <TrendingUp className="h-4 w-4 shrink-0" />
-            )}
-            {w[m]}
-          </button>
-        ))}
-      </div>}
+      {!selectedMode && (
+        <div
+          className="flex w-fit max-w-full rounded-xl bg-muted p-1"
+          role="tablist"
+          aria-label={w.title}
+        >
+          {(["ai", "demand"] as const).map((m) => (
+            <button
+              key={m}
+              role="tab"
+              aria-selected={mode === m}
+              onClick={() => {
+                setMode(m);
+                setVisible(5);
+              }}
+              className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-xs font-semibold sm:text-sm ${mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+            >
+              {m === "ai" ? (
+                <Cpu className="h-4 w-4 shrink-0" />
+              ) : (
+                <TrendingUp className="h-4 w-4 shrink-0" />
+              )}
+              {w[m]}
+            </button>
+          ))}
+        </div>
+      )}
       {data && (
         <>
           <p className="text-xs font-semibold">
@@ -427,7 +428,7 @@ export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = 
                       className="mt-1 text-3xl font-extrabold tabular-nums text-primary"
                       data-testid={`market-value-${r.roleId}`}
                     >
-                      {metric(r)}
+                      <ChangingValue value={metric(r)} />
                     </p>
                     <p className="mt-2 border-t pt-2 text-[10px] text-muted-foreground">
                       {mode === "ai" ? w.exposure : w.growth}:{" "}
@@ -461,7 +462,7 @@ export function MarketOutlook({ selectedMode }: {selectedMode?:"ai"|"demand"} = 
                         {roleTitle(r, lang)}
                       </span>
                       <span className="shrink-0 text-base font-extrabold tabular-nums text-primary">
-                        {metric(r)}
+                        <ChangingValue value={metric(r)} />
                       </span>
                       <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
                       <span className="col-span-3 col-start-2">

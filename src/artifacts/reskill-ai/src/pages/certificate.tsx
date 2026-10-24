@@ -176,7 +176,7 @@ export default function CertificatePage() {
       <main className="mx-auto max-w-6xl px-4 py-5 sm:py-8">
         <div className="certificate-controls">
           <Link
-            href={window.location.pathname.startsWith("/hr/")?"/hr/members":"/me"}
+            href={window.location.pathname.startsWith("/tvet/")?"/tvet/students":window.location.pathname.startsWith("/hr/")?"/hr/members":"/me"}
             className="mb-5 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -254,8 +254,8 @@ export default function CertificatePage() {
                   lang={lang}
                 >
                   <div className="certificate-inner">
-                    <div className="certificate-brand">
-                      <BrandMark className="h-24 w-24" />
+                    <div className="certificate-brand flex flex-row flex-nowrap items-center justify-center gap-3">
+                      <BrandMark className="h-11 w-11 shrink-0" />
                       <span>Skilytics</span>
                     </div>
                     <h2>{w.heading}</h2>

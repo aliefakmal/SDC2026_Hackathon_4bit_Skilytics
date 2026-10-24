@@ -1,3 +1,4 @@
+import {graduateOutcomes,graduateYears,compulsoryIds} from "./institution";
 import {
   db,
   profilesTable,
@@ -108,6 +109,7 @@ export async function companyData(req: Request) {
       targetRole: target?.r.title ?? null,
       stage: state?.stage ?? "intake",
       skillCount: evidence.length,
+      skillNames: [...new Set([...evidence.map(s=>skills.find(k=>k.id===s.skillId)?.name).filter((s):s is string=>!!s),...completedItems.flatMap(i=>i.skills)])],
       gapCount: gapNames.length,
       remainingGap: outstanding.length,
       gaps: outstanding,
@@ -129,7 +131,11 @@ export async function companyData(req: Request) {
   );
   const totalCourses = members.reduce((n, m) => n + m.totalCourses, 0),
     completedCourses = members.reduce((n, m) => n + m.completedCourses, 0);
+  const institution = req.user!.role === "tvet";
   return {
+    portal: institution ? "tvet" as const : "hr" as const,
+    institutionHistory: institution ? {...graduateOutcomes,annual:graduateYears()} : null,
+    compulsoryCourseIds: institution ? await compulsoryIds(req) : [],
     organization: req.user!.organization,
     members,
     profileCount: members.length,

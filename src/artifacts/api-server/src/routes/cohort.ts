@@ -39,7 +39,7 @@ router.get("/cohort/summary", requireRole("hr", "tvet"), async (req, res) => {
     if (!hasCurrentRiasec(p.riasecAnswers)) { p.riasecCode = null; p.riasecScores = null; }
     segCount.set(p.segment, (segCount.get(p.segment) ?? 0) + 1);
     if (p.riasecCode) riasecCount.set(p.riasecCode[0], (riasecCount.get(p.riasecCode[0]) ?? 0) + 1);
-    const scored = (req.user?.role === "hr" ? selfDirectedRoles(roles,courses) : roles).map((r) => ({ r, s: scoreRole({...p,skills:profileSkills(p,skills)}, r, skills, courses) })).sort((a, b) => b.s.score - a.s.score);
+    const scored = selfDirectedRoles(roles,courses).map((r) => ({ r, s: scoreRole({...p,skills:profileSkills(p,skills)}, r, skills, courses) })).sort((a, b) => b.s.score - a.s.score);
     if (scored[0]) fitCount.set(scored[0].r.title, (fitCount.get(scored[0].r.title) ?? 0) + 1);
     const target = (p.targetRoleId && scored.find((x) => x.r.id === p.targetRoleId)) || scored[0];
     for (const g of target?.s.gapSkills ?? []) gapCount.set(g.name, (gapCount.get(g.name) ?? 0) + 1);

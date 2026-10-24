@@ -10,6 +10,7 @@ export type CompanyMember = {
   targetRole: string | null;
   stage: string;
   skillCount: number;
+  skillNames?: string[];
   gapCount: number;
   remainingGap: number;
   gaps: string[];
@@ -38,8 +39,10 @@ export type SavedAnalysis = {
   generatedAt: string;
   cached: boolean;
 };
-export function useCompany() {
+export type CompanyAnalysis = SavedAnalysis & { id: number };
+export function useCompany(enabled=true) {
   return useQuery({
+    enabled,
     queryKey: ["enterprise"],
     queryFn: () => customFetch<Company>("/api/enterprise/overview"),
     retry: false,
@@ -52,3 +55,7 @@ export function enterprisePost<T>(path: string, data: unknown = {}) {
     body: JSON.stringify(data),
   });
 }
+export function enterpriseGet<T>(path: string) {
+  return customFetch<T>(`/api/enterprise/${path}`);
+}
+

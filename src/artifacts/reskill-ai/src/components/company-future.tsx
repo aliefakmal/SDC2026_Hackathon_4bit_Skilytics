@@ -1,6 +1,10 @@
+import type { ReactNode } from "react";
+import { CompanyAdvisor } from "./company-advisor";
+import { ChangingValue, HorizonSlider } from "./projection-feedback";
+import { MarketSkills, jobWords } from "./market-skills";
 import { useState } from "react";
 import { Link } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   CartesianGrid,
   Line,
@@ -17,7 +21,8 @@ import { enterpriseWords } from "@/i18n/enterprise";
 import {
   useCompany,
   enterprisePost,
-  type SavedAnalysis,
+  enterpriseGet,
+  type CompanyAnalysis,
   type CompanyMember,
 } from "@/lib/enterprise";
 import { scenarioPercent } from "@/lib/market-scenario";
@@ -61,7 +66,7 @@ export function EnterpriseDashboard() {
       <PageHeader
         title={c?.organization ?? w.dashboard}
         sub={w.dashboardSub}
-        actions={<TeamGuide />}
+        help={<TeamGuide />}
       />
       {q.isLoading ? (
         <Rows n={4} />
@@ -159,21 +164,38 @@ export function EnterpriseDashboard() {
                 ))}
               </div>
             </Panel>
-            <Panel title={w.company} meta={w.source}>
-              <p className="text-4xl font-bold text-primary">
-                {c.avgExposure == null
-                  ? "—"
-                  : `${Math.round(c.avgExposure * 100)}%`}
-              </p>
-              <p className="mt-2 text-sm">
-                {w.now} · {c.exposureCoverage}/{c.profileCount}
-              </p>
-              <Link
-                href="/market"
-                className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
-              >
-                {w.future} →
-              </Link>
+            <Panel
+              title={w.company}
+              meta={w.source}
+              className="flex h-full flex-col justify-between"
+            >
+              <div className="flex flex-1 flex-col justify-between gap-4">
+                <div className="flex flex-1 flex-col justify-center py-2 lg:py-6">
+                  <div className="space-y-2 lg:space-y-3">
+                    <p className="text-4xl font-extrabold tracking-tight text-primary sm:text-5xl lg:text-6xl xl:text-7xl">
+                      {c.avgExposure == null
+                        ? "—"
+                        : `${Math.round(c.avgExposure * 100)}%`}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center rounded-lg bg-[hsl(var(--maroon-soft))] px-2.5 py-1 text-xs font-semibold text-primary lg:text-sm">
+                        {w.now}
+                      </span>
+                      <span className="text-sm font-medium text-muted-foreground lg:text-base">
+                        · {c.exposureCoverage}/{c.profileCount}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-2">
+                  <Link
+                    href="/market"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md active:scale-95 lg:min-h-12 lg:px-6 lg:text-base"
+                  >
+                    {w.future} →
+                  </Link>
+                </div>
+              </div>
             </Panel>
           </div>
         </>
@@ -187,15 +209,33 @@ export function CompanyFuture() {
   const [tab, setTab] = useState("company");
   return (
     <>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <PageHeader
+        title={
+          tab === "company"
+            ? w.company
+            : tab === "skills"
+              ? jobWords[lang].title
+              : marketWords[lang].title
+        }
+        sub={
+          tab === "company"
+            ? w.source
+            : tab === "skills"
+              ? jobWords[lang].note
+              : marketWords[lang].sub
+        }
+        help={<TeamGuide future />}
+      />
+      <div className="mb-5">
         <div
           role="tablist"
-          className="grid grid-cols-3 rounded-2xl border bg-card p-1"
+          className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl border bg-card p-1"
         >
           {[
             ["company", w.company],
             ["ai", marketWords[lang].ai],
             ["demand", marketWords[lang].demand],
+            ["skills", jobWords[lang].tab],
           ].map(([id, label]) => (
             <button
               key={id}
@@ -208,14 +248,33 @@ export function CompanyFuture() {
             </button>
           ))}
         </div>
-        <TeamGuide future />
       </div>
       {tab === "company" ? (
         <CompanyProjection />
+      ) : tab === "skills" ? (
+        <MarketSkills employer hideHeader />
       ) : (
-        <MarketOutlook selectedMode={tab === "demand" ? "demand" : "ai"} />
+        <MarketOutlook
+          hideGuide
+          hideHeader
+          selectedMode={tab === "demand" ? "demand" : "ai"}
+        />
       )}
     </>
+  );
+}
+function ProjectionMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="mt-2 text-2xl font-bold tabular-nums">{value}</div>
+    </div>
   );
 }
 function CompanyProjection() {
@@ -224,17 +283,29 @@ function CompanyProjection() {
     q = useCompany(),
     c = q.data;
   const [years, setYears] = useState(3);
-  const [saved, setSaved] = useState<Record<string, SavedAnalysis>>({});
-  const fingerprint = JSON.stringify(c?.members);
-  const result = saved[`${fingerprint}:${years}`];
+  const [saved, setSaved] = useState<Record<string, CompanyAnalysis>>({});
+  const fingerprint = JSON.stringify(c ? { ...c, updatedAt: undefined } : null);
+  const localResult = saved[`${fingerprint}:${years}`];
+
+  const existingQuery = useQuery({
+    queryKey: ["company-analysis", fingerprint, years],
+    queryFn: () =>
+      enterpriseGet<CompanyAnalysis>(`future/analysis?years=${years}`),
+    enabled: !!c && !localResult,
+    retry: false,
+  });
+
+  const result = localResult || existingQuery.data;
+
   const ai = useMutation({
     mutationFn: async ({ years: at, key }: { years: number; key: string }) => ({
       key,
-      result: await enterprisePost<SavedAnalysis>("future/analysis", {
+      result: await enterprisePost<CompanyAnalysis>("future/analysis", {
         years: at,
       }),
     }),
-    onSuccess: ({ key, result }) => setSaved((v) => ({ ...v, [key]: result })),
+    onSuccess: ({ key, result: res }) =>
+      setSaved((v) => ({ ...v, [key]: res })),
   });
   if (q.isLoading) return <Rows n={4} />;
   if (q.isError || !c)
@@ -248,41 +319,39 @@ function CompanyProjection() {
   }));
   return (
     <div className="space-y-4">
-      <PageHeader title={w.company} sub={w.source} />
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label={w.employees} value={c.profileCount} />
-        <Stat
-          label={w.now}
+        <ProjectionMetric
+          label={w.coverage}
+          value={`${c.exposureCoverage} / ${c.profileCount}`}
+        />
+        <ProjectionMetric
+          label={`${w.now} · ${new Date().getFullYear()}`}
           value={
             c.avgExposure == null ? "—" : `${Math.round(c.avgExposure * 100)}%`
           }
         />
-        <Stat label={w.gap} value={c.avgGap.toFixed(1)} />
-        <Stat
-          label={w.completed}
-          value={`${c.completedCourses}/${c.totalCourses}`}
-        />
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
+          <p className="text-xs font-semibold text-muted-foreground">
+            {w.scenario} · {new Date().getFullYear() + years}
+          </p>
+          <ChangingValue
+            value={
+              projected(c.avgExposure, years) == null
+                ? "—"
+                : `${Math.round(projected(c.avgExposure, years)!)}%`
+            }
+            className="mt-2 text-3xl font-extrabold text-primary"
+          />
+        </div>
+        <ProjectionMetric label={w.gap} value={c.avgGap.toFixed(1)} />
       </div>
       <Panel title={w.scenario} meta={w.scenarioNote}>
-        <label
-          className="mb-4 block text-sm font-semibold"
-          htmlFor="company-years"
-        >
-          {w.years}: <b className="text-primary">{years}</b>
-          <input
-            id="company-years"
-            className="mt-3 block h-6 w-full accent-[#7a1523]"
-            type="range"
-            min="1"
-            max="10"
-            value={years}
-            onChange={(e) => setYears(+e.target.value)}
-          />
-          <span className="mt-1 flex justify-between text-xs text-muted-foreground">
-            <span>1</span>
-            <span>10</span>
-          </span>
-        </label>
+        <HorizonSlider
+          id="company-years"
+          years={years}
+          onChange={setYears}
+          label={w.years}
+        />
         {c.avgExposure === null ? (
           <p>{w.unknown}</p>
         ) : (
@@ -324,6 +393,42 @@ function CompanyProjection() {
           {w.coverage}: {c.exposureCoverage} / {c.profileCount}
         </p>
       </Panel>
+      <Panel title={w.analysis} meta={w.saved}>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            disabled={ai.isPending || !c.profileCount}
+            onClick={() => ai.mutate({ years, key: `${fingerprint}:${years}` })}
+            className="shadow-sm font-semibold"
+          >
+            {ai.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {w.analyse}
+          </Button>
+          {result && (
+            <span className="text-xs text-muted-foreground">
+              {result.cached ? "✓ Saved" : "✓ Updated"}
+            </span>
+          )}
+        </div>
+        {ai.isPending && (
+          <p className="mt-3 animate-pulse text-sm text-primary font-medium">
+            {w.loading}
+          </p>
+        )}
+        {ai.isError && (
+          <div className="mt-3">
+            <ErrorBox
+              error={ai.error}
+              retry={() => ai.mutate({ years, key: `${fingerprint}:${years}` })}
+            />
+          </div>
+        )}
+        {result && (
+          <div className="mt-5 text-sm leading-relaxed rounded-2xl border border-primary/20 bg-card/60 p-4 sm:p-5 shadow-sm">
+            <Markdown>{result.translations[lang]}</Markdown>
+            <CompanyAdvisor key={result.id} analysis={result} years={years} />
+          </div>
+        )}
+      </Panel>
       <Panel title={w.all} meta={w.reported}>
         <ul className="space-y-3">
           {c.members.map((m) => (
@@ -331,24 +436,6 @@ function CompanyProjection() {
           ))}
         </ul>
         {!c.members.length && <p>{w.empty}</p>}
-      </Panel>
-      <Panel title={w.analysis} meta={w.saved}>
-        <Button
-          disabled={ai.isPending || !c.profileCount}
-          onClick={() => ai.mutate({ years, key: `${fingerprint}:${years}` })}
-        >
-          {ai.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {w.analyse}
-        </Button>
-        {ai.isPending && (
-          <p className="mt-3 animate-pulse text-sm">{w.loading}</p>
-        )}
-        {ai.isError && <ErrorBox error={ai.error} />}{" "}
-        {result && (
-          <div className="mt-5 text-sm leading-relaxed">
-            <Markdown>{result.translations[lang]}</Markdown>
-          </div>
-        )}
       </Panel>
       <p className="text-xs text-muted-foreground">
         {w.source}{" "}
@@ -378,7 +465,10 @@ function EmployeeProjection({ m, years }: { m: CompanyMember; years: number }) {
           <span>
             {w.now}:{" "}
             {m.exposure === null ? "—" : `${Math.round(m.exposure * 100)}%`} →{" "}
-            {value === null ? "—" : `${Math.round(value)}%`}
+            <ChangingValue
+              value={value === null ? "—" : `${Math.round(value)}%`}
+              className="text-lg font-extrabold text-primary"
+            />
           </span>
           <Meter value={value} max={100} tone="slate" />
           {value === null && <span>{w.unknown}</span>}
