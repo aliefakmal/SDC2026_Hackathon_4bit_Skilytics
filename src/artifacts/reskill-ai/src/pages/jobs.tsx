@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { customFetch } from "@workspace/api-client-react";
-import { Trophy, ArrowUpRight } from "lucide-react";
+import { Trophy, ArrowUpRight, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
 import { jobWords } from "@/components/market-skills";
 import { skillLabel } from "@/lib/skill-label";
@@ -202,12 +203,27 @@ export default function Jobs() {
             </section>
           )}
           {limit < jobs.length && (
-            <button
-              className="mt-5 min-h-11 rounded-xl border px-4"
-              onClick={() => setLimit((n) => n + 10)}
-            >
-              {w.more}
-            </button>
+            <div className="mt-8 mb-4 flex flex-col items-center justify-center gap-2.5 text-center">
+              <Button
+                variant="outline"
+                size="lg"
+                className="group relative inline-flex min-h-12 min-w-56 items-center justify-center gap-2.5 rounded-2xl border-2 border-primary/40 bg-card px-8 text-sm font-bold text-primary shadow-sm transition-all duration-200 hover:border-primary hover:bg-primary hover:text-primary-foreground hover:shadow-md active:scale-95"
+                onClick={() => setLimit((n) => n + 10)}
+              >
+                <span>{w.more}</span>
+                <span className="flex h-5 items-center rounded-full bg-primary/10 px-2 text-xs font-semibold text-primary transition-colors group-hover:bg-primary-foreground/20 group-hover:text-primary-foreground">
+                  +{Math.min(10, jobs.length - limit)}
+                </span>
+                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:translate-y-0.5" />
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                {lang === "ms"
+                  ? `Memaparkan ${Math.min(limit, jobs.length)} daripada ${jobs.length} kekosongan jawatan`
+                  : lang === "zh"
+                    ? `显示 ${jobs.length} 个职位中的 ${Math.min(limit, jobs.length)} 个`
+                    : `Showing ${Math.min(limit, jobs.length)} of ${jobs.length} vacancies`}
+              </p>
+            </div>
           )}
         </>
       )}
