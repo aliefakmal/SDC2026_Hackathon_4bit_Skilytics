@@ -13,6 +13,7 @@ type Row = { label: DictKey; k?: DictKey[]; ref?: string; url?: string };
 type Doc = { id: string; types: DocType[]; name: DictKey; sourceIds?: string[]; ai?: boolean; rows: Row[] };
 
 const DOCS: Doc[] = [
+  {id:"tvet_synthetic",types:["demo","static","derived"],name:"docs.tvet.synthetic",rows:[{label:"docs.f.files",ref:"src/synthetic-data/tvet/graduate-employment-2024-2026.json · synthetic data/"},{label:"docs.f.coverage",k:["docs.tvet.coverage"]},{label:"docs.f.method",k:["docs.tvet.method"]},{label:"docs.f.privacy",k:["docs.tvet.policy"]}]},
   {id:"hubspot",types:["external","derived"],name:"src.hubspot_catalogue.name",sourceIds:["hubspot_catalogue"],rows:[
     {label:"docs.f.publisher",ref:"HubSpot Academy"},
     {label:"docs.f.dataset",url:"https://academy.hubspot.com/courses"},
@@ -158,7 +159,7 @@ const CATEGORIES = [
   { key: "career", ids: ["riasec", "onet", "skill_reference", "match"] },
   { key: "learning", ids: ["hubspot", "courses", "freecodecamp", "githubskills", "huggingface", "openlearn", "sdg"] },
   { key: "aiService", ids: ["runpod"] },
-  { key: "privacy", ids: ["demo", "learningRecords"] },
+  { key: "privacy", ids: ["tvet_synthetic", "demo", "learningRecords"] },
 ] as const;
 const TYPE_TONE: Record<DocType, string> = {
   external: "bg-[hsl(var(--maroon-soft))] text-primary",

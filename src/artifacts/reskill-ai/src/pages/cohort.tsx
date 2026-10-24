@@ -1,3 +1,5 @@
+import {useCompany} from "@/lib/enterprise";
+import { InstitutionDashboard, InstitutionCourses } from "@/components/institution-portal";
 import { EnterpriseDashboard } from "@/components/company-future";
 import { PageGuide } from "@/components/page-guide";
 import { enterpriseWords } from "@/i18n/enterprise";
@@ -37,7 +39,7 @@ function Bars({ items, label, tone = "maroon" }: { items: CountItem[]; label?: (
   );
 }
 
-export function CohortDashboard({kind}:{kind:"hr"|"tvet"}) { return kind === "hr" ? <EnterpriseDashboard/> : <LegacyCohortDashboard kind={kind}/>; }
+export function CohortDashboard({kind}:{kind:"hr"|"tvet"}) { return kind === "hr" ? <EnterpriseDashboard/> : <InstitutionDashboard/>; }
 
 function LegacyCohortDashboard({ kind }: { kind: "hr" | "tvet" }) {
   const { t, tk } = useT();
@@ -123,18 +125,7 @@ function GapCourses({ c, wide, hr = false }: { c: NonNullable<ReturnType<typeof 
   );
 }
 
-export function Programmes() {
-  const { t } = useT();
-  const q = useCohort();
-  return (
-    <>
-      <PageHeader eyebrow={t("portal.tvet")} title={t("programmes.title")} sub={t("programmes.sub")} />
-      {q.isLoading ? <Rows n={5} h="h-24" /> : q.isError || !q.data ? <ErrorBox error={q.error} retry={() => q.refetch()} /> : !q.data.gapCourses.length ? <Empty title={t("cohort.emptyTitle")}>{t("programmes.empty")}</Empty> : (
-        <div className="grid gap-4 lg:grid-cols-2"><GapCourses c={q.data} wide /></div>
-      )}
-    </>
-  );
-}
+export function Programmes() {return <InstitutionCourses/>;}
 
 export function Members({ kind }: { kind: "hr" | "tvet" }) {
   const { t, tk, lang } = useT();
@@ -142,14 +133,16 @@ export function Members({ kind }: { kind: "hr" | "tvet" }) {
   const f = useFmt();
   const [, nav] = useLocation();
   const q = useCohort();
+  const progress = useCompany();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const base = kind === "hr" ? "/hr/members" : "/tvet/students";
   const members = (q.data?.members ?? []).filter((m) => !query.trim() || `${m.name} ${m.currentRole ?? ""} ${m.topMatchTitle ?? ""}`.toLowerCase().includes(query.trim().toLowerCase()));
   return (
     <>
-      <PageHeader eyebrow={q.data?.organization ?? t(kind === "hr" ? "portal.hr" : "portal.tvet")} title={t(kind === "hr" ? "nav.members" : "nav.students")} sub={t(kind === "hr" ? "members.hrSub" : "members.tvetSub")}
-        actions={<div className="flex gap-2"><PageGuide title={ew.guide} steps={[{title:ew.employees,body:ew.guideEmployee},{title:ew.progress,body:ew.reported}]}/><Button className="min-h-11" onClick={() => setOpen(true)} data-testid="button-add-member"><Plus className="mr-1.5 h-4 w-4" />{t(kind === "hr" ? "cohort.addMember" : "cohort.addStudent")}</Button></div>} />
+      <PageHeader title={t(kind === "hr" ? "nav.members" : "nav.students")} sub={t(kind === "hr" ? "members.hrSub" : "members.tvetSub")}
+        help={<PageGuide title={ew.guide} steps={[{title:t(kind === "hr" ? "nav.members" : "nav.students"),body:ew.guideEmployee},{title:ew.progress,body:ew.reported}]}/>}
+        actions={<Button className="min-h-11" onClick={() => setOpen(true)} data-testid="button-add-member"><Plus className="mr-1.5 h-4 w-4" />{t(kind === "hr" ? "cohort.addMember" : "cohort.addStudent")}</Button>} />
       <div className="relative mb-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("members.search")} aria-label={t("members.search")} className="min-h-11 pl-9" data-testid="input-member-search" />
@@ -173,7 +166,7 @@ export function Members({ kind }: { kind: "hr" | "tvet" }) {
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
                   <span className="rounded-full bg-muted px-2 py-0.5">{t("me.skillsN", { n: m.skillCount ?? 0 })}</span>
                   {m.riasecCode && <span translate="no" className="rounded-full border px-2 py-1 font-semibold">{m.riasecCode}</span>}
-                  {m.hasPlan && <span className="rounded-full bg-primary px-2 py-0.5 font-semibold text-primary-foreground">{t("members.hasPlan")}</span>}
+                  {progress.data?.members.find(p=>p.id===m.id)?.stage === "active" && <span className="rounded-full bg-primary px-2 py-0.5 font-semibold text-primary-foreground">{ew.progress}: {progress.data.members.find(p=>p.id===m.id)?.completedCourses}/{progress.data.members.find(p=>p.id===m.id)?.totalCourses}</span>}
                   {kind === "hr" && m.hrdcEligible && <span className="rounded-full bg-accent px-2 py-0.5 font-semibold text-accent-foreground">HRD Corp</span>}
                   <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground group-hover:text-primary" />
                 </div>

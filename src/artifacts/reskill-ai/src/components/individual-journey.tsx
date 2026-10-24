@@ -1,3 +1,4 @@
+import {useErrText} from "@/i18n";
 import { StudyCalendar } from "./study-calendar";
 import {
   isAiWorkplaceCourse,
@@ -150,14 +151,15 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(20);
   const [selected, setSelected] = useState<number | null>(null);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
+  const errorText=useErrText();
   const roles = matches.data ?? [];
   const chosen = roles.find((x) => x.role.id === selected) ?? roles[0];
   if (matches.isLoading) return <Rows n={3} />;
   if (matches.isError)
     return <ErrorBox error={matches.error} retry={() => matches.refetch()} />;
   const choose = async (id: number) => {
-    setError(false);
+    setError("");
     try {
       const profile = await update.mutateAsync({
         id: p.id,
@@ -171,8 +173,8 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
       qc.setQueryData(getGetProfilePlanQueryKey(p.id), plan);
       await qc.invalidateQueries({ queryKey: ["learning", p.id] });
       nav(`${base}/${p.id}/pathway`);
-    } catch {
-      setError(true);
+    } catch (err) {
+      setError(errorText(err));
     }
   };
   return (
@@ -235,7 +237,7 @@ export function IndividualMatcher({ p, base }: { p: Profile; base: string }) {
           </article>
         ))}
       </div>
-      {error && <p role="alert">{w.fail}</p>}
+      {error && <p role="alert">{error}</p>}
       <p className="text-xs text-muted-foreground">
         {matcherWords[lang].exposureNote} {matcherWords[lang].sdg}
       </p>
@@ -344,6 +346,7 @@ function day(date: Date) {
 }
 export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
   const { lang } = useT();
+  const errorText=useErrText();
   const lw = learningWords[lang];
   const sw = studyWords[lang];
   const roleList = useListRoles();
@@ -401,8 +404,8 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
       });
       qc.setQueryData(getGetProfilePlanQueryKey(p.id), result);
       qc.invalidateQueries({ queryKey: getGetProfileMatchesQueryKey(p.id) });
-    } catch {
-      setError(w.fail);
+    } catch (err) {
+      setError(errorText(err));
     }
   };
   useEffect(() => {
@@ -551,6 +554,7 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
               {lw.calendarNote}
             </p>
           </div>
+          {base.startsWith("/tvet") && <div className="flex flex-wrap gap-3 rounded-xl bg-primary/5 p-3 text-sm font-bold"><span>{lang==="ms"?"Kursus wajib":lang==="zh"?"必修课程":"Compulsory courses"}: {items.filter(i=>i.compulsory).length}</span><span>{lang==="ms"?"Kursus peribadi":lang==="zh"?"个性化课程":"Personalised courses"}: {items.filter(i=>!i.compulsory).length}</span></div>}
           <ol className="space-y-4 border-l-2 border-primary/25 pl-5">
             {items.map((item, index) => {
               const dates = dated[index];
@@ -563,6 +567,7 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
                   className={`scroll-mt-40 rounded-2xl border border-l-4 bg-card p-4 transition-shadow ${selectedCourse === item.courseId ? "ring-2 ring-primary ring-offset-2" : ""}`}
                   style={{ borderLeftColor: color }}
                 >
+                  {base.startsWith("/tvet") && <p className="mb-2 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{item.compulsory ? (lang==="ms"?"Kursus wajib":lang==="zh"?"必修课程":"Compulsory course") : (lang==="ms"?"Kursus peribadi":lang==="zh"?"个性化课程":"Personalised course")}</p>}
                   {advancing && (
                     <p className="mb-2 text-xs font-bold text-primary">
                       {sw.ai}
@@ -694,7 +699,7 @@ export function IndividualPathway({ p, base }: { p: Profile; base: string }) {
                     startDate: start,
                     durationWeeks: estimates,
                   });
-                  navigate(`${base}/${p.id}/${base.startsWith("/hr") ? "intake" : "ready"}`);
+                  navigate(`${base}/${p.id}/${base.startsWith("/me") ? "ready" : "intake"}`);
                 } catch {}
               }}
             >

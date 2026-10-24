@@ -1,3 +1,4 @@
+import { InstitutionFuture } from "@/components/institution-portal";
 import { AiRoutingPanel } from "@/components/ai-routing-panel";
 import {SourceAccess,SourceAccessAudit,auditedSourceDescription} from "@/components/source-access";
 import { MarketExplore } from "@/components/market-skills";
@@ -382,7 +383,8 @@ function ObservedMarket() {
   );
 }
 
-export function TvetMarket() {
+export function TvetMarket() {return <InstitutionFuture/>;}
+function LegacyTvetMarket() {
   const { t, tk, lang } = useT();
   const f = useFmt();
   const ov = useGetMarketOverview({

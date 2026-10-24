@@ -1,3 +1,4 @@
+import {graduateOutcomes,graduateYears,compulsoryIds} from "./institution";
 import {
   db,
   profilesTable,
@@ -130,7 +131,11 @@ export async function companyData(req: Request) {
   );
   const totalCourses = members.reduce((n, m) => n + m.totalCourses, 0),
     completedCourses = members.reduce((n, m) => n + m.completedCourses, 0);
+  const institution = req.user!.role === "tvet";
   return {
+    portal: institution ? "tvet" as const : "hr" as const,
+    institutionHistory: institution ? {...graduateOutcomes,annual:graduateYears()} : null,
+    compulsoryCourseIds: institution ? await compulsoryIds(req) : [],
     organization: req.user!.organization,
     members,
     profileCount: members.length,

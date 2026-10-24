@@ -956,6 +956,7 @@ components:
       type: object
       required: [courseId, title, provider, url, startWeek, durationWeeks, costMyr, hrdcStatus, skills, sdgTargets]
       properties:
+        compulsory: { type: boolean, description: Institution-required course for TVET learners }
         courseId: { type: integer }
         title: { type: string }
         provider: { type: string }

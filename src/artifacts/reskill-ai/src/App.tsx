@@ -47,6 +47,7 @@ function AppRoutes() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/onboarding/:step?"><RoutedErrorBoundary><Onboarding /></RoutedErrorBoundary></Route>
+      <Route path="/tvet/certificates/:id"><Gate role="tvet"><RoutedErrorBoundary><CertificatePage /></RoutedErrorBoundary></Gate></Route>
       <Route path="/hr/certificates/:id"><Gate role="hr"><RoutedErrorBoundary><CertificatePage /></RoutedErrorBoundary></Gate></Route>
       <Route path="/me/certificates/:id"><Gate role="individual"><RoutedErrorBoundary><CertificatePage /></RoutedErrorBoundary></Gate></Route>
       <Route>
@@ -71,7 +72,8 @@ function AppRoutes() {
               <Route path="/tvet"><Gate role="tvet"><CohortDashboard kind="tvet" /></Gate></Route>
               <Route path="/tvet/students"><Gate role="tvet"><Members kind="tvet" /></Gate></Route>
               <Route path="/tvet/students/:id/:module?"><Gate role="tvet"><ProfileWorkspace base="/tvet/students" listHref="/tvet/students" /></Gate></Route>
-              <Route path="/tvet/programmes"><Gate role="tvet"><Programmes /></Gate></Route>
+              <Route path="/tvet/courses"><Gate role="tvet"><Programmes /></Gate></Route>
+              <Route path="/tvet/programmes"><Redirect to="/tvet/courses"/></Route>
               <Route path="/tvet/market"><Gate role="tvet"><TvetMarket /></Gate></Route>
               <Route component={NotFound} />
             </Switch>

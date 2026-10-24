@@ -3,6 +3,9 @@ import { obMs } from "./ob";
 import type { DictKey } from "./en";
 
 export const ms: Record<DictKey, string> = {
+  "err.compulsory_duration_required": "Pilih kursus wajib dengan tempoh belajar yang diterbitkan.",
+  "err.compulsory_catalogue_changed": "Keperluan institusi atau katalog berubah. Bina semula pathway sebelum bermula.",
+  "err.compulsory_budget_exceeded": "Kos kursus wajib melebihi bajet pelajar. Tingkatkan bajet latihan dalam butiran CV atau pilih kursus wajib yang lebih murah.",
   "err.journey_step_required": "Lengkapkan langkah semasa sebelum meneruskan.",
   "err.intake_required": "Semak dan sahkan ringkasan intake dahulu.",
   "err.riasec_locked": "Keputusan Holland telah disimpan dan dikunci. Edit maklumat CV dalam ringkasan intake.",
@@ -200,7 +203,7 @@ export const ms: Record<DictKey, string> = {
   "members.hasPlan": "Pelan", "members.noMatch": "Tiada yang sepadan", "members.search": "Cari mengikut nama atau peranan",
   "members.topMatch": "Padanan teratas", "members.hrSub": "Buka profil pekerja untuk memetakan kemahiran dan membina laluan.",
   "members.tvetSub": "Buka pelajar untuk memetakan kemahiran, minat dan laluan.",
-  "nav.agents": "Ejen AI", "nav.courses": "Kursus", "nav.gradMarket": "Pasaran graduan", "nav.group.data": "Data",
+  "nav.agents": "Ejen AI", "nav.courses": "Kursus", "nav.gradMarket": "Masa depan graduan", "nav.group.data": "Data",
   "nav.group.explore": "Teroka", "nav.group.modules": "Modul", "nav.group.portal": "Portal", "nav.group.workspace": "Ruang kerja",
   "nav.future": "Masa depan", "nav.hrDashboard": "Papan pemuka", "nav.intake": "Kemasukan", "nav.market": "Pasaran", "nav.matcher": "Padanan",
   "nav.members": "Pekerja", "nav.outlook": "Tinjauan", "nav.pathway": "Laluan", "nav.primary": "Navigasi utama",

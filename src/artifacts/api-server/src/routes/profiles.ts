@@ -1,3 +1,4 @@
+import { compulsoryIds } from "../lib/institution";
 import { guestProfileScope, keepOneGuestProfile } from "../lib/guest-profile";
 import demoFixtures from "../../../../testing/demo-cv/profiles.json";
 import { individualProfile } from "../lib/individual-profile";
@@ -164,6 +165,7 @@ router.post("/profiles/:id/journey", async(req,res)=>{
   const action=journeyAction.parse(req.body);
   // Serialise changes across browser tabs and application instances.
   const outcome=await db.transaction(async tx=>{
+    if(req.user?.role === "tvet")await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${"tvet-policy:"+req.user.organization},0))`);
     await tx.execute(sql`SELECT pg_advisory_xact_lock(${p.id})`);
     const state=await learningState(p.id,tx);
     if(action.action==="confirm_intake") {
@@ -173,6 +175,7 @@ router.post("/profiles/:id/journey", async(req,res)=>{
       if(state.stage!=="pathway") {return {status:409,error:"journey_step_required"};}
       const plan=await getLatestPlan(p.id);
       if(!plan || plan.roleId!==p.targetRoleId || !plan.items.length || (await planToApi(plan)).verificationStatus!=="verified") {return {status:409,error:"plan_required"};}
+      if((await compulsoryIds(req)).some(id=>!plan.items.some(i=>i.courseId===id && i.compulsory))){return {status:409,error:"compulsory_catalogue_changed"};}
       if(datedCourses(plan.items,action.startDate,action.durationWeeks).some(i=>!i.deadline)) {return {status:400,error:"course_dates_required"};}
       await saveLearningState(p.id,{stage:"active",planId:plan.id,startDate:action.startDate,durationWeeks:action.durationWeeks,completed:{}},tx);
     } else {
@@ -201,13 +204,13 @@ router.patch("/profiles/:id", async (req, res) => {
   const body = UpdateProfileBody.parse(req.body);
   const p = await requireProfile(id, req, res);
   if (!p) return;
-  if (req.user?.role === "hr" && body.riasecAnswers && p.riasecCode) {res.status(409).json({error:"riasec_locked"});return;}
+  if (["hr","tvet"].includes(req.user?.role??"") && body.riasecAnswers && p.riasecCode) {res.status(409).json({error:"riasec_locked"});return;}
   if (req.user?.role !== "hr") { body.hrdcEligible = false; body.hrdcEligibilityStatus = "no"; }
   const individual = !req.user || req.user.role === "individual";
-  const journey = (individual || req.user?.role === "hr") ? await learningState(p.id) : null;
-  const locked = (individual || req.user?.role === "hr") && p.onboardingStep === "complete";
+  const journey = (individual || req.user?.role === "hr" || req.user?.role === "tvet") ? await learningState(p.id) : null;
+  const locked = (individual || req.user?.role === "hr" || req.user?.role === "tvet") && p.onboardingStep === "complete";
   if (locked && ((body.onboardingStep && body.onboardingStep !== "complete") || (body.riasecAnswers && JSON.stringify([...body.riasecAnswers].sort((a,b)=>a.questionId-b.questionId)) !== JSON.stringify([...p.riasecAnswers].sort((a,b)=>a.questionId-b.questionId))))) {res.status(409).json({error:"riasec_locked"});return;}
-  if ((individual || req.user?.role === "hr") && body.targetRoleId && journey?.stage !== "matcher" && journey?.stage !== "pathway") {res.status(409).json({error:"journey_step_required"});return;}
+  if ((individual || req.user?.role === "hr" || req.user?.role === "tvet") && body.targetRoleId && journey?.stage !== "matcher" && journey?.stage !== "pathway") {res.status(409).json({error:"journey_step_required"});return;}
   const step = body.onboardingStep;
   if (body.verified && !(body.name ?? p.name).trim()) {
     res.status(400).json({ error: "invalid_input" }); return;
@@ -218,7 +221,7 @@ router.patch("/profiles/:id", async (req, res) => {
   if (["results", "save", "complete"].includes(step ?? "") && (!(body.verified ?? p.verified) || !p.riasecScores)) {
     res.status(400).json({ error: "riasec_required" }); return;
   }
-  if (step === "complete" && !(req.user?.role === "hr" || (req.user?.role === "individual" && p.ownerUserId === req.user.id)) && !(p.guestToken && p.guestToken === req.guestToken && !p.ownerUserId)) {
+  if (step === "complete" && !(req.user?.role === "hr" || req.user?.role === "tvet" || (req.user?.role === "individual" && p.ownerUserId === req.user.id)) && !(p.guestToken && p.guestToken === req.guestToken && !p.ownerUserId)) {
     res.status(401).json({ error: "login_required" }); return;
   }
   if (body.riasecAnswers && (new Set(body.riasecAnswers.map((a) => a.questionId)).size !== body.riasecAnswers.length || body.riasecAnswers.some((a) => !RIASEC_QUESTIONS.some((q) => q.id === a.questionId)))) {
@@ -407,7 +410,7 @@ router.post("/profiles/:id/cv", async (req, res) => {
       cvEvidence: result.evidence, cvExtractionKey: key, verified: false, onboardingStep: "review",
       skills: [...extracted, ...manual],
     }).where(eq(profilesTable.id, id)).returning();
-    if(req.user?.role === "hr" && (await learningState(id)).stage !== "active") await saveLearningState(id,{stage:"intake",completed:{}});
+    if(["hr","tvet"].includes(req.user?.role??"") && (await learningState(id)).stage !== "active") await saveLearningState(id,{stage:"intake",completed:{}});
     return profileToApi(row, allSkills);
   })();
   cvRequests.set(id, work);
@@ -434,8 +437,8 @@ router.post("/profiles/:id/riasec", async (req, res) => {
   const body = SubmitRiasecBody.parse(req.body);
   const p = await requireProfile(id, req, res);
   if (!p) return;
-  if ((!req.user || req.user.role === "individual" || req.user.role === "hr") && p.onboardingStep === "complete") {res.status(409).json({error:"riasec_locked"});return;}
-  if (req.user?.role === "hr" && p.riasecCode) {res.status(409).json({error:"riasec_locked"});return;}
+  if ((!req.user || req.user.role === "individual" || req.user.role === "hr" || req.user.role === "tvet") && p.onboardingStep === "complete") {res.status(409).json({error:"riasec_locked"});return;}
+  if (["hr","tvet"].includes(req.user?.role??"") && p.riasecCode) {res.status(409).json({error:"riasec_locked"});return;}
   if (p.onboardingStep && !p.verified) { res.status(400).json({ error: "cv_review_required" }); return; }
   let scores, code;
   try { ({ scores, code } = scoreRiasec(body.answers)); }
@@ -456,7 +459,7 @@ router.get("/profiles/:id/matches", async (req, res) => {
   const { id } = GetProfileParams.parse(req.params);
   const p = await requireProfile(id, req, res);
   if (!p) return;
-  if ((!req.user || req.user.role === "individual" || req.user.role === "hr") && !["matcher","pathway","active"].includes((await learningState(p.id)).stage)) {res.status(409).json({error:"journey_step_required"});return;}
+  if ((!req.user || req.user.role === "individual" || req.user.role === "hr" || req.user.role === "tvet") && !["matcher","pathway","active"].includes((await learningState(p.id)).stage)) {res.status(409).json({error:"journey_step_required"});return;}
   res.json(await computeMatches(p));
 });
 
@@ -473,7 +476,7 @@ router.post("/profiles/:id/plan", async (req, res) => {
   const { roleId } = CreateProfilePlanBody.parse(req.body);
   const p = await requireProfile(id, req, res);
   if (!p) return;
-  const journey = (!req.user || req.user.role === "individual" || req.user.role === "hr") ? await learningState(p.id) : null;
+  const journey = (!req.user || req.user.role === "individual" || req.user.role === "hr" || req.user.role === "tvet") ? await learningState(p.id) : null;
   if(journey && !["matcher","pathway"].includes(journey.stage)) {res.status(409).json({error:"journey_step_required"});return;}
   const [roles, skills, courses] = await Promise.all([loadRoles(), loadSkills(), loadCourses()]);
   if (!courses.length) { res.status(503).json({ error: "course_catalogue_unavailable" }); return; }
@@ -484,7 +487,11 @@ router.post("/profiles/:id/plan", async (req, res) => {
     return;
   }
   const { gapSkills } = scoreRole({ ...p, skills: profileSkills(p, skills) }, role, skills, courses);
-  const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: req.user?.role === "hr" && p.hrdcEligible, roleTitle: role.title, aiAdvancement: !req.user || req.user.role === "individual" || req.user.role === "hr" });
+  const requiredIds = await compulsoryIds(req);
+  const compulsoryCourses = requiredIds.map(id=>courses.find(c=>c.id===id));
+  if(compulsoryCourses.some(c=>!c || c.durationHours===null)){res.status(409).json({error:"compulsory_catalogue_changed"});return;}
+  if(compulsoryCourses.reduce((n,c)=>n+(c?.costMyr??0),0)>p.budgetMyr){res.status(409).json({error:"compulsory_budget_exceeded"});return;}
+  const plan = buildPlan({ compulsoryCourses: compulsoryCourses.filter((c):c is NonNullable<typeof c>=>!!c), gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: req.user?.role === "hr" && p.hrdcEligible, roleTitle: role.title, aiAdvancement: !req.user || req.user.role === "individual" || req.user.role === "hr" || req.user.role === "tvet" });
   const [row] = await db
     .insert(plansTable)
     .values({ profileId: id, roleId, roleTitle: role.title, ...plan })

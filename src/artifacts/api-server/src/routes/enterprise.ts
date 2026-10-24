@@ -242,8 +242,8 @@ router.post("/enterprise/future/analysis", async (req, res) => {
       try {
         const out = await chat(
           "main",
-          policy +
-            " For TVET context, graduate outcome history is a synthetic reference template, never actual institutional employment evidence. The employment scenario assumes +2 percentage points per year capped at 100; state this is an illustration. Refer to students, institution and graduate learning, not employees or company performance. Distinguish institution-required courses from personalised courses. Give exactly 4 concise sections: what is changing; team learning priorities; 3 proposed measurable company KPIs with time windows; limitations and next review. Differentiate observed data from the illustrative scenario and suggested targets. Use everyday ELI5 words; explain technical terms with a simple example. Under 180 words per language.",
+          policy + (context.portal === "tvet" ? " For TVET context, graduate outcome history is a synthetic reference template, never actual institutional employment evidence. The employment scenario assumes +2 percentage points per year capped at 100; state this is an illustration. Refer to students, institution and graduate learning, not employees or company performance. Distinguish institution-required courses from personalised courses." : "") +
+            " Give exactly 4 concise sections: what is changing; learning priorities; 3 proposed measurable organisation KPIs with time windows; limitations and next review. Differentiate observed data from the illustrative scenario and suggested targets. Use everyday ELI5 words; explain technical terms with a simple example. Under 180 words per language.",
           JSON.stringify(context),
           { agent: "analyst", timeoutMs: 30_000 },
         );
@@ -457,7 +457,7 @@ router.post("/enterprise/future/chat", async (req, res) => {
         const out = await chat(
           "main",
           policy +
-            " You are the Company or TVET Learning Advisor, according to the supplied portal. For TVET, synthetic outcomes are fictional reference data, never actual institutional employment results. Refer to students, graduate readiness and institution goals. Answer the user's follow-up about this company's future using the supplied company snapshot, saved analysis, recent conversation and retrieved course/source references. Distinguish current observations, scenario assumptions and proposed KPI targets. Recommend only retrieved courses and use their exact URLs as links. If the data cannot answer, say what is missing and suggest a small way to check it. Do not browse, claim autonomous actions or invent future measurements. Cite at least one relevant supplied reference when making a sourced claim. Under 160 words per language.",
+            " You are the Company or TVET Learning Advisor, according to the supplied portal. For TVET, synthetic outcomes are fictional reference data, never actual institutional employment results. Refer to students, graduate readiness and institution goals. Answer the user's follow-up about this organisation's future using the supplied organisation snapshot, saved analysis, recent conversation and retrieved course/source references. Distinguish current observations, scenario assumptions and proposed KPI targets. Recommend only retrieved courses and use their exact URLs as links. If the data cannot answer, say what is missing and suggest a small way to check it. Do not browse, claim autonomous actions or invent future measurements. Cite at least one relevant supplied reference when making a sourced claim. Under 160 words per language.",
           JSON.stringify({
             context,
             analysis: parseCompanyTranslation(analysis.content),

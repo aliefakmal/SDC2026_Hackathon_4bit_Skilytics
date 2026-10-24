@@ -1,9 +1,7 @@
-import { db, profilesTable, plansTable, usersTable, type StoredRiasec } from "@workspace/db";
+import { db, profilesTable, usersTable, type StoredRiasec } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { DEMO_ACCOUNTS } from "./auth";
-import { loadCourses, loadRoles, loadSkills } from "./catalog";
-import { scoreRole } from "./scoring";
-import { buildPlan } from "./planner";
+import { loadSkills } from "./catalog";
 import { RIASEC_QUESTIONS } from "../data/riasec";
 import { hasCurrentRiasec, scoreRiasec } from "./riasec-scoring";
 import { logger } from "./logger";
@@ -35,13 +33,8 @@ const TVET_MEMBERS: Member[] = [
   { name: "Daniel Wong (Demo)", segment: "graduate", currentRole: null, skills: ["IT Support and Troubleshooting", "Networking", "Linux"], riasec: { R: 3.8, I: 3.8, A: 2, S: 2.6, E: 2, C: 3.6 } },
 ];
 
-function code(r: StoredRiasec): string {
-  const order = ["R", "I", "A", "S", "E", "C"] as const;
-  return [...order].sort((a, b) => r[b] - r[a] || order.indexOf(a) - order.indexOf(b)).slice(0, 3).join("");
-}
-
 export async function seedDemoMembers(): Promise<void> {
-  const [skills, roles, courses] = await Promise.all([loadSkills(), loadRoles(), loadCourses()]);
+  const skills = await loadSkills();
   const skillId = new Map(skills.map((s) => [s.name, s.id]));
   for (const acct of DEMO_ACCOUNTS) {
     const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(profilesTable).where(eq(profilesTable.organization, acct.organization));
@@ -51,12 +44,13 @@ export async function seedDemoMembers(): Promise<void> {
         for (const p of existing) {
           const fixtures=acct.role === "hr" ? HR_MEMBERS : TVET_MEMBERS;
           const fixture=fixtures.find(m=>m.name===p.name);
+          if(!fixture)continue;
           const answers = hasCurrentRiasec(p.riasecAnswers) ? p.riasecAnswers : fixedDemoAnswers(p.riasecScores ?? fixture?.riasec ?? fixtures[p.id % fixtures.length].riasec);
           const scored = scoreRiasec(answers);
           const missingCv=!p.cvExtractionKey && fixture;
           if(hasCurrentRiasec(p.riasecAnswers) && !missingCv)continue;
           await db.update(profilesTable).set({riasecAnswers:answers,riasecScores:scored.scores,riasecCode:scored.code,
-            ...(missingCv?{cvFileName:"Fictional employee CV",cvText:`Fictional demo CV: ${fixture.name}. ${fixture.currentRole}. Skills: ${fixture.skills.join(", ")}.`,experience:`Fictional demo experience in ${fixture.currentRole}. Uses ${fixture.skills.join(", ")}.`,cvExtractionKey:"hr-demo-v2",verified:true,onboardingStep:"complete"}:{}),
+            ...(missingCv?{cvFileName:"Fictional demo CV",cvText:`Fictional demo CV: ${fixture.name}. ${fixture.currentRole ?? "TVET coursework and projects"}. Skills: ${fixture.skills.join(", ")}.`,experience:`Fictional demo experience in ${fixture.currentRole ?? "TVET coursework and projects"}. Uses ${fixture.skills.join(", ")}.`,cvExtractionKey:"hr-demo-v2",verified:true,onboardingStep:"complete"}:{}),
           }).where(eq(profilesTable.id,p.id));
         }
       }
@@ -66,7 +60,7 @@ export async function seedDemoMembers(): Promise<void> {
     if (!owner) continue;
     const members = acct.role === "hr" ? HR_MEMBERS : TVET_MEMBERS;
     for (const m of members) {
-      const [p] = await db
+      await db
         .insert(profilesTable)
         .values({
           name: m.name,
@@ -82,19 +76,12 @@ export async function seedDemoMembers(): Promise<void> {
           riasecScores: scoreRiasec(fixedDemoAnswers(m.riasec)).scores,
           riasecCode: scoreRiasec(fixedDemoAnswers(m.riasec)).code,
           ...({
-            cvFileName:"Fictional employee CV", cvText:`Fictional demo CV: ${m.name}. ${m.currentRole}. Skills: ${m.skills.join(", ")}.`,
-            experience:`Fictional demo experience in ${m.currentRole}. Uses ${m.skills.join(", ")}.`,
+            cvFileName:"Fictional demo CV", cvText:`Fictional demo CV: ${m.name}. ${m.currentRole ?? "TVET coursework and projects"}. Skills: ${m.skills.join(", ")}.`,
+            experience:`Fictional demo experience in ${m.currentRole ?? "TVET coursework and projects"}. Uses ${m.skills.join(", ")}.`,
             cvExtractionKey:"hr-demo-v2", verified:true, onboardingStep:"complete",
           }),
         })
         .returning();
-      const role = m.plan ? roles.find((r) => r.title === m.plan) : undefined;
-      if (role && acct.role !== "hr") {
-        const { gapSkills } = scoreRole(p, role, skills, courses);
-        const plan = buildPlan({ gaps: gapSkills, courses, budgetMyr: p.budgetMyr, weeklyHours: p.weeklyHours, hrdcEligible: p.hrdcEligible });
-        await db.insert(plansTable).values({ profileId: p.id, roleId: role.id, roleTitle: role.title, ...plan });
-        await db.update(profilesTable).set({ targetRoleId: role.id }).where(eq(profilesTable.id, p.id));
-      }
     }
     logger.info({ organization: acct.organization, members: members.length }, "Demo members seeded");
   }

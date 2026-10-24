@@ -7,13 +7,13 @@ Reviewed: 24 October 2026. Source of truth: `src/lib/agent-routing.ts` and `GET 
 | Route identity | Actual use | Retrieved context / entry point | Tier |
 | --- | --- | --- | --- |
 | `cv` | Uploaded CV extraction and optional CV improvements | CV text/images and local O*NET skill references; `lib/cv-retrieval.ts`, profile insights | light |
-| `holland` | Holland explanation, employer employee summary, translation utility | Fixed questionnaire scores plus reviewed CV fields; `routes/profiles.ts`, employee summary, `lib/agents.ts` | light |
+| `holland` | Holland explanation, employer employee and TVET student summaries, translation utility | Fixed questionnaire scores plus reviewed CV fields; `routes/profiles.ts`, employee summary, `lib/agents.ts` | light |
 | `profiler` | Explain profile strengths and constraints | Saved profile, occupations and market context; profile insights | main |
 | `fitter` | Explain ranked career matches | Deterministic role scores, gaps, course availability; profile insights | main |
 | `planner` | Explain a learning timeline | Existing course plan and constraints; profile insights | main |
 | `sdg` | Explain thematic SDG links | Supplied role/course targets; profile insights | light |
 | `analyst` | Market outlook, outlook questions, Company Future analysis | Stored labour/AI snapshots, reviewed projections/news for public outlook; organisation learning and exposure snapshot for company analysis | main |
-| `company_advisor` | Employer follow-up chat after Company Future analysis | Same account's saved analysis, anonymous company snapshot, up to six recent saved turns, up to six relevant available course references | main |
+| `company_advisor` | Employer/institution follow-up chat after Company Future / Grads Future analysis | Same account's saved analysis, anonymous company snapshot, up to six recent saved turns, up to six relevant available course references | main |
 
 These are bounded, application-orchestrated AI workflows, not eight autonomous agents that browse, execute tools or take actions. CV extraction and CV advice share one route. Employee summaries share Holland; public market and company analyses share Analyst. Translation is a utility, not an extra agent. Other roles can remain registered for optional insights even when a streamlined UI does not expose their buttons.
 
@@ -21,7 +21,7 @@ Holland scoring, role ranking, skill-gap calculation, course scheduling, vacancy
 
 ## Company Advisor retrieval, privacy and caching
 
-- Employer-authenticated endpoints: `POST /api/enterprise/future/analysis`, `GET /api/enterprise/future/chat?analysisId=…`, `POST /api/enterprise/future/chat`.
+- Employer- or TVET-authenticated endpoints: `POST /api/enterprise/future/analysis`, `GET /api/enterprise/future/chat?analysisId=…`, `POST /api/enterprise/future/chat`.
 - Analysis returns its saved prediction ID. Chat requires that exact analysis, the same account, matching 1–10-year horizon and a current company-input fingerprint. Stale analyses return 409, unrelated account IDs return 404.
 - Retrieval starts from organisation-scoped database data and available course suggestions. A bounded keyword relevance pass ranks those course references for the question. It is not internet-wide or vector retrieval. Course titles and links must come from this context; missing evidence is declared.
 - Prompts omit employee names, IDs and raw CVs. Supplied profile text, questions and source text are untrusted data. Prior turns are loaded from owned database rows, not client-submitted chat history. Company-only recommendations exclude hiring/dismissal decisions and employee rankings.
@@ -58,3 +58,7 @@ Global `AI_PROVIDER` overrides routing and `AI_TEST_MODE` can select the test en
 ## Verification
 
 `enterprise.test.ts` checks organisation/account boundaries, saved translation reuse, concurrent chat caching, references, history and stale snapshot/horizon rejection with a mocked model provider. `agent-routing.test.ts` checks eight distinct identities and Gemini-only testing. No AI credits are needed for these tests.
+
+## TVET reuse
+
+TVET reuses Holland for student summaries, Analyst for Grads Future, and Company Advisor for institution follow-up chat; the inventory remains eight routed roles. Institution history is the explicitly fictional 2024–2026 reference in `src/synthetic-data/tvet/`. It never represents the signed-in institution's actual employment performance. The scenario adds an assumed two percentage points per year to the synthetic 2026 baseline. Current learning and skill gaps come from organisation-scoped student records. Required-course settings and scheduling are deterministic and do not call AI. See `tvet-portal.md`.

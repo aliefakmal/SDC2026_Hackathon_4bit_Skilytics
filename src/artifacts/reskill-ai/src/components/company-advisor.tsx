@@ -51,15 +51,55 @@ const words = {
     ],
   },
 };
+const institutionCopy = {
+  en: {
+    ...words.en,
+    title: "Ask about your institution's next step",
+    note: "Uses this institution's learning snapshot and synthetic graduate reference data, not measured employment results. Replies are saved in three languages.",
+    placeholder: "How can we improve graduate readiness?",
+    loading: "Checking student learning and reference courses…",
+    questions: [
+      "Which skills should students practise first?",
+      "Suggest a realistic graduate-readiness KPI.",
+      "How do required and personalised courses work together?",
+    ],
+  },
+  ms: {
+    ...words.ms,
+    title: "Tanya langkah seterusnya untuk institusi",
+    note: "Merujuk snapshot pembelajaran institusi dan rujukan graduan sintetik, bukan hasil pekerjaan sebenar. Jawapan disimpan dalam tiga bahasa.",
+    placeholder: "Bagaimana meningkatkan kesediaan graduan?",
+    loading: "Menyemak pembelajaran pelajar dan rujukan kursus…",
+    questions: [
+      "Kemahiran apa patut pelajar latih dahulu?",
+      "Cadangkan KPI kesediaan graduan yang realistik.",
+      "Bagaimana kursus wajib dan peribadi saling melengkapi?",
+    ],
+  },
+  zh: {
+    ...words.zh,
+    title: "询问机构的下一步",
+    note: "使用本机构学习快照和合成毕业生参考数据，并非实测就业结果。回答以三种语言保存。",
+    placeholder: "如何提升毕业生就业准备？",
+    loading: "正在核对学生学习和课程资料…",
+    questions: [
+      "学生应该先练习哪些技能？",
+      "建议一个切实可行的毕业生准备度KPI。",
+      "必修课程如何与个性化课程配合？",
+    ],
+  },
+};
 export function CompanyAdvisor({
   analysis,
   years,
+  institution = false,
 }: {
   analysis: CompanyAnalysis;
   years: number;
+  institution?: boolean;
 }) {
   const { lang } = useT(),
-    w = words[lang],
+    w = institution ? institutionCopy[lang] : words[lang],
     qc = useQueryClient();
   const [question, setQuestion] = useState("");
   const key = ["company-advisor", analysis.id];

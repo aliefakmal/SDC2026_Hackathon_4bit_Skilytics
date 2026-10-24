@@ -209,7 +209,23 @@ export function CompanyFuture() {
   const [tab, setTab] = useState("company");
   return (
     <>
-      <PageHeader title={tab === "company" ? w.company : tab === "skills" ? jobWords[lang].title : marketWords[lang].title} sub={tab === "company" ? w.source : tab === "skills" ? jobWords[lang].note : marketWords[lang].sub} help={<TeamGuide future/>}/>
+      <PageHeader
+        title={
+          tab === "company"
+            ? w.company
+            : tab === "skills"
+              ? jobWords[lang].title
+              : marketWords[lang].title
+        }
+        sub={
+          tab === "company"
+            ? w.source
+            : tab === "skills"
+              ? jobWords[lang].note
+              : marketWords[lang].sub
+        }
+        help={<TeamGuide future />}
+      />
       <div className="mb-5">
         <div
           role="tablist"
@@ -236,18 +252,30 @@ export function CompanyFuture() {
       {tab === "company" ? (
         <CompanyProjection />
       ) : tab === "skills" ? (
-        <MarketSkills employer hideHeader/>
+        <MarketSkills employer hideHeader />
       ) : (
         <MarketOutlook
-          hideGuide hideHeader
+          hideGuide
+          hideHeader
           selectedMode={tab === "demand" ? "demand" : "ai"}
         />
       )}
     </>
   );
 }
-function ProjectionMetric({label,value}:{label:string;value:ReactNode}) {
- return <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm"><p className="text-xs font-medium text-muted-foreground">{label}</p><div className="mt-2 text-2xl font-bold tabular-nums">{value}</div></div>;
+function ProjectionMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className="min-w-0 rounded-2xl border bg-card p-4 shadow-sm">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <div className="mt-2 text-2xl font-bold tabular-nums">{value}</div>
+    </div>
+  );
 }
 function CompanyProjection() {
   const { lang } = useT(),
@@ -276,7 +304,8 @@ function CompanyProjection() {
         years: at,
       }),
     }),
-    onSuccess: ({ key, result: res }) => setSaved((v) => ({ ...v, [key]: res })),
+    onSuccess: ({ key, result: res }) =>
+      setSaved((v) => ({ ...v, [key]: res })),
   });
   if (q.isLoading) return <Rows n={4} />;
   if (q.isError || !c)
@@ -290,7 +319,6 @@ function CompanyProjection() {
   }));
   return (
     <div className="space-y-4">
-
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <ProjectionMetric
           label={w.coverage}
@@ -382,7 +410,9 @@ function CompanyProjection() {
           )}
         </div>
         {ai.isPending && (
-          <p className="mt-3 animate-pulse text-sm text-primary font-medium">{w.loading}</p>
+          <p className="mt-3 animate-pulse text-sm text-primary font-medium">
+            {w.loading}
+          </p>
         )}
         {ai.isError && (
           <div className="mt-3">

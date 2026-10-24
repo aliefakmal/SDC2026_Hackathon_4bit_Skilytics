@@ -11,7 +11,7 @@ import { useT } from "@/i18n";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { skillLabel } from "@/lib/skill-label";
-import { ErrorBox, Rows, Panel } from "./kit";
+import { ErrorBox, Rows, Panel, PageHeader } from "./kit";
 export const jobWords = {
   en: {
     tab: "Skills in demand",
@@ -80,7 +80,8 @@ export const jobWords = {
 };
 export function MarketSkills({
   employer = false,
-}: { employer?: boolean } = {}) {
+  hideHeader = false,
+}: { employer?: boolean; hideHeader?: boolean } = {}) {
   const company = useCompany(employer);
   const { lang } = useT(),
     w = jobWords[lang];
@@ -98,7 +99,10 @@ export function MarketSkills({
     retry: false,
   });
   return (
-    <Panel title={w.title} meta={w.note}>
+    <Panel
+      title={hideHeader ? undefined : w.title}
+      meta={hideHeader ? undefined : w.note}
+    >
       <HorizonSlider
         id={employer ? "company-skill-years" : "skill-years"}
         years={years}
@@ -189,7 +193,13 @@ export function MarketSkills({
       )}
       <p className="mt-5 text-xs">
         {q.data?.source} · {q.data?.sample ?? 0} · {q.data?.checkedAt} ·{" "}
-        <a href="/sources" className="underline">{lang === "en" ? "Data and method" : lang === "ms" ? "Data dan kaedah" : "数据与方法"}</a>
+        <a href="/sources" className="underline">
+          {lang === "en"
+            ? "Data and method"
+            : lang === "ms"
+              ? "Data dan kaedah"
+              : "数据与方法"}
+        </a>
       </p>
     </Panel>
   );
@@ -202,7 +212,21 @@ export function MarketExplore() {
   const [tab, setTab] = useState("ai");
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <PageHeader
+        title={tab === "skills" ? w.title : m.title}
+        sub={tab === "skills" ? w.note : m.sub}
+        help={
+          <PageGuide
+            title={m.guide}
+            steps={[
+              { title: m.title, body: m.sub },
+              { title: w.tab, body: w.note },
+              { title: w.years, body: w.scenario },
+            ]}
+          />
+        }
+      />
+      <div>
         <div
           role="tablist"
           className="grid grid-cols-3 gap-1 rounded-xl border bg-card p-1"
@@ -223,20 +247,13 @@ export function MarketExplore() {
             </button>
           ))}
         </div>
-        <PageGuide
-          title={m.guide}
-          steps={[
-            { title: m.title, body: m.sub },
-            { title: w.tab, body: w.note },
-            { title: w.years, body: w.scenario },
-          ]}
-        />
       </div>
       {tab === "skills" ? (
-        <MarketSkills />
+        <MarketSkills hideHeader />
       ) : (
         <MarketOutlook
           hideGuide
+          hideHeader
           selectedMode={tab === "demand" ? "demand" : "ai"}
         />
       )}

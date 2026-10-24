@@ -92,7 +92,12 @@ function Goals({ role }: { role: Candidate }) {
 export function MarketOutlook({
   selectedMode,
   hideGuide = false,
-}: { selectedMode?: "ai" | "demand"; hideGuide?: boolean } = {}) {
+  hideHeader = false,
+}: {
+  selectedMode?: "ai" | "demand";
+  hideGuide?: boolean;
+  hideHeader?: boolean;
+} = {}) {
   const { lang } = useT(),
     w = marketWords[lang];
   const qc = useQueryClient();
@@ -184,21 +189,23 @@ export function MarketOutlook({
   );
   return (
     <div className="space-y-5">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold sm:text-3xl">{w.title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{w.sub}</p>
-        </div>
-        {!hideGuide && (
-          <GuideButton
-            label={w.guide}
-            onClick={() => {
-              setStep(0);
-              setGuide(true);
-            }}
-          />
-        )}
-      </header>
+      {!hideHeader && (
+        <header className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-extrabold sm:text-3xl">{w.title}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{w.sub}</p>
+          </div>
+          {!hideGuide && (
+            <GuideButton
+              label={w.guide}
+              onClick={() => {
+                setStep(0);
+                setGuide(true);
+              }}
+            />
+          )}
+        </header>
+      )}
       <section
         className="min-w-0 rounded-2xl border bg-card p-4 sm:p-6"
         aria-label={w.trend}

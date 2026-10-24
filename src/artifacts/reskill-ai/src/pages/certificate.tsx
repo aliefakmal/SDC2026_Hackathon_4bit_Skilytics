@@ -176,7 +176,7 @@ export default function CertificatePage() {
       <main className="mx-auto max-w-6xl px-4 py-5 sm:py-8">
         <div className="certificate-controls">
           <Link
-            href={window.location.pathname.startsWith("/hr/")?"/hr/members":"/me"}
+            href={window.location.pathname.startsWith("/tvet/")?"/tvet/students":window.location.pathname.startsWith("/hr/")?"/hr/members":"/me"}
             className="mb-5 inline-flex min-h-11 items-center gap-2 text-sm text-muted-foreground"
           >
             <ArrowLeft className="h-4 w-4" />

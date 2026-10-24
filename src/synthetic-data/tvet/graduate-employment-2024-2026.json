@@ -1,0 +1,94 @@
+{
+  "id": "tvet-graduate-outcomes-demo-v1",
+  "synthetic": true,
+  "institution": "Fictional TVET reference institution",
+  "period": {
+    "start": 2024,
+    "end": 2026
+  },
+  "reviewDate": "2026-10-24",
+  "method": "Hand-authored aggregate fixture. Employment rate = employed within six months / all graduates. Further study is not counted as employment. Unknown outcomes remain in the denominator. Not measured institutional or national statistics.",
+  "rows": [
+    {
+      "year": 2024,
+      "programme": "Digital & ICT",
+      "graduates": 80,
+      "employedWithinSixMonths": 58,
+      "furtherStudy": 10,
+      "seekingWork": 8,
+      "notReported": 4
+    },
+    {
+      "year": 2024,
+      "programme": "Business services",
+      "graduates": 80,
+      "employedWithinSixMonths": 52,
+      "furtherStudy": 12,
+      "seekingWork": 12,
+      "notReported": 4
+    },
+    {
+      "year": 2024,
+      "programme": "Creative",
+      "graduates": 60,
+      "employedWithinSixMonths": 39,
+      "furtherStudy": 9,
+      "seekingWork": 8,
+      "notReported": 4
+    },
+    {
+      "year": 2025,
+      "programme": "Digital & ICT",
+      "graduates": 90,
+      "employedWithinSixMonths": 70,
+      "furtherStudy": 9,
+      "seekingWork": 7,
+      "notReported": 4
+    },
+    {
+      "year": 2025,
+      "programme": "Business services",
+      "graduates": 85,
+      "employedWithinSixMonths": 61,
+      "furtherStudy": 10,
+      "seekingWork": 10,
+      "notReported": 4
+    },
+    {
+      "year": 2025,
+      "programme": "Creative",
+      "graduates": 65,
+      "employedWithinSixMonths": 45,
+      "furtherStudy": 9,
+      "seekingWork": 7,
+      "notReported": 4
+    },
+    {
+      "year": 2026,
+      "programme": "Digital & ICT",
+      "graduates": 100,
+      "employedWithinSixMonths": 83,
+      "furtherStudy": 8,
+      "seekingWork": 6,
+      "notReported": 3
+    },
+    {
+      "year": 2026,
+      "programme": "Business services",
+      "graduates": 90,
+      "employedWithinSixMonths": 70,
+      "furtherStudy": 9,
+      "seekingWork": 8,
+      "notReported": 3
+    },
+    {
+      "year": 2026,
+      "programme": "Creative",
+      "graduates": 70,
+      "employedWithinSixMonths": 53,
+      "furtherStudy": 8,
+      "seekingWork": 6,
+      "notReported": 3
+    }
+  ]
+}

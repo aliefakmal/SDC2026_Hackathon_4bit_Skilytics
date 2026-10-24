@@ -1,3 +1,4 @@
+import institutionRouter from "./institution";
 import { Router, type IRouter } from "express";
 import jobsRouter from "./jobs";
 import healthRouter from "./health";
@@ -22,5 +23,6 @@ router.use(outlookRouter);
 router.use(aiRouter);
 router.use(cohortRouter);
 router.use(enterpriseRouter);
+router.use(institutionRouter);
 
 export default router;

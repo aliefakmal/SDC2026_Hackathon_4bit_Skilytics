@@ -15,12 +15,16 @@ export function buildPlan(opts: {
   maxCourses?: number;
   roleTitle?: string;
   aiAdvancement?: boolean;
+  compulsoryCourses?: CourseView[];
 }) {
   const { courses, weeklyHours, hrdcEligible } = opts;
   const maxCourses = opts.maxCourses ?? 6;
   const remaining = new Map(opts.gaps.map((g) => [g.skillId, g]));
   let budget = opts.budgetMyr;
-  const chosen: CourseView[] = [];
+  const compulsory = opts.compulsoryCourses ?? [];
+  const chosen: CourseView[] = [...compulsory];
+  budget -= compulsory.reduce((sum,c)=>sum+c.costMyr,0);
+  for(const c of compulsory) for(const skill of c.skills) remaining.delete(skill.id);
   const advancement = opts.aiAdvancement ? workplaceAiCourses(courses) : [];
   for (const c of advancement) for (const s of c.skills) remaining.delete(s.id);
 
@@ -75,11 +79,12 @@ export function buildPlan(opts: {
     opts.gaps.filter((g) => g.importance >= 3).map((g) => g.skillId),
   );
   chosen.sort((a, b) => {
+    if(compulsory.includes(a)!==compulsory.includes(b))return compulsory.includes(a)?-1:1;
     const ca = a.skills.some((s) => coreIds.has(s.id)) ? 0 : 1;
     const cb = b.skills.some((s) => coreIds.has(s.id)) ? 0 : 1;
     return ca - cb || a.costMyr - b.costMyr;
   });
-  chosen.push(...advancement);
+  chosen.push(...advancement.filter(c=>!chosen.includes(c)));
 
   // Schedule: two parallel tracks when weekly hours allow (>= 8h/week),
   // otherwise sequential. Course hours are never truncated.
@@ -92,6 +97,7 @@ export function buildPlan(opts: {
     if (advancement.includes(c)) trackEnd.fill(Math.max(...trackEnd));
     if (c.durationHours === null)
       return {
+        compulsory: compulsory.includes(c),
         courseId: c.id,
         title: c.title,
         provider: c.provider,
@@ -114,6 +120,7 @@ export function buildPlan(opts: {
     const startWeek = trackEnd[t];
     trackEnd[t] = startWeek + durationWeeks;
     return {
+      compulsory: compulsory.includes(c),
       courseId: c.id,
       title: c.title,
       provider: c.provider,
@@ -124,7 +131,7 @@ export function buildPlan(opts: {
       hrdcStatus: c.hrdcStatus,
       skills: c.skills
         .map((s) => s.name)
-        .filter((n) => advancement.includes(c) || gapNames.has(n)),
+        .filter((n) => compulsory.includes(c) || advancement.includes(c) || gapNames.has(n)),
       sdgCodes: c.sdgCodes,
     };
   });

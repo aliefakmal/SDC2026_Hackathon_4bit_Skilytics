@@ -69,6 +69,16 @@ export function generateDeterministicCompanyAnalysis(
   context: ReturnType<typeof companyFutureContext>,
   years: number,
 ): { en: string; ms: string; zh: string } {
+  if(context.portal === "tvet") {
+    const rows=context.institutionHistory?.annual ?? [];
+    const baseline=rows.at(-1)?.rate;
+    const scenario=baseline==null?null:Math.min(100,baseline+2*years);
+    return {
+      en:`### Synthetic graduate example\nThe fictional 2026 employment rate is ${baseline?.toFixed(1)??"unknown"}%. With an assumed +2 percentage points each year, the ${2026+years} example is ${scenario?.toFixed(1)??"unknown"}%. These are not this institution's measured results.\n\n### Current learning\nThere are ${context.profileCount} student records and ${context.completedCourses}/${context.totalCourses} course check-ins. Keep compulsory learning and personalised career practice visible.\n\n### Proposed review\nReview required-course completion and a small work sample every month. Set targets after checking the baseline; do not promise employment.`,
+      ms:`### Contoh graduan sintetik\nKadar pekerjaan rekaan 2026 ialah ${baseline?.toFixed(1)??"tidak diketahui"}%. Dengan andaian +2 mata peratus setahun, contoh ${2026+years} ialah ${scenario?.toFixed(1)??"tidak diketahui"}%. Ini bukan hasil sebenar institusi ini.\n\n### Pembelajaran semasa\nTerdapat ${context.profileCount} rekod pelajar dan ${context.completedCourses}/${context.totalCourses} semakan selesai kursus. Bezakan kursus wajib dan latihan kerjaya peribadi.\n\n### Semakan dicadangkan\nSemak penyelesaian kursus wajib dan satu hasil kerja kecil setiap bulan. Tetapkan sasaran selepas menyemak asas; jangan janjikan pekerjaan.`,
+      zh:`### 合成毕业生示例\n虚构的2026年就业率为${baseline?.toFixed(1)??"未知"}%。假设每年增加2个百分点，${2026+years}年的示例为${scenario?.toFixed(1)??"未知"}%。这些并非本机构实测结果。\n\n### 当前学习\n共有${context.profileCount}条学生记录，课程完成自报为${context.completedCourses}/${context.totalCourses}。请区分必修学习与个性化职业练习。\n\n### 建议回顾\n每月回顾必修完成情况和一份小型作品。核对基准后再设目标，不承诺就业。`,
+    };
+  }
   const currentExposure = context.avgExposure ?? 0.35;
   const projectedExposure = 1 - (1 - currentExposure) * Math.pow(0.95, years);
   const topSkills =

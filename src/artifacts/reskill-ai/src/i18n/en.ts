@@ -1,6 +1,9 @@
 import { docsEn } from "./docs";
 import { obEn } from "./ob";
 export const en = {
+  "err.compulsory_duration_required": "Choose required courses with published study hours.",
+  "err.compulsory_catalogue_changed": "The institution requirements or catalogue changed. Rebuild this pathway before starting.",
+  "err.compulsory_budget_exceeded": "The required courses cost more than this student’s budget. Increase the training budget in their CV details or choose lower-cost required courses.",
   "err.analysis_outdated": "Your company data or selected year has changed. Run the company analysis again before chatting.",
   "err.analysis_not_found": "Generate the company analysis first.",
   "err.chat_not_found": "This conversation is unavailable. Run a new company analysis.",
@@ -199,7 +202,7 @@ export const en = {
   "members.hasPlan": "Plan", "members.noMatch": "No one matches that search", "members.search": "Search by name or role",
   "members.topMatch": "Top match", "members.hrSub": "Open an employee to map skills and build a pathway.",
   "members.tvetSub": "Open a student to map skills, interests and pathways.",
-  "nav.agents": "AI agents", "nav.courses": "Courses", "nav.gradMarket": "Graduate market", "nav.group.data": "Data",
+  "nav.agents": "AI agents", "nav.courses": "Courses", "nav.gradMarket": "Grads Future", "nav.group.data": "Data",
   "nav.group.explore": "Explore", "nav.group.modules": "Modules", "nav.group.portal": "Portal", "nav.group.workspace": "Workspace",
   "nav.future": "Future", "nav.hrDashboard": "Dashboard", "nav.intake": "Intake", "nav.market": "Market", "nav.matcher": "Matcher",
   "nav.members": "Employees", "nav.outlook": "Outlook", "nav.pathway": "Pathway", "nav.primary": "Main navigation",

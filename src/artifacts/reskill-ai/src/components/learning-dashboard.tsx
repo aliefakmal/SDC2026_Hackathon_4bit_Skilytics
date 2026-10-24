@@ -1,3 +1,4 @@
+import {useState} from "react";
 import {jobWords} from "./market-skills";
 import type { Profile } from "@workspace/api-client-react";
 import { Link } from "wouter";
@@ -13,9 +14,10 @@ import {
 import { Button } from "./ui/button";
 import { ErrorBox, SdgBadge } from "./kit";
 
-export function LearningDashboard({ p, employer=false }: { p: Profile; employer?:boolean }) {
+export function LearningDashboard({ p, employer=false, portal="hr" }: { p: Profile; employer?:boolean;portal?:"hr"|"tvet" }) {
   const { lang } = useT(),
     w = learningWords[lang];
+  const [category,setCategory]=useState("all");
   const q = useLearning(p.id),
     action = useLearningAction(p.id);
   const j = q.data;
@@ -93,8 +95,9 @@ export function LearningDashboard({ p, employer=false }: { p: Profile; employer?
           />
         </div>
       </div>
+      {employer && portal==="tvet" && <div role="tablist" className="mb-4 flex flex-wrap gap-2">{[["all",lang==="ms"?"Semua":lang==="zh"?"全部":"All"],["compulsory",lang==="ms"?"Wajib":lang==="zh"?"必修":"Compulsory"],["personalised",lang==="ms"?"Peribadi":lang==="zh"?"个性化":"Personalised"]].map(([id,label])=><button key={id} role="tab" aria-selected={category===id} onClick={()=>setCategory(id)} className={`min-h-11 rounded-xl border px-3 text-sm font-semibold ${category===id?"bg-primary text-primary-foreground":""}`}>{label} ({j.items.filter(i=>id==="all"||(id==="compulsory"?i.compulsory:!i.compulsory)).length})</button>)}</div>}
       <ol className="space-y-3">
-        {j.items.map((i) => {
+        {j.items.filter(i=>!employer||portal!=="tvet"||category==="all"||(category==="compulsory"?i.compulsory:!i.compulsory)).map((i) => {
           const complete = !!j.completed[String(i.courseId)];
           const late =
             !complete &&
@@ -107,6 +110,7 @@ export function LearningDashboard({ p, employer=false }: { p: Profile; employer?
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
+                  {employer && portal==="tvet" && <p className="mb-2 text-xs font-bold text-primary">{i.compulsory ? (lang==="ms"?"Kursus wajib":lang==="zh"?"必修课程":"Compulsory course") : (lang==="ms"?"Kursus peribadi":lang==="zh"?"个性化课程":"Personalised course")}</p>}
                   <h3 className="font-bold">
                     {complete && (
                       <CheckCircle2 className="mr-2 inline h-4 w-4 text-emerald-600" />
@@ -186,7 +190,7 @@ export function LearningDashboard({ p, employer=false }: { p: Profile; employer?
         <div className="mt-5 space-y-3 rounded-2xl border-2 border-accent p-4">
           <h3 className="text-xl font-bold">{w.finish} 🎉</h3>
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-          <Button asChild className="h-auto min-h-11 whitespace-normal py-3"><Link href={`${employer?"/hr":"/me"}/certificates/${p.id}`}>
+          <Button asChild className="h-auto min-h-11 whitespace-normal py-3"><Link href={`${employer?`/${portal}`:"/me"}/certificates/${p.id}`}>
             <Award className="mr-2 h-4 w-4" />
             {w.certificate}
           </Link></Button>

@@ -60,7 +60,7 @@ const tasks: Record<string, Record<string, string>> = {
     analyst:
       "Market outlook, outlook questions and saved Company Future analysis.",
     company_advisor:
-      "Employer-only follow-up chat using company data, saved analysis, recent turns and retrieved course references.",
+      "Employer/institution follow-up chat using company data, saved analysis, recent turns and retrieved course references.",
   },
   ms: {
     cv: "Membaca teks/imej CV dan menerangkan bukti CV.",
@@ -73,7 +73,7 @@ const tasks: Record<string, Record<string, string>> = {
     analyst:
       "Prospek pasaran, soalan outlook dan analisis Company Future disimpan.",
     company_advisor:
-      "Chat susulan khas majikan menggunakan data syarikat, analisis disimpan, perbualan terkini dan rujukan kursus.",
+      "Chat susulan majikan/institusi menggunakan data syarikat, analisis disimpan, perbualan terkini dan rujukan kursus.",
   },
   zh: {
     cv: "读取上传的简历文字和图像，解释简历依据。",
@@ -84,7 +84,7 @@ const tasks: Record<string, Record<string, string>> = {
     sdg: "解释提供的SDG主题。",
     analyst: "市场展望、展望问答及已保存的公司未来分析。",
     company_advisor:
-      "雇主专用的后续对话，参考公司数据、已保存分析、近期对话和检索的课程资料。",
+      "雇主/机构的后续对话，参考公司数据、已保存分析、近期对话和检索的课程资料。",
   },
 };
 export function AiRoutingPanel() {

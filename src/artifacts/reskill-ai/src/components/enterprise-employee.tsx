@@ -1,3 +1,5 @@
+import { PageHeader } from "./kit";
+import { institutionWords } from "@/i18n/institution";
 import { useState } from "react";
 import { Link, Redirect, useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -26,9 +28,26 @@ import {
 } from "./ui/dialog";
 import { ErrorBox, Rows, Panel, Meter, Markdown } from "./kit";
 
-export function EnterpriseEmployee({ p, mod }: { p: Profile; mod: string }) {
+export function EnterpriseEmployee({
+  p,
+  mod,
+  institution = false,
+}: {
+  p: Profile;
+  mod: string;
+  institution?: boolean;
+}) {
   const { lang } = useT(),
-    w = enterpriseWords[lang];
+    w = {
+      ...enterpriseWords[lang],
+      ...(institution
+        ? {
+            back: institutionWords[lang].back,
+            guideEmployee: institutionWords[lang].guideStudents,
+          }
+        : {}),
+    };
+  const base = institution ? "/tvet/students" : "/hr/members";
   const j = useLearning(p.id);
   if (j.isLoading) return <Rows n={3} />;
   if (j.isError) return <ErrorBox error={j.error} retry={() => j.refetch()} />;
@@ -40,26 +59,30 @@ export function EnterpriseEmployee({ p, mod }: { p: Profile; mod: string }) {
       (mod === "pathway" && stage !== "pathway") ||
       ["radar", "agents"].includes(mod))
   )
-    return <Redirect to={`/hr/members/${p.id}/${stage}`} />;
+    return <Redirect to={`${base}/${p.id}/${stage}`} />;
   const index = mod === "matcher" ? 1 : mod === "pathway" ? 2 : 0;
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <Link
-          className="inline-flex min-h-11 items-center text-sm text-primary"
-          href="/hr/members"
-        >
-          ← {w.back}
-        </Link>
-        <PageGuide
-          title={w.guide}
-          steps={[
-            { title: active ? w.progress : w.profile, body: w.guideEmployee },
-            { title: w.gaps, body: w.reported },
-          ]}
-        />
-      </div>
-      <h1 className="break-words text-2xl font-bold sm:text-3xl">{p.name}</h1>
+      <PageHeader
+        title={p.name}
+        help={
+          <PageGuide
+            title={w.guide}
+            steps={[
+              { title: active ? w.progress : w.profile, body: w.guideEmployee },
+              { title: w.gaps, body: w.reported },
+            ]}
+          />
+        }
+        sub={
+          <Link
+            className="inline-flex min-h-11 items-center text-sm text-primary"
+            href={base}
+          >
+            ← {w.back}
+          </Link>
+        }
+      />
       {!active && (
         <ol className="grid grid-cols-3 gap-2">
           {w.setup.map((s, i) => (
@@ -75,23 +98,27 @@ export function EnterpriseEmployee({ p, mod }: { p: Profile; mod: string }) {
       )}
       {active ? (
         <>
-          <LearningDashboard p={p} employer />
+          <LearningDashboard
+            p={p}
+            employer
+            portal={institution ? "tvet" : "hr"}
+          />
           <EmployeeGap p={p} />
           <details className="rounded-2xl border bg-card p-4">
             <summary className="cursor-pointer font-semibold">
               {w.profile} · {w.holland}
             </summary>
             <div className="mt-4">
-              <EmployeeIntake p={p} active />
+              <EmployeeIntake p={p} active base={base} />
             </div>
           </details>
         </>
       ) : index === 0 ? (
-        <EmployeeIntake p={p} />
+        <EmployeeIntake p={p} base={base} />
       ) : index === 1 ? (
-        <IndividualMatcher p={p} base="/hr/members" />
+        <IndividualMatcher p={p} base={base} />
       ) : (
-        <IndividualPathway p={p} base="/hr/members" />
+        <IndividualPathway p={p} base={base} />
       )}
     </div>
   );
@@ -144,12 +171,32 @@ function EmployeeGap({ p }: { p: Profile }) {
 function EmployeeIntake({
   p,
   active = false,
+  base = "/hr/members",
 }: {
   p: Profile;
   active?: boolean;
+  base?: string;
 }) {
   const { lang, t, tk } = useT(),
-    w = enterpriseWords[lang];
+    w = {
+      ...enterpriseWords[lang],
+      ...(base.startsWith("/tvet")
+        ? {
+            summary:
+              lang === "ms"
+                ? "Maksudnya untuk pembelajaran"
+                : lang === "zh"
+                  ? "这对学习意味着什么"
+                  : "What this means for learning",
+            uploadHelp:
+              lang === "ms"
+                ? "Semak CV pelajar dan kemas kini maklumat yang disimpan. Keputusan Holland kekal tetap."
+                : lang === "zh"
+                  ? "核对学生简历并更新保存的资料，霍兰德结果保持固定。"
+                  : "Review the student's CV and update saved details. The Holland result stays fixed.",
+          }
+        : {}),
+    };
   const [cv, setCv] = useState(false),
     [edit, setEdit] = useState(false),
     [questions, setQuestions] = useState(false);
@@ -184,7 +231,7 @@ function EmployeeIntake({
       qc.setQueryData(getGetProfileQueryKey(p.id), next);
       await action.mutateAsync({ action: "confirm_intake" });
       qc.invalidateQueries({ queryKey: ["enterprise"] });
-      nav(`/hr/members/${p.id}/matcher`);
+      nav(`${base}/${p.id}/matcher`);
     } catch {}
   };
   return (

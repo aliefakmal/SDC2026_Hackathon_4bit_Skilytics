@@ -3,6 +3,9 @@ import { obZh } from "./ob";
 import type { DictKey } from "./en";
 
 export const zh: Record<DictKey, string> = {
+  "err.compulsory_duration_required": "请选择已公布学习时长的必修课程。",
+  "err.compulsory_catalogue_changed": "机构要求或目录已更改，请在开始前重新生成学习路径。",
+  "err.compulsory_budget_exceeded": "必修课程费用超过学生预算。请在简历详情中增加培训预算，或选择费用较低的必修课程。",
   "err.journey_step_required": "请先完成当前步骤。",
   "err.intake_required": "请先核对并确认录入摘要。",
   "err.riasec_locked": "Holland 测评已保存并锁定，请在录入摘要中编辑简历资料。",
@@ -200,7 +203,7 @@ export const zh: Record<DictKey, string> = {
   "members.hasPlan": "已有计划", "members.noMatch": "没有符合搜索的人员", "members.search": "按姓名或职位搜索",
   "members.topMatch": "最佳匹配", "members.hrSub": "打开员工资料以梳理技能并制定学习路径。",
   "members.tvetSub": "打开学生以梳理技能、兴趣与路径。",
-  "nav.agents": "AI 助手", "nav.courses": "课程", "nav.gradMarket": "毕业生市场", "nav.group.data": "数据",
+  "nav.agents": "AI 助手", "nav.courses": "课程", "nav.gradMarket": "毕业生未来", "nav.group.data": "数据",
   "nav.group.explore": "探索", "nav.group.modules": "模块", "nav.group.portal": "门户", "nav.group.workspace": "工作区",
   "nav.future": "未来", "nav.hrDashboard": "仪表板", "nav.intake": "录入", "nav.market": "市场", "nav.matcher": "匹配",
   "nav.members": "员工", "nav.outlook": "展望", "nav.pathway": "路径", "nav.primary": "主导航",

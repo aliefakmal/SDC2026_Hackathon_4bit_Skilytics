@@ -57,6 +57,7 @@ export default defineConfig({
               'tvet',
               'tvet/students',
               'tvet/programmes',
+              'tvet/courses',
               'tvet/market',
             ];
 

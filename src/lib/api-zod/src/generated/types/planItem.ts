@@ -9,6 +9,8 @@ import type { HrdcStatus } from './hrdcStatus';
 import type { SdgTarget } from './sdgTarget';
 
 export interface PlanItem {
+  /** Institution-required course for TVET learners */
+  compulsory?: boolean;
   courseId: number;
   title: string;
   provider: string;
