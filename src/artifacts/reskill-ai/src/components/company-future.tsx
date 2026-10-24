@@ -163,21 +163,38 @@ export function EnterpriseDashboard() {
                 ))}
               </div>
             </Panel>
-            <Panel title={w.company} meta={w.source}>
-              <p className="text-4xl font-bold text-primary">
-                {c.avgExposure == null
-                  ? "—"
-                  : `${Math.round(c.avgExposure * 100)}%`}
-              </p>
-              <p className="mt-2 text-sm">
-                {w.now} · {c.exposureCoverage}/{c.profileCount}
-              </p>
-              <Link
-                href="/market"
-                className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
-              >
-                {w.future} →
-              </Link>
+            <Panel
+              title={w.company}
+              meta={w.source}
+              className="flex h-full flex-col justify-between"
+            >
+              <div className="flex flex-1 flex-col justify-between gap-4">
+                <div className="flex flex-1 flex-col justify-center py-2 lg:py-6">
+                  <div className="space-y-2 lg:space-y-3">
+                    <p className="text-4xl font-extrabold tracking-tight text-primary sm:text-5xl lg:text-6xl xl:text-7xl">
+                      {c.avgExposure == null
+                        ? "—"
+                        : `${Math.round(c.avgExposure * 100)}%`}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center rounded-lg bg-[hsl(var(--maroon-soft))] px-2.5 py-1 text-xs font-semibold text-primary lg:text-sm">
+                        {w.now}
+                      </span>
+                      <span className="text-sm font-medium text-muted-foreground lg:text-base">
+                        · {c.exposureCoverage}/{c.profileCount}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="pt-2">
+                  <Link
+                    href="/market"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md active:scale-95 lg:min-h-12 lg:px-6 lg:text-base"
+                  >
+                    {w.future} →
+                  </Link>
+                </div>
+              </div>
             </Panel>
           </div>
         </>
