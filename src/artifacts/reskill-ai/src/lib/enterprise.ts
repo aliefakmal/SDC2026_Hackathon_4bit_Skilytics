@@ -39,6 +39,7 @@ export type SavedAnalysis = {
   generatedAt: string;
   cached: boolean;
 };
+export type CompanyAnalysis = SavedAnalysis & { id: number };
 export function useCompany(enabled=true) {
   return useQuery({
     enabled,

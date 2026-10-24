@@ -1,3 +1,9 @@
+import {
+  companyFutureContext,
+  companyAnalysisHash,
+  advisorRetrieval,
+} from "../lib/company-advisor";
+import { consumeAiRequest } from "../lib/ai-rate-limit";
 import { Router } from "express";
 import { z } from "zod";
 import { db, insightsTable, predictionsTable } from "@workspace/db";
@@ -93,7 +99,7 @@ router.post("/enterprise/employees/:id/summary", async (req, res) => {
         policy +
           " Explain like a friendly guide to someone new to career planning. Use exactly three short headings: CV strengths, interest mix, one 10-minute activity. Describe the practical result of their work in everyday words. Do not copy CV jargon such as pipelines, containerization, MLOps, end-to-end or unexplained abbreviations. Use one relatable example connecting the fixed Holland letters to their actual CV. Describe CV claims as reported experience, not proven expertise. Suggest one specific small practice task, not vague advice to explore certifications. Under 120 words per language. Do not repeat the raw CV.",
         JSON.stringify(context),
-        { agent: "holland", timeoutMs:45_000 },
+        { agent: "holland", timeoutMs: 45_000 },
       );
       const translations = parseCompanyTranslation(out.content);
       const [saved] = await tx
@@ -116,7 +122,16 @@ router.post("/enterprise/employees/:id/summary", async (req, res) => {
       { kind: err instanceof Error ? err.name : "unknown" },
       "Enterprise analysis failed",
     );
-    res.status(503).json({ error: err instanceof AiTimeoutError ? "ai_timeout" : err instanceof AiNotConnectedError ? "ai_not_connected" : "ai_failed" });
+    res
+      .status(503)
+      .json({
+        error:
+          err instanceof AiTimeoutError
+            ? "ai_timeout"
+            : err instanceof AiNotConnectedError
+              ? "ai_not_connected"
+              : "ai_failed",
+      });
   }
 });
 
@@ -125,22 +140,8 @@ router.post("/enterprise/future/analysis", async (req, res) => {
     .object({ years: z.number().int().min(1).max(10) })
     .parse(req.body);
   const company = await companyData(req);
-  // No employee names or raw CVs are needed for the company recommendation.
-  const context = {
-    ...company,
-    members: company.members.map(({ id, name, ...m }) => m),
-    updatedAt: undefined,
-    years,
-    assumption:
-      "Illustrative adoption scenario only: each year AI overlaps 5% of remaining tasks; no empirical company forecast or job-loss estimate.",
-    suggestedKpis:
-      "Label every target as a proposal, not a measured outcome. Use course completion, voluntary practice tasks and assessment of relevant gaps; never fabricated ROI.",
-  };
-  const inputHash = hashInput(
-    "company-future-v1",
-    req.user!.organization,
-    context,
-  );
+  const context = companyFutureContext(company, years);
+  const inputHash = companyAnalysisHash(req.user!.organization, context);
   try {
     const result = await db.transaction(async (tx) => {
       await tx.execute(
@@ -159,6 +160,7 @@ router.post("/enterprise/future/analysis", async (req, res) => {
         .limit(1);
       if (cached)
         return {
+          id: cached.id,
           translations: parseCompanyTranslation(cached.content),
           generatedAt: cached.createdAt,
           cached: true,
@@ -168,7 +170,7 @@ router.post("/enterprise/future/analysis", async (req, res) => {
         policy +
           " Give exactly 4 concise sections: what is changing; team learning priorities; 3 proposed measurable company KPIs with time windows; limitations and next review. Differentiate observed data from the illustrative scenario and suggested targets. Use everyday ELI5 words; explain technical terms with a simple example. Under 180 words per language.",
         JSON.stringify(context),
-        { agent: "analyst", timeoutMs:60_000 },
+        { agent: "analyst", timeoutMs: 60_000 },
       );
       const translations = parseCompanyTranslation(out.content);
       const [saved] = await tx
@@ -184,7 +186,12 @@ router.post("/enterprise/future/analysis", async (req, res) => {
           model: out.model,
         })
         .returning();
-      return { translations, generatedAt: saved.createdAt, cached: false };
+      return {
+        id: saved.id,
+        translations,
+        generatedAt: saved.createdAt,
+        cached: false,
+      };
     });
     res.json(result);
   } catch (err) {
@@ -192,7 +199,234 @@ router.post("/enterprise/future/analysis", async (req, res) => {
       { kind: err instanceof Error ? err.name : "unknown" },
       "Enterprise analysis failed",
     );
-    res.status(503).json({ error: err instanceof AiTimeoutError ? "ai_timeout" : err instanceof AiNotConnectedError ? "ai_not_connected" : "ai_failed" });
+    res
+      .status(503)
+      .json({
+        error:
+          err instanceof AiTimeoutError
+            ? "ai_timeout"
+            : err instanceof AiNotConnectedError
+              ? "ai_not_connected"
+              : "ai_failed",
+      });
+  }
+});
+
+const savedChat = tri.extend({
+  analysisId: z.number().int().positive(),
+  parentId: z.number().int().positive().nullable(),
+});
+function chatRecord(row: typeof predictionsTable.$inferSelect) {
+  try {
+    const parsed = savedChat.safeParse(JSON.parse(row.content));
+    return parsed.success ? parsed.data : null;
+  } catch { return null; }
+}
+router.get("/enterprise/future/chat", async (req, res) => {
+  const analysisId = z.coerce
+    .number()
+    .int()
+    .positive()
+    .parse(req.query.analysisId);
+  const [analysis] = await db
+    .select()
+    .from(predictionsTable)
+    .where(
+      and(
+        eq(predictionsTable.id, analysisId),
+        eq(predictionsTable.ownerUserId, req.user!.id),
+        eq(predictionsTable.question, "Company Future"),
+      ),
+    )
+    .limit(1);
+  if (!analysis) {
+    res.status(404).json({ error: "analysis_not_found" });
+    return;
+  }
+  const rows = await db
+    .select()
+    .from(predictionsTable)
+    .where(
+      and(
+        eq(predictionsTable.ownerUserId, req.user!.id),
+        sql`${predictionsTable.inputHash} LIKE 'company-chat:%'`,
+        sql`${predictionsTable.content} LIKE ${'%"analysisId":' + analysisId + ",%"}`,
+      ),
+    )
+    .orderBy(desc(predictionsTable.id))
+    .limit(40);
+  res.json(
+    rows.reverse().flatMap((row) => {
+      const data = chatRecord(row);
+      return data?.analysisId === analysisId
+        ? [
+            {
+              id: row.id,
+              question: row.question,
+              translations: tri.parse(data),
+              generatedAt: row.createdAt,
+              sources: row.sources,
+              cached: true,
+            },
+          ]
+        : [];
+    }),
+  );
+});
+router.post("/enterprise/future/chat", async (req, res) => {
+  const body = z
+    .object({
+      analysisId: z.number().int().positive(),
+      years: z.number().int().min(1).max(10),
+      question: z.string().trim().min(2).max(1200),
+      parentId: z.number().int().positive().nullable().default(null),
+    })
+    .parse(req.body);
+  const [analysis] = await db
+    .select()
+    .from(predictionsTable)
+    .where(
+      and(
+        eq(predictionsTable.id, body.analysisId),
+        eq(predictionsTable.ownerUserId, req.user!.id),
+        eq(predictionsTable.question, "Company Future"),
+      ),
+    )
+    .limit(1);
+  if (!analysis) {
+    res.status(404).json({ error: "analysis_not_found" });
+    return;
+  }
+  const company = await companyData(req);
+  const context = companyFutureContext(company, body.years);
+  if (
+    analysis.horizonYears !== body.years ||
+    analysis.inputHash !== companyAnalysisHash(req.user!.organization, context)
+  ) {
+    res.status(409).json({ error: "analysis_outdated" });
+    return;
+  }
+  const history: { question: string; answer: unknown }[] = [];
+  let parentId = body.parentId;
+  // Only server-stored turns from this account and this exact analysis are trusted as history.
+  for (let n = 0; parentId !== null && n < 6; n++) {
+    const [row] = await db
+      .select()
+      .from(predictionsTable)
+      .where(
+        and(
+          eq(predictionsTable.id, parentId),
+          eq(predictionsTable.ownerUserId, req.user!.id),
+        ),
+      )
+      .limit(1);
+    const parsed = row ? chatRecord(row) : null;
+    if (!row || !parsed || parsed.analysisId !== body.analysisId) {
+      res.status(404).json({ error: "chat_not_found" });
+      return;
+    }
+    history.unshift({ question: row.question, answer: tri.parse(parsed) });
+    parentId = parsed.parentId;
+  }
+  const retrieved = advisorRetrieval(company, body.question);
+  const inputHash =
+    "company-chat:" +
+    hashInput(
+      "company-advisor-v1",
+      req.user!.id,
+      analysis.inputHash,
+      body.analysisId,
+      body.parentId,
+      body.question,
+    );
+  try {
+    const result = await db.transaction(async (tx) => {
+      await tx.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended(${inputHash},0))`,
+      );
+      const [cached] = await tx
+        .select()
+        .from(predictionsTable)
+        .where(
+          and(
+            eq(predictionsTable.ownerUserId, req.user!.id),
+            eq(predictionsTable.inputHash, inputHash),
+          ),
+        )
+        .limit(1);
+      if (cached)
+        return {
+          id: cached.id,
+          question: cached.question,
+          translations: parseCompanyTranslation(cached.content),
+          generatedAt: cached.createdAt,
+          sources: cached.sources,
+          cached: true,
+        };
+      const allowance = consumeAiRequest("user", String(req.user!.id));
+      if (!allowance.allowed)
+        return { limited: true, retry: allowance.retryAfterSeconds };
+      const out = await chat(
+        "main",
+        policy +
+          " You are the Company Learning Advisor. Answer the user's follow-up about this company's future using the supplied company snapshot, saved analysis, recent conversation and retrieved course/source references. Distinguish current observations, scenario assumptions and proposed KPI targets. Recommend only retrieved courses and use their exact URLs as links. If the data cannot answer, say what is missing and suggest a small way to check it. Do not browse, claim autonomous actions or invent future measurements. Cite at least one relevant supplied reference when making a sourced claim. Under 160 words per language.",
+        JSON.stringify({
+          context,
+          analysis: parseCompanyTranslation(analysis.content),
+          history,
+          retrieved,
+          question: body.question,
+        }),
+        { agent: "company_advisor", timeoutMs: 60_000 },
+      );
+      const translations = parseCompanyTranslation(out.content);
+      const [saved] = await tx
+        .insert(predictionsTable)
+        .values({
+          ownerUserId: req.user!.id,
+          question: body.question,
+          horizonYears: body.years,
+          lang: "all",
+          inputHash,
+          content: JSON.stringify({
+            ...translations,
+            analysisId: body.analysisId,
+            parentId: body.parentId,
+          }),
+          sources: retrieved.sources,
+          model: out.model,
+        })
+        .returning();
+      return {
+        id: saved.id,
+        question: body.question,
+        translations,
+        generatedAt: saved.createdAt,
+        sources: saved.sources,
+        cached: false,
+      };
+    });
+    if ("limited" in result) {
+      res.setHeader("Retry-After", result.retry!);
+      res.status(429).json({ error: "ai_rate_limited" });
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    req.log.warn(
+      { kind: err instanceof Error ? err.name : "unknown" },
+      "Company advisor failed",
+    );
+    res
+      .status(503)
+      .json({
+        error:
+          err instanceof AiTimeoutError
+            ? "ai_timeout"
+            : err instanceof AiNotConnectedError
+              ? "ai_not_connected"
+              : "ai_failed",
+      });
   }
 });
 export default router;

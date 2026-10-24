@@ -1,3 +1,4 @@
+import { ChangingValue, HorizonSlider } from "./projection-feedback";
 import { useCompany } from "@/lib/enterprise";
 import { enterpriseWords } from "@/i18n/enterprise";
 import { MarketOutlook } from "./market-outlook";
@@ -13,7 +14,7 @@ export const jobWords = {
   en: {
     tab: "Skills in demand",
     title: "What skills are employers asking for?",
-    note: "Malaysia demand signal. When the live sample is empty, use five selected DOSM JMI Q4 2025 occupations, mapped editorially to O*NET skills with course coverage. The 0–100 index is a learning-priority proxy, not a vacancy count or measured worker shortage.",
+    note: "Reviewed Malaysia signal: five selected DOSM JMI Q4 2025 occupations mapped to O*NET skills with available courses. A learning-priority index, not a vacancy count. Scenario values can exceed 100.",
     empty:
       "No Malaysian listings with recognised skills in the current sample. No ranking can be supported yet.",
     years: "Years ahead",
@@ -35,7 +36,7 @@ export const jobWords = {
   ms: {
     tab: "Kemahiran diperlukan",
     title: "Kemahiran apa yang majikan perlukan?",
-    note: "Petunjuk permintaan Malaysia. Jika sampel live kosong, gunakan lima pekerjaan terpilih DOSM JMI S4 2025, dipadankan secara editorial kepada kemahiran O*NET yang ada kursus. Indeks 0–100 ialah proksi keutamaan belajar, bukan bilangan iklan atau ukuran kekurangan pekerja.",
+    note: "Rujukan Malaysia disemak: lima pekerjaan terpilih DOSM JMI S4 2025 dipadankan kepada kemahiran O*NET yang ada kursus. Indeks keutamaan belajar, bukan bilangan vacancy. Nilai senario boleh melebihi 100.",
     empty:
       "Tiada iklan Malaysia dengan kemahiran dikenal pasti dalam sampel semasa. Belum ada bukti untuk susunan kedudukan.",
     years: "Tahun ke hadapan",
@@ -57,7 +58,7 @@ export const jobWords = {
   zh: {
     tab: "需求技能",
     title: "雇主正在寻找哪些技能？",
-    note: "马来西亚需求信号。实时样本为空时，使用DOSM JMI 2025年第4季度的五个选定职业，经编辑映射至有课程的O*NET技能。0–100指数是学习优先级参考，不是招聘数量或实测人才短缺。",
+    note: "已审核的马来西亚参考数据：DOSM JMI 2025年第4季度的五个选定职业，映射至有课程的O*NET技能。这是学习优先级指数，并非招聘数量。情景值可能超过100。",
     empty: "当前样本没有可识别技能的马来西亚职位，暂时无法提供有依据的排名。",
     years: "未来年数",
     scenario: "规划示例：假设指数每年增长5%。这是假设，不是预测。",
@@ -96,17 +97,12 @@ export function MarketSkills({
   });
   return (
     <Panel title={w.title} meta={w.note}>
-      <label className="block text-sm">
-        {w.years}: <b>{years}</b>
-        <input
-          className="my-4 block w-full accent-[#7a1523]"
-          type="range"
-          min="1"
-          max="10"
-          value={years}
-          onChange={(e) => setYears(+e.target.value)}
-        />
-      </label>
+      <HorizonSlider
+        id={employer ? "company-skill-years" : "skill-years"}
+        years={years}
+        onChange={setYears}
+        label={w.years}
+      />
       <p className="mb-4 text-xs text-muted-foreground">{w.scenario}</p>
       {q.isLoading ? (
         <Rows n={3} />
@@ -127,31 +123,48 @@ export function MarketSkills({
                 {employer && (
                   <p className="mt-2 text-xs">
                     {enterpriseWords[lang].gaps}:{" "}
-                    {company.data?.members.filter((m) =>
-                      m.skillNames && !m.skillNames.includes(s.name),
+                    {company.data?.members.filter(
+                      (m) => m.skillNames && !m.skillNames.includes(s.name),
                     ).length ?? 0}{" "}
                     / {company.data?.profileCount ?? 0}
                   </p>
                 )}
-                <p className="mt-3 text-xs">
-                  {w.now}: {s.count} → {w.next}:{" "}
-                  {(s.count * 1.05 ** years).toFixed(1)}
-                </p>
+                <div className="mt-4 rounded-xl bg-primary/5 p-3">
+                  <p className="text-xs text-muted-foreground">
+                    {w.next} · {new Date().getFullYear() + years}
+                  </p>
+                  <ChangingValue
+                    value={(s.count * 1.05 ** years).toFixed(1)}
+                    className="my-1 text-4xl font-extrabold text-primary"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {w.now}: {s.count}
+                  </p>
+                </div>
               </article>
             ))}
           </div>
           <ol className="mt-4 space-y-2">
             {q.data.skills.slice(3, limit).map((s, i) => (
               <li
-                className="flex justify-between gap-3 rounded-xl border p-3 text-sm"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-4 text-sm"
                 key={s.id}
               >
                 <b>
                   #{i + 4} {skillLabel(s.name, lang)}
                 </b>
-                <span>
-                  {s.count} → {(s.count * 1.05 ** years).toFixed(1)}
-                </span>
+                <div className="text-right">
+                  <p className="text-[10px] text-muted-foreground">
+                    {w.next} · {new Date().getFullYear() + years}
+                  </p>
+                  <ChangingValue
+                    value={(s.count * 1.05 ** years).toFixed(1)}
+                    className="text-2xl font-extrabold text-primary"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    {w.now}: {s.count}
+                  </p>
+                </div>
               </li>
             ))}
           </ol>
@@ -167,14 +180,7 @@ export function MarketSkills({
       )}
       <p className="mt-5 text-xs">
         {q.data?.source} · {q.data?.sample ?? 0} · {q.data?.checkedAt} ·{" "}
-        <a
-          href="https://github.com/public-apis/public-apis#jobs"
-          target="_blank"
-          rel="noreferrer"
-          className="underline"
-        >
-          {w.source}
-        </a>
+        <a href="/sources" className="underline">{lang === "en" ? "Data and method" : lang === "ms" ? "Data dan kaedah" : "数据与方法"}</a>
       </p>
     </Panel>
   );

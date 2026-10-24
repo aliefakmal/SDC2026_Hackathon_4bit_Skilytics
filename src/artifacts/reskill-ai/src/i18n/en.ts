@@ -1,6 +1,9 @@
 import { docsEn } from "./docs";
 import { obEn } from "./ob";
 export const en = {
+  "err.analysis_outdated": "Your company data or selected year has changed. Run the company analysis again before chatting.",
+  "err.analysis_not_found": "Generate the company analysis first.",
+  "err.chat_not_found": "This conversation is unavailable. Run a new company analysis.",
   "cadence.daily": "Daily public catalogue check",
   "err.journey_step_required": "Complete the current step before continuing.",
   "err.intake_required": "Review and confirm your intake summary first.",
@@ -266,12 +269,13 @@ export const en = {
   "src.freecodecamp_catalogue.name": "freeCodeCamp public curriculum", "src.freecodecamp_catalogue.desc": "Official course titles and links from the public curriculum structure; durations are not published.",
   "src.githubskills_catalogue.name": "GitHub Skills exercises", "src.githubskills_catalogue.desc": "Public course templates from GitHub; links open the official exercise repository.",
   "src.huggingface_catalogue.name": "Hugging Face Learn", "src.huggingface_catalogue.desc": "Public AI courses linked from the publisher's Learn index.",
-  "src.gemini.name": "Google Gemini API", "src.gemini.desc": "Active AI service for all seven agents during testing; metadata checks do not generate text.",
+  "src.gemini.name": "Google Gemini API", "src.gemini.desc": "Active AI service for all eight routed AI roles, including Company Advisor during testing; metadata checks do not generate text.",
   "src.dosm_lfs_month.name": "Monthly labour force", "src.dosm_lfs_month.desc": "DOSM monthly labour force survey via OpenDOSM.",
   "src.runpod_light.name": "RunPod light placeholder", "src.runpod_light.desc": "Reserved Qwen endpoint; generation and health checks stay off during Gemini-only testing.",
   "src.runpod_main.name": "RunPod main placeholder", "src.runpod_main.desc": "Reserved Qwen endpoint for future hybrid routing; it is disabled during testing.",
   "cadence.links_6h": "Provider catalogue refreshed every 6 hours", "cadence.monthly_6h": "Monthly data, checked every 6 hours",
   "cadence.on_refresh": "Checked on refresh", "cadence.release_6h": "Per release, checked every 6 hours",
+  "consumer.agent_company_advisor": "Company Advisor",
   "consumer.agent_cv": "CV Reader", "consumer.agent_holland": "Interest Guide", "consumer.agent_sdg": "SDG Mapper",
   "consumer.agent_profiler": "Skills Profiler", "consumer.agent_fitter": "Role Fitter", "consumer.agent_planner": "Pathway Coach",
   "consumer.predictions": "Outlook", "consumer.market": "Market", "consumer.graduate_signals": "Graduate market",

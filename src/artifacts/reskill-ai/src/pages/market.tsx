@@ -1,3 +1,4 @@
+import { AiRoutingPanel } from "@/components/ai-routing-panel";
 import {SourceAccess,SourceAccessAudit,auditedSourceDescription} from "@/components/source-access";
 import { MarketExplore } from "@/components/market-skills";
 import { CompanyFuture } from "@/components/company-future";
@@ -726,6 +727,7 @@ export function Sources() {
                     ({items.length})
                   </span>
                 </h2>
+                {k === "ai_endpoint" && <AiRoutingPanel/>}
                 <div className="grid gap-3 lg:grid-cols-2">
                   {items.map((s) => {
                     const name = tk("src", `${s.id}.name`);

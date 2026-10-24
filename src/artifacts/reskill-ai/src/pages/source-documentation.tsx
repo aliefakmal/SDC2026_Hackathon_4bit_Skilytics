@@ -5,7 +5,6 @@ import { Panel } from "@/components/kit";
 import { useFmt } from "@/lib/fmt";
 import { useT, type DictKey } from "@/i18n";
 import { cn } from "@/lib/utils";
-import { AiRoutingPanel } from "@/components/ai-routing-panel";
 
 export type DocType = "external" | "static" | "derived" | "service" | "demo" | "user";
 
@@ -278,7 +277,6 @@ export function SourceDocumentation({ sources, ai }: { sources: MarketSource[]; 
       <div className="space-y-6">{CATEGORIES.map((category) => (
         <section key={category.key} aria-labelledby={`sources-category-${category.key}`}>
           <h3 id={`sources-category-${category.key}`} className="mb-2 text-sm font-semibold text-primary">{t(`docs.category.${category.key}` as DictKey)}</h3>
-          {category.key === "aiService" && <AiRoutingPanel />}
           <div className="space-y-2">{category.ids.map((id) => {
             const d = DOCS.find((entry) => entry.id === id)!;
             return <DocItem key={d.id} d={d} live={sources} ai={ai} />;

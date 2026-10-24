@@ -307,6 +307,7 @@ test("changed inputs generate once for all languages; company analyses reuse the
     test: process.env.AI_TEST_MODE,
   };
   let calls = 0;
+  const prompts:string[]=[];
   const translations = {
     en: "### Next step\nPractise SQL with a small fictional dataset and review your learning each month.",
     ms: "### Langkah seterusnya\nLatih SQL dengan data rekaan kecil dan semak pembelajaran setiap bulan.",
@@ -320,6 +321,7 @@ test("changed inputs generate once for all languages; company analyses reuse the
       String(input).startsWith("https://generativelanguage.googleapis.com/")
     ) {
       calls++;
+      prompts.push(String(init?.body));
       return new Response(
         JSON.stringify({
           candidates: [
@@ -361,6 +363,99 @@ test("changed inputs generate once for all languages; company analyses reuse the
     assert.equal(b.status, 200);
     assert.equal(((await b.json()) as { cached: boolean }).cached, true);
     assert.equal(calls, 2);
+    const analysis = (await a.json()) as { id: number };
+    assert.ok(analysis.id > 0);
+    const payload = {
+      analysisId: analysis.id,
+      years: 3,
+      question: "Which courses should we practise first?",
+      parentId: null,
+    };
+    assert.equal(
+      (await request("/enterprise/future/chat", "POST", payload, otherToken))
+        .status,
+      404,
+    );
+    assert.equal(
+      (
+        await request(
+          `/enterprise/future/chat?analysisId=${analysis.id}`,
+          "GET",
+          undefined,
+          otherToken,
+        )
+      ).status,
+      404,
+    );
+    assert.equal(
+      (await fetch(base + `/enterprise/future/chat?analysisId=${analysis.id}`))
+        .status,
+      401,
+    );
+    assert.equal(
+      (
+        await request("/enterprise/future/chat", "POST", {
+          ...payload,
+          years: 4,
+        })
+      ).status,
+      409,
+    );
+    const chatResponses = await Promise.all([
+      request("/enterprise/future/chat", "POST", payload),
+      request("/enterprise/future/chat", "POST", payload),
+    ]);
+    let turnId = 0;
+    for (const response of chatResponses) {
+      assert.equal(response.status, 200);
+      const turn = (await response.json()) as {
+        id: number;
+        translations: unknown;
+        sources: { url: string }[];
+      };
+      assert.deepEqual(turn.translations, translations);
+      assert.ok(turn.sources.some((s) => s.url.includes("onetcenter.org")));
+      turnId = turn.id;
+    }
+    assert.equal(
+      calls,
+      3,
+      "concurrent retries must generate one trilingual answer",
+    );
+    const follow = await request("/enterprise/future/chat", "POST", {
+      ...payload,
+      question: "How can we measure our progress?",
+      parentId: turnId,
+    });
+    assert.equal(follow.status, 200);
+    assert.equal(calls, 4);
+    assert.ok(prompts.at(-1)?.includes("Which courses should we practise first?"),"follow-up includes a server-loaded prior turn");
+    assert.ok(!prompts.at(-1)?.includes("Fictional QA employee"),"employee names are omitted");
+    const invalidParent=await request("/enterprise/future/chat","POST",{...payload,parentId:analysis.id});
+    assert.equal(invalidParent.status,404);
+    const history = await request(
+      `/enterprise/future/chat?analysisId=${analysis.id}`,
+    );
+    assert.equal(history.status, 200);
+    const turns = (await history.json()) as {
+      id: number;
+      translations: unknown;
+    }[];
+    assert.equal(turns.length, 2);
+    assert.deepEqual(turns[0].translations, translations);
+    await db
+      .update(profilesTable)
+      .set({ currentRole: "Changed fictional role" })
+      .where(eq(profilesTable.id, pid));
+    assert.equal(
+      (await request("/enterprise/future/chat", "POST", payload)).status,
+      409,
+    );
+    assert.equal(
+      calls,
+      4,
+      "stale analysis cannot spend tokens or use outdated team data",
+    );
   } finally {
     globalThis.fetch = realFetch;
     for (const [key, value] of [
