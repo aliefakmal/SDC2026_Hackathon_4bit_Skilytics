@@ -254,8 +254,8 @@ export default function CertificatePage() {
                   lang={lang}
                 >
                   <div className="certificate-inner">
-                    <div className="certificate-brand">
-                      <BrandMark className="h-24 w-24" />
+                    <div className="certificate-brand flex flex-row flex-nowrap items-center justify-center gap-3">
+                      <BrandMark className="h-11 w-11 shrink-0" />
                       <span>Skilytics</span>
                     </div>
                     <h2>{w.heading}</h2>
