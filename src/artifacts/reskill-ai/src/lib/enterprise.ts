@@ -55,3 +55,7 @@ export function enterprisePost<T>(path: string, data: unknown = {}) {
     body: JSON.stringify(data),
   });
 }
+export function enterpriseGet<T>(path: string) {
+  return customFetch<T>(`/api/enterprise/${path}`);
+}
+

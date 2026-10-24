@@ -4,7 +4,7 @@ import { ChangingValue, HorizonSlider } from "./projection-feedback";
 import { MarketSkills, jobWords } from "./market-skills";
 import { useState } from "react";
 import { Link } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   CartesianGrid,
   Line,
@@ -21,6 +21,7 @@ import { enterpriseWords } from "@/i18n/enterprise";
 import {
   useCompany,
   enterprisePost,
+  enterpriseGet,
   type CompanyAnalysis,
   type CompanyMember,
 } from "@/lib/enterprise";
@@ -65,7 +66,7 @@ export function EnterpriseDashboard() {
       <PageHeader
         title={c?.organization ?? w.dashboard}
         sub={w.dashboardSub}
-        actions={<TeamGuide />}
+        help={<TeamGuide />}
       />
       {q.isLoading ? (
         <Rows n={4} />
@@ -208,7 +209,8 @@ export function CompanyFuture() {
   const [tab, setTab] = useState("company");
   return (
     <>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <PageHeader title={tab === "company" ? w.company : tab === "skills" ? jobWords[lang].title : marketWords[lang].title} sub={tab === "company" ? w.source : tab === "skills" ? jobWords[lang].note : marketWords[lang].sub} help={<TeamGuide future/>}/>
+      <div className="mb-5">
         <div
           role="tablist"
           className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl border bg-card p-1"
@@ -230,15 +232,14 @@ export function CompanyFuture() {
             </button>
           ))}
         </div>
-        <TeamGuide future />
       </div>
       {tab === "company" ? (
         <CompanyProjection />
       ) : tab === "skills" ? (
-        <MarketSkills employer />
+        <MarketSkills employer hideHeader/>
       ) : (
         <MarketOutlook
-          hideGuide
+          hideGuide hideHeader
           selectedMode={tab === "demand" ? "demand" : "ai"}
         />
       )}
@@ -256,7 +257,18 @@ function CompanyProjection() {
   const [years, setYears] = useState(3);
   const [saved, setSaved] = useState<Record<string, CompanyAnalysis>>({});
   const fingerprint = JSON.stringify(c ? { ...c, updatedAt: undefined } : null);
-  const result = saved[`${fingerprint}:${years}`];
+  const localResult = saved[`${fingerprint}:${years}`];
+
+  const existingQuery = useQuery({
+    queryKey: ["company-analysis", fingerprint, years],
+    queryFn: () =>
+      enterpriseGet<CompanyAnalysis>(`future/analysis?years=${years}`),
+    enabled: !!c && !localResult,
+    retry: false,
+  });
+
+  const result = localResult || existingQuery.data;
+
   const ai = useMutation({
     mutationFn: async ({ years: at, key }: { years: number; key: string }) => ({
       key,
@@ -264,7 +276,7 @@ function CompanyProjection() {
         years: at,
       }),
     }),
-    onSuccess: ({ key, result }) => setSaved((v) => ({ ...v, [key]: result })),
+    onSuccess: ({ key, result: res }) => setSaved((v) => ({ ...v, [key]: res })),
   });
   if (q.isLoading) return <Rows n={4} />;
   if (q.isError || !c)
@@ -278,7 +290,7 @@ function CompanyProjection() {
   }));
   return (
     <div className="space-y-4">
-      <PageHeader title={w.company} sub={w.source} />
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <ProjectionMetric
           label={w.coverage}
@@ -354,19 +366,34 @@ function CompanyProjection() {
         </p>
       </Panel>
       <Panel title={w.analysis} meta={w.saved}>
-        <Button
-          disabled={ai.isPending || !c.profileCount}
-          onClick={() => ai.mutate({ years, key: `${fingerprint}:${years}` })}
-        >
-          {ai.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {w.analyse}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            disabled={ai.isPending || !c.profileCount}
+            onClick={() => ai.mutate({ years, key: `${fingerprint}:${years}` })}
+            className="shadow-sm font-semibold"
+          >
+            {ai.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {w.analyse}
+          </Button>
+          {result && (
+            <span className="text-xs text-muted-foreground">
+              {result.cached ? "✓ Saved" : "✓ Updated"}
+            </span>
+          )}
+        </div>
         {ai.isPending && (
-          <p className="mt-3 animate-pulse text-sm">{w.loading}</p>
+          <p className="mt-3 animate-pulse text-sm text-primary font-medium">{w.loading}</p>
         )}
-        {ai.isError && <ErrorBox error={ai.error} />}{" "}
+        {ai.isError && (
+          <div className="mt-3">
+            <ErrorBox
+              error={ai.error}
+              retry={() => ai.mutate({ years, key: `${fingerprint}:${years}` })}
+            />
+          </div>
+        )}
         {result && (
-          <div className="mt-5 text-sm leading-relaxed">
+          <div className="mt-5 text-sm leading-relaxed rounded-2xl border border-primary/20 bg-card/60 p-4 sm:p-5 shadow-sm">
             <Markdown>{result.translations[lang]}</Markdown>
             <CompanyAdvisor key={result.id} analysis={result} years={years} />
           </div>

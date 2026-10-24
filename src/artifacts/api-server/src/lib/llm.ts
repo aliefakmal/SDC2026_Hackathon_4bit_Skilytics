@@ -374,7 +374,38 @@ function mockGenerateChat(system: string, user: string, images?: ChatImage[]): s
     });
   }
 
-  // 3. Holland RIASEC explanation
+  // 3. Enterprise Company Future Analysis (Trilingual JSON)
+  if (
+    system.includes("what is changing") ||
+    system.includes("team learning priorities") ||
+    system.includes("company KPIs")
+  ) {
+    return JSON.stringify({
+      en: "### What is changing\nAverage observed team AI task exposure is currently 38%. Under an illustrative 3-year scenario, task overlap compounds to approximately 47%. AI tools assist routine documentation and analysis tasks without eliminating roles.\n\n### Team learning priorities\nPrioritise closing critical team skill gaps:\n- Combine domain experience with practical AI workflow tools.\n- Focus on hands-on practice over theory.\n- Support cross-team skill sharing.\n\n### 3 Proposed company KPIs\n- **Target 1 (6 Months)**: 75% module completion rate across enrolled pathways.\n- **Target 2 (12 Months)**: Reduce average individual skill gaps from 2.5 to under 1.0.\n- **Target 3 (Quarterly)**: Each active member completes a 10-minute micro-learning task monthly.\n\n### Limitations & next review\nIllustrative planning model based on O*NET benchmarks. Next formal review in 6 months.",
+      ms: "### Perubahan yang berlaku\nPendedahan tugasan AI yang diperhatikan bagi pasukan kini berada pada purata 38%. Mengikut senario ilustrasi 3 tahun, pertindihan tugasan diunjurkan mencecah sekitar 47%. Alatan AI membantu tugasan rutin dan dokumentasi tanpa menghapuskan peranan pekerja.\n\n### Keutamaan pembelajaran pasukan\nUtamakan penyelesaian jurang kemahiran utama pasukan:\n- Gabungkan kepakaran sedia ada dengan alatan aliran kerja AI amali.\n- Tumpukan latihan praktikal berbanding teori semata-mata.\n- Galakkan perkongsian kemahiran silang pasukan.\n\n### 3 Cadangan KPI syarikat boleh diukur\n- **Sasaran 1 (6 Bulan)**: Kadar penyelesaian modul 75% bagi laluan yang didaftarkan.\n- **Sasaran 2 (12 Bulan)**: Kurangkan purata jurang kemahiran individu daripada 2.5 kepada bawah 1.0.\n- **Sasaran 3 (Suku Tahunan)**: Setiap ahli aktif menyelesaikan latihan mikro 10 minit setiap bulan.\n\n### Kekangan & semakan seterusnya\nModel perancangan ilustrasi berpandukan penanda aras O*NET. Semakan seterusnya dalam 6 bulan.",
+      zh: "### 正在发生的变化\n当前团队观察到的AI任务重叠度平均为38%。在3年情景下，重叠度预计达到约47%。AI工具协助日常文档和分析任务，并非替代岗位。\n\n### 团队学习重点\n优先弥补团队核心技能差距：\n- 将专业经验与实用AI工作流工具相结合。\n- 侧重于动手实操而非枯燥理论。\n- 促进团队间的跨职能技能共享。\n\n### 3项拟议可衡量公司KPI\n- **目标 1（6个月）**：注册路径模块完成率达到75%。\n- **目标 2（12个月）**：将人均技能差距从2.5项降至1.0项以下。\n- **目标 3（按季度）**：每位在职成员每月完成一次10分钟微学习实践。\n\n### 局限性与下次审查\n基于O*NET基准的规划参考模型。建议6个月后进行正式审查。",
+    });
+  }
+
+  // 4. Enterprise Company Learning Advisor Chat (Trilingual JSON)
+  if (system.includes("Company Learning Advisor")) {
+    return JSON.stringify({
+      en: "### Recommendations\nBased on your team's profile, focus on practical modules that address your top identified skill gaps. Combine daily tasks with micro-learning to build confidence.\n\n- Prioritise foundational data skills\n- Schedule regular peer check-ins",
+      ms: "### Cadangan Pembelajaran\nBerdasarkan profil pasukan anda, tumpukan modul amali bagi merapatkan jurang kemahiran utama. Gabungkan tugasan harian dengan pembelajaran mikro.\n\n- Utamakan kemahiran data asas\n- Adakan semakan berkala sesama rakan sekerja",
+      zh: "### 学习建议\n根据团队画像，建议侧重针对核心技能差距的实战模块。将日常工作与微学习相结合以建立信心。\n\n- 优先培养基础数据能力\n- 安排定期的同行交流与进度复盘",
+    });
+  }
+
+  // 5. Employee Summary (Trilingual JSON)
+  if (system.includes("CV strengths") && system.includes("interest mix")) {
+    return JSON.stringify({
+      en: "### CV strengths\nDemonstrates clear practical experience in operational execution and workflow coordination.\n\n### Interest mix\nHolland profile indicates strong affinity for technical problem solving and systematic processes.\n\n### 10-minute activity\nPractise mapping one repetitive weekly spreadsheet task into an automated template.",
+      ms: "### Kekuatan CV\nMenunjukkan pengalaman praktikal yang jelas dalam pelaksanaan operasi dan penyelarasan aliran kerja.\n\n### Corak minat\nProfil Holland menunjukkan kecenderungan kuat terhadap penyelesaian masalah teknikal dan proses sistematik.\n\n### Aktiviti 10 minit\nLatih pemetaan satu tugasan helaian kerja mingguan yang berulang ke dalam templat automatik.",
+      zh: "### 简历优势\n在运营执行和工作流协调方面展现出扎实的实操经验。\n\n### 兴趣组合\n霍兰德兴趣画像显示对技术问题解决和系统化流程有极高认同感。\n\n### 10分钟实践活动\n尝试将每周一项重复性的电子表格处理任务映射为自动化模板。",
+    });
+  }
+
+  // 6. Holland RIASEC explanation
   if (system.includes("Holland") || system.includes("RIASEC") || user.includes("riasec") || user.includes("scores")) {
     return [
       "### Analisis Minat Holland (RIASEC)",

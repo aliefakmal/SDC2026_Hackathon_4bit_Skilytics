@@ -46,11 +46,12 @@ export async function seedDemoMembers(): Promise<void> {
   for (const acct of DEMO_ACCOUNTS) {
     const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(profilesTable).where(eq(profilesTable.organization, acct.organization));
     if (count > 0) {
-      if (acct.role === "hr") {
+      if (acct.role === "hr" || acct.role === "tvet") {
         const existing = await db.select().from(profilesTable).where(eq(profilesTable.organization, acct.organization));
         for (const p of existing) {
-          const fixture=HR_MEMBERS.find(m=>m.name===p.name);
-          const answers = hasCurrentRiasec(p.riasecAnswers) ? p.riasecAnswers : fixedDemoAnswers(p.riasecScores ?? fixture?.riasec ?? HR_MEMBERS[p.id % HR_MEMBERS.length].riasec);
+          const fixtures=acct.role === "hr" ? HR_MEMBERS : TVET_MEMBERS;
+          const fixture=fixtures.find(m=>m.name===p.name);
+          const answers = hasCurrentRiasec(p.riasecAnswers) ? p.riasecAnswers : fixedDemoAnswers(p.riasecScores ?? fixture?.riasec ?? fixtures[p.id % fixtures.length].riasec);
           const scored = scoreRiasec(answers);
           const missingCv=!p.cvExtractionKey && fixture;
           if(hasCurrentRiasec(p.riasecAnswers) && !missingCv)continue;
@@ -80,11 +81,11 @@ export async function seedDemoMembers(): Promise<void> {
           riasecAnswers: fixedDemoAnswers(m.riasec),
           riasecScores: scoreRiasec(fixedDemoAnswers(m.riasec)).scores,
           riasecCode: scoreRiasec(fixedDemoAnswers(m.riasec)).code,
-          ...(acct.role === "hr" ? {
+          ...({
             cvFileName:"Fictional employee CV", cvText:`Fictional demo CV: ${m.name}. ${m.currentRole}. Skills: ${m.skills.join(", ")}.`,
             experience:`Fictional demo experience in ${m.currentRole}. Uses ${m.skills.join(", ")}.`,
             cvExtractionKey:"hr-demo-v2", verified:true, onboardingStep:"complete",
-          } : {}),
+          }),
         })
         .returning();
       const role = m.plan ? roles.find((r) => r.title === m.plan) : undefined;
